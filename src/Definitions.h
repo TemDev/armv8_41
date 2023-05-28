@@ -1,3 +1,6 @@
+#include <stdbool.h>
+#include <stdin.h>
+
 struct Flags {
   bool N, Z, C, V;
 };
