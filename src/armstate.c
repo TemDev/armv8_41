@@ -3,10 +3,6 @@
 #include "Definitions.h"
 #define NUM_GEN_REG 32
 
-struct Flags {
-  bool N, Z, C, V;
-};
-
 //functions for changing the values of flags for encapsulation purposes
 void changeN (bool* N) {
   *N = false;
