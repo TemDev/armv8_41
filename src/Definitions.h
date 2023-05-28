@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdin.h>
+#define NUM_GEN_REG 32
 
 struct Flags {
   bool N, Z, C, V;
