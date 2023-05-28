@@ -6,12 +6,21 @@ struct Flags {
   bool N, Z, C, V;
 };
 
-void changeFlag (int* N, int* Z, int* C, int* V) {
+void changeN (bool* N) {
   *N = false;
-  *Z = false;
-  *C = false;
-  *V = false;
 };
+
+void changeZ (bool* Z) {
+  *Z = false;
+}
+
+void changeC (bool* C) {
+  *C = false;
+}
+
+void changeV (bool* V) {
+  *V = false;
+}
 
 struct CompState {
   long ZR;
