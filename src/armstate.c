@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include "Definitions.h"
 #define NUM_GEN_REG 32
 
 struct Flags {
@@ -22,14 +23,6 @@ void changeC (bool* C) {
 void changeV (bool* V) {
   *V = false;
 }
-
-struct CompState {
-  long ZR;
-  long PC;
-  struct Flags PSTATE;
-  long SP;
-  long Regs[NUM_GEN_REG];
-};
 
 void initial(struct CompState* statep) {
   statep->ZR = 0;
