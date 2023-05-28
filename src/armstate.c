@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdbool.h>
 #define NUM_GEN_REG 32
 
 struct Flags {
-	char N, Z, C, V;
+	bool N, Z, C, V;
 };
 
 struct CompState {
@@ -16,10 +17,10 @@ struct CompState {
 void initial(struct CompState* statep) {
 	statep->ZR = 0;
 	statep->PC  = 0;
-	statep->PSTATE.N = 0;
-	statep->PSTATE.Z = 0;
-	statep->PSTATE.C = 0;
-	statep->PSTATE.V = 0;
+	statep->PSTATE.N = false;
+	statep->PSTATE.Z = false;
+	statep->PSTATE.C = false;
+	statep->PSTATE.V = false;
 	statep->SP = 0;
 	for (int i = 0; i < NUM_GEN_REG; i++) {
 		statep->Regs[i] = 0;
@@ -33,10 +34,10 @@ void incrementPC(struct CompState* state) {
 
 // mutates output to have the correct letters for set flags
 void formatPSTATE(struct CompState* state, char *output) {
-        if (state->PSTATE.N == 1) output[0] = 'N';
-        if (state->PSTATE.Z == 1) output[1] = 'Z';
-        if (state->PSTATE.C == 1) output[2] = 'C';
-        if (state->PSTATE.V == 1) output[3] = 'V';
+        if (state->PSTATE.N) output[0] = 'N';
+        if (state->PSTATE.Z) output[1] = 'Z';
+        if (state->PSTATE.C) output[2] = 'C';
+        if (state->PSTATE.V) output[3] = 'V';
 }
 
 
@@ -74,7 +75,7 @@ int main(void) {
 	fclose(fp);
 	fp = fopen("output2.out", "w");
 	incrementPC(&state);
-	state.PSTATE.C = 1;  // doesn't make logical sense, just for testing
+	state.PSTATE.C = true;  // doesn't make logical sense, just for testing
 	printContentsTo(fp, &state);
 	fclose(fp);
 
