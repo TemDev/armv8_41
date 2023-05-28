@@ -1,3 +1,7 @@
+struct Flags {
+  bool N, Z, C, V;
+};
+
 struct CompState {
   long ZR;
   long PC;
