@@ -1,10 +1,17 @@
 #include <stdio.h>
 #include <stdbool.h>
-#define BIT24 16777216 // == 2 ^ 24
-#define BIT2523 41943040 // == 2 ^ 25 + 2 ^ 23
-#define BITsf 2147483648 // == 2 ^ 31
-#define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0
+#define BIT24 16777216 // == 2 ^ 24, MASK
+#define BIT2523 41943040 // == 2 ^ 25 + 2 ^ 23, MASK
+#define BITsf 2147483648 // == 2 ^ 31, MASK
+#define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0, MASK
 #define NUM_GEN_REG 32
+#define BIT32MASK 4294967295 // == 2 ^ 32 - 1, MASK
+#define BIT64MASK 18446744073709551615 // == 2 ^ 64 - 1, MASK
+#define BIT64 18446744073709551616 // == 2 ^ 64, MASK
+#define REGISTER31 31
+#define BIT63 9223372036854775808 // == 2 ^ 63, MASK
+#define BIT31 2147483648 // == 2 ^ 31, MASK
+#define BIT32 4294967296 // == 2 ^ 32, MASK
 
 struct Flags {
   bool N, Z, C, V;
@@ -20,44 +27,155 @@ struct CompState {
 
 
 void add(struct CompState* state, int instruction, char Rn, int Op) {
-    const int rd = 4294967295; // 2 ^ 32 - 1
     char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        state->Regs[Rd] = state->Regs[Rn] + Op;
-        if (BITsf & instruction) {
-            
-        } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
-        };
-    }
     
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == REGISTER31) {
+            result = state->SP + Op;
+        } else {
+            result = state->Regs[Rn] + Op;
+        };
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT64MASK;
+        } else {
+            state->Regs[Rd] = result & BIT64MASK;
+        };
+        
+    } else {
+        long result;
+        if (Rn == REGISTER31) {
+            result = (state->SP & BIT32MASK) + Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) + Op;
+        };
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT32MASK;
+        } else {
+            state->Regs[Rd] = result & BIT32MASK;
+        };
+    };
 };
 
 void adds(struct CompState* state, int instruction, char Rn, int Op) {
-    const int rd = 4294967295; // 2 ^ 32 - 1
     char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        if (Rn == 31) {
-            state->Regs[Rd] = state->SP + Op;
+    
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == REGISTER31) {
+            result = state->SP + Op;
         } else {
-            state->Regs[Rd] = state->Regs[Rn] + Op;
+            result = state->Regs[Rn] + Op;
         };
-        if (BITsf & instruction) {
-            
+        
+        //Set Flags
+        state->PSTATE.N = result & BIT63 ? true : false;
+        state->PSTATE.Z = result == 0 ? true : false;
+        state->PSTATE.C = result & BIT64 ? true : false;
+        state->PSTATE.V = state->PSTATE.C;
+        
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT64MASK;
         } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
+            state->Regs[Rd] = result & BIT64MASK;
         };
+        
     } else {
-        state->SP = state->Re
+        long result;
+        if (Rn == REGISTER31) {
+            result = (state->SP & BIT32MASK) + Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) + Op;
+        };
+        
+        //Set Flags
+        state->PSTATE.N = result & BIT31 ? true : false;
+        state->PSTATE.Z = result == 0 ? true : false;
+        state->PSTATE.C = result & BIT32 ? true : false;
+        state->PSTATE.V = state->PSTATE.C;
+        
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT32MASK;
+        } else {
+            state->Regs[Rd] = result & BIT32MASK;
+        };
     };
 };
 
 void sub(struct CompState* state, int instruction, char Rn, int Op) {
+    char Rd = BITrd & instruction;
     
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == REGISTER31) {
+            result = state->SP - Op;
+        } else {
+            result = state->Regs[Rn] - Op;
+        };
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT64MASK;
+        } else {
+            state->Regs[Rd] = result & BIT64MASK;
+        };
+        
+    } else {
+        long result;
+        if (Rn == REGISTER31) {
+            result = (state->SP & BIT32MASK) - Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) - Op;
+        };
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT32MASK;
+        } else {
+            state->Regs[Rd] = result & BIT32MASK;
+        };
+    };
 };
 
 void subs(struct CompState* state, int instruction, char Rn, int Op) {
-    sub(state, instruction, Rn, Op);
+    char Rd = BITrd & instruction;
+    
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == REGISTER31) {
+            result = state->SP - Op;
+        } else {
+            result = state->Regs[Rn] - Op;
+        };
+        
+        //Set Flags
+        state->PSTATE.N = result & BIT63 ? true : false;
+        state->PSTATE.Z = result == 0 ? true : false;
+        state->PSTATE.C = result & BIT64 ? true : false;
+        state->PSTATE.V = state->PSTATE.C;
+        
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT64MASK;
+        } else {
+            state->Regs[Rd] = result & BIT64MASK;
+        };
+        
+    } else {
+        long result;
+        if (Rn == REGISTER31) {
+            result = (state->SP & BIT32MASK) - Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) - Op;
+        };
+        
+        //Set Flags
+        state->PSTATE.N = result & BIT31 ? true : false;
+        state->PSTATE.Z = result == 0 ? true : false;
+        state->PSTATE.C = result & BIT32 ? true : false;
+        state->PSTATE.V = state->PSTATE.C;
+        
+        if (Rd == REGISTER31) {
+            state->SP = result & BIT32MASK;
+        } else {
+            state->Regs[Rd] = result & BIT32MASK;
+        };
+    };
 };
 
 void arithmetic(struct CompState* state, int instruction) {
