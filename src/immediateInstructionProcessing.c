@@ -25,7 +25,6 @@ struct CompState {
   long Regs[NUM_GEN_REG];
 };
 
-
 void add(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
@@ -36,8 +35,13 @@ void add(struct CompState* state, int instruction, char Rn, int Op) {
         } else {
             result = state->Regs[Rn] + Op;
         };
+        
         if (Rd == REGISTER31) {
-            state->SP = result & BIT64MASK;
+            if (result < 0) {
+                state->SP = result;
+            } else {
+                state->SP = result & BIT64MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT64MASK;
         };
@@ -49,8 +53,14 @@ void add(struct CompState* state, int instruction, char Rn, int Op) {
         } else {
             result = (state->Regs[Rn] & BIT32MASK) + Op;
         };
+        
         if (Rd == REGISTER31) {
-            state->SP = result & BIT32MASK;
+            if (result < 0) {
+                int res = result;
+                state->SP = res;
+            } else {
+                state->SP = result & BIT32MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT32MASK;
         };
@@ -69,13 +79,20 @@ void adds(struct CompState* state, int instruction, char Rn, int Op) {
         };
         
         //Set Flags
-        state->PSTATE.N = result & BIT63 ? true : false;
+        state->PSTATE.N = result < 0 ? true : false;
         state->PSTATE.Z = result == 0 ? true : false;
-        state->PSTATE.C = result & BIT64 ? true : false;
+        if (result > 0) {
+            state->PSTATE.C = result & BIT64 ? true : false;
+        } else {
+            state->PSTATE.C = false;
+        };
         state->PSTATE.V = state->PSTATE.C;
-        
         if (Rd == REGISTER31) {
-            state->SP = result & BIT64MASK;
+            if (result < 0) {
+                state->SP = result;
+            } else {
+                state->SP = result & BIT64MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT64MASK;
         };
@@ -89,13 +106,22 @@ void adds(struct CompState* state, int instruction, char Rn, int Op) {
         };
         
         //Set Flags
-        state->PSTATE.N = result & BIT31 ? true : false;
+        state->PSTATE.N = result < 0 ? true : false;
         state->PSTATE.Z = result == 0 ? true : false;
-        state->PSTATE.C = result & BIT32 ? true : false;
+        if (result > 0) {
+            state->PSTATE.C = result & BIT32 ? true : false;
+        } else {
+            state->PSTATE.C = false;
+        };
         state->PSTATE.V = state->PSTATE.C;
         
         if (Rd == REGISTER31) {
-            state->SP = result & BIT32MASK;
+            if (result < 0) {
+                int res = reslt;
+                state->SP = res;
+            } else {
+                state->SP = result & BIT32MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT32MASK;
         };
@@ -112,8 +138,13 @@ void sub(struct CompState* state, int instruction, char Rn, int Op) {
         } else {
             result = state->Regs[Rn] - Op;
         };
+        
         if (Rd == REGISTER31) {
-            state->SP = result & BIT64MASK;
+            if (result < 0) {
+                state->SP = result;
+            } else {
+                state->SP = result & BIT64MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT64MASK;
         };
@@ -125,8 +156,14 @@ void sub(struct CompState* state, int instruction, char Rn, int Op) {
         } else {
             result = (state->Regs[Rn] & BIT32MASK) - Op;
         };
+        
         if (Rd == REGISTER31) {
-            state->SP = result & BIT32MASK;
+            if (result < 0) {
+                int res = result;
+                state->SP = res;
+            } else {
+                state->SP = result & BIT32MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT32MASK;
         };
@@ -145,13 +182,24 @@ void subs(struct CompState* state, int instruction, char Rn, int Op) {
         };
         
         //Set Flags
-        state->PSTATE.N = result & BIT63 ? true : false;
+        state->PSTATE.N = result < 0 ? true : false;
         state->PSTATE.Z = result == 0 ? true : false;
-        state->PSTATE.C = result & BIT64 ? true : false;
+        if (result > 0) {
+            state->PSTATE.C = result & BIT64 ? true : false;
+        } else {
+            if (result < -BIT63) {
+                state->PSTATE.C = true;
+            } else {
+                state->PSTATE.C = false;
+            };
+        };
         state->PSTATE.V = state->PSTATE.C;
-        
         if (Rd == REGISTER31) {
-            state->SP = result & BIT64MASK;
+            if (result < 0) {
+                state->SP = result;
+            } else {
+                state->SP = result & BIT64MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT64MASK;
         };
@@ -165,13 +213,26 @@ void subs(struct CompState* state, int instruction, char Rn, int Op) {
         };
         
         //Set Flags
-        state->PSTATE.N = result & BIT31 ? true : false;
+        state->PSTATE.N = result < 0 ? true : false;
         state->PSTATE.Z = result == 0 ? true : false;
-        state->PSTATE.C = result & BIT32 ? true : false;
+        if (result > 0) {
+            state->PSTATE.C = result & BIT32 ? true : false;
+        } else {
+            if (result < -BIT31) {
+                state->PSTATE.C = true;
+            } else {
+                state->PSTATE.C = false;
+            };
+        };
         state->PSTATE.V = state->PSTATE.C;
         
         if (Rd == REGISTER31) {
-            state->SP = result & BIT32MASK;
+            if (result < 0) {
+                int res = result;
+                state->SP = res;
+            } else {
+                state->SP = result & BIT32MASK;
+            };
         } else {
             state->Regs[Rd] = result & BIT32MASK;
         };
@@ -227,4 +288,4 @@ void determineType(struct CompState* state, int instruction) {
 
 void main() {
     
-}
+};
