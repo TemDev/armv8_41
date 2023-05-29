@@ -73,7 +73,7 @@ void adds(struct CompState* state, int instruction, char Rn, int Op) {
     if (BITsf & instruction) {
         long long result;
         if (Rn == REGISTER31) {
-            result = state->SP + Op;
+            result = state->ZR + Op;
         } else {
             result = state->Regs[Rn] + Op;
         };
@@ -87,20 +87,18 @@ void adds(struct CompState* state, int instruction, char Rn, int Op) {
             state->PSTATE.C = false;
         };
         state->PSTATE.V = state->PSTATE.C;
-        if (Rd == REGISTER31) {
+        if (!(Rd == REGISTER31)) {
             if (result < 0) {
-                state->SP = result;
+                state->Regs[Rd] = result;
             } else {
-                state->SP = result & BIT64MASK;
+                state->Regs[Rd] = result & BIT64MASK;
             };
-        } else {
-            state->Regs[Rd] = result & BIT64MASK;
         };
         
     } else {
         long result;
         if (Rn == REGISTER31) {
-            result = (state->SP & BIT32MASK) + Op;
+            result = (state->ZR & BIT32MASK) + Op;
         } else {
             result = (state->Regs[Rn] & BIT32MASK) + Op;
         };
@@ -115,15 +113,13 @@ void adds(struct CompState* state, int instruction, char Rn, int Op) {
         };
         state->PSTATE.V = state->PSTATE.C;
         
-        if (Rd == REGISTER31) {
+        if (!(Rd == REGISTER31)) {
             if (result < 0) {
                 int res = reslt;
-                state->SP = res;
+                state->Regs[Rd] = res;
             } else {
-                state->SP = result & BIT32MASK;
+                state->Regs[Rd] = result & BIT32MASK;
             };
-        } else {
-            state->Regs[Rd] = result & BIT32MASK;
         };
     };
 };
@@ -194,14 +190,12 @@ void subs(struct CompState* state, int instruction, char Rn, int Op) {
             };
         };
         state->PSTATE.V = state->PSTATE.C;
-        if (Rd == REGISTER31) {
+        if (!(Rd == REGISTER31)) {
             if (result < 0) {
-                state->SP = result;
+                state->Regs[Rd] = result;
             } else {
-                state->SP = result & BIT64MASK;
+                state->Regs[Rd] = result & BIT64MASK;
             };
-        } else {
-            state->Regs[Rd] = result & BIT64MASK;
         };
         
     } else {
@@ -226,15 +220,13 @@ void subs(struct CompState* state, int instruction, char Rn, int Op) {
         };
         state->PSTATE.V = state->PSTATE.C;
         
-        if (Rd == REGISTER31) {
+        if (!(Rd == REGISTER31)) {
             if (result < 0) {
                 int res = result;
-                state->SP = res;
+                state->Regs[Rd] = res;
             } else {
-                state->SP = result & BIT32MASK;
+                state->Regs[Rd] = result & BIT32MASK;
             };
-        } else {
-            state->Regs[Rd] = result & BIT32MASK;
         };
     };
 };
