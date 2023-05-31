@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
+#include Definitions.h
+#include bitwise.c
 #define BIT24 16777216 // == 2 ^ 24, MASK
 #define BIT2523 41943040 // == 2 ^ 25 + 2 ^ 23, MASK
 #define BITsf 2147483648 // == 2 ^ 31, MASK
 #define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0, MASK
-#define NUM_GEN_REG 32
 #define BIT32MASK 4294967295 // == 2 ^ 32 - 1, MASK
 #define BIT64MASK 18446744073709551615 // == 2 ^ 64 - 1, MASK
 #define BIT64 18446744073709551616 // == 2 ^ 64, MASK
@@ -13,18 +14,6 @@
 #define BIT63 9223372036854775808 // == 2 ^ 63, MASK
 #define BIT31 2147483648 // == 2 ^ 31, MASK
 #define BIT32 4294967296 // == 2 ^ 32, MASK
-
-struct Flags {
-  bool N, Z, C, V;
-};
-
-struct CompState {
-  long ZR;
-  long PC;
-  struct Flags PSTATE;
-  long SP;
-  long Regs[NUM_GEN_REG];
-};
 
 void add(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
@@ -283,8 +272,9 @@ void movk(struct CompState* state, int instruction, int imm16, char hw) {
 void wideMove(struct CompState* state, int instruction) {
     char hw = (instruction >> 21) & 3;
     char opc = (instruction >> 29) & 3;
-    int imm16 = (instruction >> 5) & 65535;
-    long Op = imm16 << (hw * 16);
+    short imm16MASK = 65535; // 2 ^ 16 - 1
+    int imm16 = (instruction >> 5) & imm16MASK;
+    long Op = lsl_64(imm16, hw * 16);
     if (opc == 3) {
         movk(state, instruction, imm16, hw);
     } else if (opc == 2) {
