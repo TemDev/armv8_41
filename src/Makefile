@@ -11,7 +11,12 @@ all: assemble emulate
 
 assemble: assemble.o
 emulate: emulate.o
+RegisterInstructionProcessing: RegisterInstructionProcessing.o
+bitwise: bitwise.o
+branchInstructions: branchInstructions.o
+immediateInstructionProcessing: immediateInstructionProcessing.o
+singleMtransfer: singleMtransfer.o
 
 clean:
-	$(RM) *.o assemble emulate
+	$(RM) *.o assemble emulate RegisterInstructionProcessing bitwise branchInstructions immediateInstructionProcessing singleMtransfer
 	
