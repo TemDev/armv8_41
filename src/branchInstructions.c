@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
-#include Definitions.h
+#include "Definitions.h"
+
 #define BIT2826 335544320 // == 2 ^ 28 + 2 ^ 26
 #define BIT313029282726 4227858432 // == 2 ^ 31 + 2 ^ 30 + 2 ^ 29 + 2 ^ 28 + 2 ^ 27 + 2 ^ 26
 #define BIT31302826252019181716 3592355840 // == 2 ^ 31 + 2 ^ 30 + 2 ^ 28 + 2 ^ 26 + 2 ^ 25 + 2 ^ 20 + 2 ^ 19 + 2 ^ 18 + 2 ^ 17 + 2 ^ 16
@@ -12,18 +13,6 @@
 #define BIT26MASK 67108863 // == 2 ^ 26 - 1
 #define BIT235MASK 16777184 // == 2 ^ 24 - 2 ^ 5
 #define BIT4MASK 15 // == 2 ^ 4 - 1
-
-struct Flags {
-  bool N, Z, C, V;
-};
-
-struct CompState {
-  long ZR;
-  long PC;
-  struct Flags PSTATE;
-  long SP;
-  long Regs[NUM_GEN_REG];
-};
 
 void unconditional(struct CompState* state, long simm26) {
     state->PC = simm26 * 4;
@@ -89,6 +78,6 @@ void branch(struct CompState* state, int instruction) {
     };
 };
 
-void main() {
+void mainBranch() {
     
 };

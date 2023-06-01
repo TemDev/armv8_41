@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "Definitions.h"
 
-#include "singleMTransfer.h"
 #define MEM_SIZE 16394
 #define HLT 0x8a000000
 
@@ -32,15 +32,19 @@ int main(int argc, char** argv) {
 		// to inst value
 		char Op0 = (instruction >> 25) & 15;
 		if (Op0 == 8 || Op0 == 9) {
-		    
+		    determineTypeImmediate(&state, instruction);
+		    state.PC += 4;
 		} else if (Op0 == 5 || Op0 == 13) {
-		    
+		    determineTypeRegister(&state, instruction);
+		    state.PC += 4;
 		} else if (Op0 == 4 || Op0 == 6 || Op0 == 12 || Op0 == 14) {
-		    
+			// Single Data Transfer determineType to go here
+		    state.PC += 4;
 		} else if (Op0 == 10 || Op0 == 11) {
-		    
+		    branch(&state, instruction);
+		} else {
+		    state.PC += 4;
 		};
-		state.PC += 4;
 		
 	};
 	

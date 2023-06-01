@@ -31,3 +31,10 @@ extern void determineTypeRegister(struct CompState* state, int instruction);
 
 // ImmediateInstructionProcessing
 extern void determineTypeImmediate(struct CompState* state, int instruction);
+
+// singleMTransfer
+extern void unsignedImmOffset(struct CompState* state, int inst, char *mem);
+extern int accessMemory(int address, char *mem, size_t n);
+
+// branchInstructions
+extern void branch(struct CompState* state, int instruction);
