@@ -1,9 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+<<<<<<< HEAD
 #include <string.h>
 //#include "Definitions.h"
 #include "singleMTransfer.h" 
+=======
+#include "emulate.h"
+#include "bitwise.h"
+#include "immediateInstructionProcessing.h"
+#include "RegisterInstructionProcessing.h"
+#include "singleMTransfer.h"
+#include "branchInstructions.h"
+
+
+#define MEM_SIZE 16394
+>>>>>>> 1178ca318990d4e25969299e2f406e7826841bdc
 #define HLT 0x8a000000
      
 void printCompState(FILE *fp, struct CompState* state) {
@@ -43,18 +55,47 @@ int main(int argc, char** argv) {
 		fread(&memory[count], sizeof(char), 1, fp);
 		count++;
 	}
+<<<<<<< HEAD
 	fclose(fp);
 	int inst = memory[0];
 	while (inst == HLT ) { // it is supposed to be != but in this case is in infinite loop
+=======
+	
+	struct CompState state;
+	
+	int instruction = memory[state.PC];
+	while (instruction == HLT ) { // it is supposed to be != but in this case is in infinite loop
+>>>>>>> 1178ca318990d4e25969299e2f406e7826841bdc
 		// process this instruction 
 		// update the CompState
 		// and memory corresponding to the
 		// next insturction
 		// get the next instruction back 
 		// to inst value
+<<<<<<< HEAD
 	}
 	struct CompState state;
 	initial(&state);
+=======
+		char Op0 = (instruction >> 25) & 15;
+		if (Op0 == 8 || Op0 == 9) {
+		    determineTypeImmediate(&state, instruction);
+		    state.PC += 4;
+		} else if (Op0 == 5 || Op0 == 13) {
+		    determineTypeRegister(&state, instruction);
+		    state.PC += 4;
+		} else if (Op0 == 4 || Op0 == 6 || Op0 == 12 || Op0 == 14) {
+			// Single Data Transfer determineType to go here
+		    state.PC += 4;
+		} else if (Op0 == 10 || Op0 == 11) {
+		    branch(&state, instruction);
+		} else {
+		    state.PC += 4;
+		};
+		
+	};
+	
+>>>>>>> 1178ca318990d4e25969299e2f406e7826841bdc
 	state.Regs[1] = 2;
 	state.Regs[2] = 20;
 	long x = 0x6789678967896789;
@@ -88,7 +129,11 @@ int main(int argc, char** argv) {
  	fclose(file);
 
 	return EXIT_SUCCESS;
+<<<<<<< HEAD
 
 }
 
 
+=======
+};
+>>>>>>> 1178ca318990d4e25969299e2f406e7826841bdc

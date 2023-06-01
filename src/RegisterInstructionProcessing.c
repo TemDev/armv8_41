@@ -1,230 +1,308 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include "RegisterInstructionProcessing.h"
+
 #define BIT24 16777216 // == 2 ^ 24
-#define BUTM 268435456 // == 2 ^ 28
-#define BIT2523 41943040 // == 2 ^ 25 + 2 ^ 23
+#define BITm 268435456 // == 2 ^ 28
+#define BITshift 50331648 // 2 ^ 25 + 2 ^ 24
 #define BITsf 2147483648 // == 2 ^ 31
 #define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0
-#define rd 4294967295; // 2 ^ 32 - 1
-#define NUM_GEN_REG 32
-
-struct Flags {
-  bool N, Z, C, V;
-};
-
-struct CompState {
-  long ZR;
-  long PC;
-  struct Flags PSTATE;
-  long SP;
-  long Regs[NUM_GEN_REG];
-};
-
-void arithmetic(struct CompState* state, int instruction) {
-    const int fst = 166777216; // 2 ^ 24
-    const int shift = 12582912; // 2 ^ 23 + 2 ^ 22
-    const short lst = 2097152; // 2 ^ 21;
-    int Op = ((imm12 & instruction) >> 10) << (12 * ((sh & instruction) >> 31));
-    char Rn = (rn & instruction) >> 5;
-    // Bit wise shift should be included and some things will be added / altered
-    char opc = (instruction >> 29) & 3;
-    switch (opc) {
-        case 7:
-        bics(state, instruction, Rn, Op);
-        break;
-        case 6:
-        ands(state, instruction, Rn, Op);
-        break;
-        case 5:
-        eor(state, instruction, Rn, Op);
-        break;
-        case 4:
-        eon(state, instruction, Rn, Op);
-        break;
-        case 3:
-        orn(state, instruction, Rn, Op);
-        break;
-        case 2:
-        orr(state, instruction, Rn, Op);
-        break;
-        case 1:
-        bic(state, instruction, Rn, Op);
-        break;
-        case 0:
-        andd(state, instruction, Rn, Op);
-        break;
-        default:
-        add(state, instruction, Rn, Op);
-    }
-};
+#define BITx 32768 // == 2 ^ 15
+#define BITra 31744 // == 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10
+#define BITrn 992 // == 2 ^ 9 + 2 ^ 8 + 2 ^ 7 + 2 ^ 6 + 2 ^ 5
+#define BITrm 2031616 // == 2 ^ 20 + 2 ^ 19 + 2 ^ 18 + 2 ^ 17 + 2 ^ 16
+#define rd 4294967295 // 2 ^ 32 - 1
+#define BIToperand 64512 // 2 ^ 15 + 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10
+#define BIT32MASK 4294967295 // == 2 ^ 32 - 1, MASK
+#define BIT64MASK 18446744073709551615 // == 2 ^ 64 - 1, MASK
+#define BIT64 18446744073709551616 // == 2 ^ 64, MASK
+#define BIT32 4294967296 // == 2 ^ 32, MASK
 
 
-void andd(struct CompState* state, int instruction, char Rn, int Op) {
+static void andd(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        state->Regs[Rd] = state->Regs[Rn] & Op;
-        if (BITsf & instruction) {
-            
+    
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == BITrd) {
+            result = state->SP & Op;
         } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
+            result = state->Regs[Rn] & Op;
         };
-    }
+        
+        if (Rd == BITrd) {
+            if (result < 0) {
+                state->SP = result;
+            } else {
+                state->SP = result & BIT64MASK;
+            };
+        } else {
+            state->Regs[Rd] = result & BIT64MASK;
+        };
+        
+    } else {
+        long result;
+        if (Rn == BITrd) {
+            result = (state->SP & BIT32MASK) & Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) & Op;
+        };
+        
+        if (Rd == BITrd) {
+            if (result < 0) {
+                int res = result;
+                state->SP = res;
+            } else {
+                state->SP = result & BIT32MASK;
+            };
+        } else {
+            state->Regs[Rd] = result & BIT32MASK;
+        };
+    };
+
     
 };
 
-void bic(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        state->Regs[Rd] = state->Regs[Rn] & (~Op);
-        if (BITsf & instruction) {
-            
-        } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
-        };
-    }
-};
+// All the possible commands that might be asked to be performed
 
-void orr(struct CompState* state, int instruction, char Rn, int Op) {
+//Only functions and orr eor and ands are written below because the other function
+//are achieved by passing a negated Op parameter to these functions. This significantly simplifies the code
+static void orr(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        state->Regs[Rd] = state->Regs[Rn] | Op;
-        if (BITsf & instruction) {
-            
+    
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == BITrd) {
+            result = state->SP | Op;
         } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
+            result = state->Regs[Rn] | Op;
         };
-    }
-};
-
-void orn(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        state->Regs[Rd] = state->Regs[Rn] | (~Op);
-        if (BITsf & instruction) {
-            
+        
+        if (Rd == BITrd) {
+            if (result < 0) {
+                state->SP = result;
+            } else {
+                state->SP = result & BIT64MASK;
+            };
         } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
+            state->Regs[Rd] = result & BIT64MASK;
         };
-    }
-};
-
-void eon(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        state->Regs[Rd] = state->Regs[Rn] ^ (~Op);
-        if (BITsf & instruction) {
-            
-        } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
-        };
-    }
-};
-
-void eor(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        state->Regs[Rd] = state->Regs[Rn] ^ Op;
-        if (BITsf & instruction) {
-            
-        } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
-        };
-    }
-};
-
-void ands(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        if (Rn == 31) {
-            state->Regs[Rd] = state->SP & Op;
-        } else {
-            state->Regs[Rd] = state->Regs[Rn] + Op;
-        };
-        if (BITsf & instruction) {
-            
-        } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
-        };
+        
     } else {
-        state->SP = state->Re
+        long result;
+        if (Rn == BITrd) {
+            result = (state->SP & BIT32MASK) | Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) | Op;
+        };
+        
+        if (Rd == BITrd) {
+            if (result < 0) {
+                int res = result;
+                state->SP = res;
+            } else {
+                state->SP = result & BIT32MASK;
+            };
+        } else {
+            state->Regs[Rd] = result & BIT32MASK;
+        };
+    };
+};
+
+static void eor(struct CompState* state, int instruction, char Rn, int Op) {
+    char Rd = BITrd & instruction;
+    
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == BITrd) {
+            result = state->SP ^ Op;
+        } else {
+            result = state->Regs[Rn] ^ Op;
+        };
+        
+        if (Rd == BITrd) {
+            if (result < 0) {
+                state->SP = result;
+            } else {
+                state->SP = result & BIT64MASK;
+            };
+        } else {
+            state->Regs[Rd] = result & BIT64MASK;
+        };
+        
+    } else {
+        long result;
+        if (Rn == BITrd) {
+            result = (state->SP & BIT32MASK) ^ Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) ^ Op;
+        };
+        
+        if (Rd == BITrd) {
+            if (result < 0) {
+                int res = result;
+                state->SP = res;
+            } else {
+                state->SP = result & BIT32MASK;
+            };
+        } else {
+            state->Regs[Rd] = result & BIT32MASK;
+        };
+    };
+};
+
+static void ands(struct CompState* state, int instruction, char Rn, int Op) {
+    char Rd = BITrd & instruction;
+    
+    if (BITsf & instruction) {
+        long long result;
+        if (Rn == BITrd) {
+            result = state->ZR & Op;
+        } else {
+            result = state->Regs[Rn] & Op;
+        };
+        
+        //Setting Flags
+        state->PSTATE.N = result < 0 ? true : false;
+        state->PSTATE.Z = result == 0 ? true : false;
+        if (result > 0) {
+            state->PSTATE.C = result & BIT64 ? true : false;
+        } else {
+            state->PSTATE.C = false;
+        };
+        state->PSTATE.V = state->PSTATE.C;
+        if (!(Rd == BITrd)) {
+            if (result < 0) {
+                state->Regs[Rd] = result;
+            } else {
+                state->Regs[Rd] = result & BIT64MASK;
+            };
+        };
+        
+    } else {
+        long result;
+        if (Rn == BITrd) {
+            result = (state->ZR & BIT32MASK) & Op;
+        } else {
+            result = (state->Regs[Rn] & BIT32MASK) & Op;
+        };
+        
+        //Setting Flags
+        state->PSTATE.N = result < 0 ? true : false;
+        state->PSTATE.Z = result == 0 ? true : false;
+        if (result > 0) {
+            state->PSTATE.C = result & BIT32 ? true : false;
+        } else {
+            state->PSTATE.C = false;
+        };
+        state->PSTATE.V = state->PSTATE.C;
+        
+        if (!(Rd == BITrd)) {
+            if (result < 0) {
+                int res = result;
+                state->Regs[Rd] = res;
+            } else {
+                state->Regs[Rd] = result & BIT32MASK;
+            };
+        };
     };
 
-};
-
-void bics(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    if (Rd != 31) {
-        if (Rn == 31) {
-            state->Regs[Rd] = state->SP & (!Op);
-        } else {
-            state->Regs[Rd] = state->Regs[Rn] + Op2;
-        };
-        if (BITsf & instruction) {
-            
-        } else {
-            state->Regs[Rd] = state->Regs[Rd] & rd;
-        };
-    } else {
-        state->SP = state->Re
-    };
 
 };
 
-void arithmetic(struct CompState* state, int instruction) {
-    const int sh = 4194304;
-    const int imm12 = 4293280;
-    const short rn = 992;
-    int Op = ((imm12 & instruction) >> 10) << (12 * ((sh & instruction) >> 31));
-    char Rn = (rn & instruction) >> 5;
-    char opc = (instruction >> 29) & 3;
-    switch (opc) {
-        case 3:
-        subs(state, instruction, Rn, Op);
-        break;
-        case 2:
-        sub(state, instruction, Rn, Op);
-        break;
-        case 1:
-        adds(state, instruction, Rn, Op);
-        break;
-        default:
-        add(state, instruction, Rn, Op);
-    }
-};
 
 // Multiply-Add: Rd := Ra + (Rn * Rm)
-int madd(int Ra, int Rn, int Rm) {
+static int madd(instruction) {
+    char Ra = BITra & instruction;
+    char Rn = BITrn & instruction;
+    char Rm = BITrm & instruction;
     return Ra + (Rn * Rm);
 }
 
 // Multiply-Sub: Rd := Ra - (Rn * Rm)
-int msub(int Ra, int Rn, int Rm) {
+static int msub(instruction) {
+    char Ra = BITra & instruction;
+    char Rn = BITrn & instruction;
+    char Rm = BITrm & instruction;
     return Ra - (Rn * Rm);
 }
 
+// Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
+static void arithmetic(struct CompState* state, int instruction) {
+    char Opnew = BITrm;
+    if ((instruction >> 22) & 1) {
+        Opnew = lsl_64 ((instruction & BITrm), (instruction & BIToperand));
+    } else if ((instruction >> 22) & 2) {
+        Opnew = lsr_64 ((instruction & BITrm), (instruction & BIToperand));
+    } else {
+        Opnew = asr_64 ((instruction & BITrm), (instruction & BIToperand));
+    }
+    char Rn = (BITrn & instruction) >> 5;
+    char opc = (instruction >> 29) & 3;
+    switch (opc) {
+        case 3:
+        ands(state, instruction, Rn, Opnew);
+        break;
+        case 2:
+        eor(state, instruction, Rn, Opnew);
+        break;
+        case 1:
+        orr(state, instruction, Rn, Opnew);
+        break;
+        default:
+        andd(state, instruction, Rn, Opnew);
+    }
+}
 
-void bit-logic(struct CompState* state, int instruction) {
-    
+//Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
+static void logical(struct CompState* state, int instruction) {
+    char Opnew = ~(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
+    char Rn = (BITrn & instruction) >> 5;
+    // Bit wise shift should be included and some things will be added / altered
+    char opc = (instruction >> 29) & 3;
+    switch (opc) {
+        case 3:
+        ands(state, instruction, Rn, Opnew);
+        break;
+        case 2:
+        eor(state, instruction, Rn, Opnew);
+        break;
+        case 1:
+        orr(state, instruction, Rn, Opnew);
+        break;
+        default:
+        and(state, instruction, Rn, Opnew);
+    }
 };
 
-void multiply(struct CompState* state, int instruction) {
-    
+
+static void multiply(struct CompState* state, int instruction) {
+  char Rd = instruction & BITrd;
+  if (instruction & BITx) {
+      state->Regs[Rd] = msub(instruction);
+  } else {
+      state->Regs[Rd] = madd(instruction);
+  }
 };
 
 // Determines type of immediate instruction, arithmetic or wideMove.
-void determineType(struct CompState* state, int instruction) {
-    if (instruction & !(BITM) & (BIT24)) {
+void determineTypeRegister(struct CompState* state, int instruction) {
+    char m = instruction & BITm;
+    char r24 = instruction & BIT24;
+    if (instruction && (~m) && (~r24)) {
         arithmetic(state, instruction);
-    } else if (instruction & !(BITM) & !(BIT24) {
-        bit-logic(state, instruction);
-        else if (instruction & (BITM) & (BIT24)) {
+    } else if (instruction && (~m) && (~r24)) {
+        logical(state, instruction);
+    }
+        else if (instruction && (m) && (r24)) {
             multiply(state, instruction);
         }
-    };
 };
 
-void main() {
+static void main() {
     
 }
+
+
 
 

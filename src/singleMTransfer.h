@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -78,4 +79,9 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	printf("%d \n", address);
 }
 
+=======
+#include "emulate.h"
+>>>>>>> 1178ca318990d4e25969299e2f406e7826841bdc
 
+extern void unsignedImmOffset(struct CompState* state, int inst, char *mem);
+extern int accessMemory(int address, char *mem, size_t n);
