@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "Definitions.h"
+#include "emulate.h"
+#include "bitwise.h"
+#include "immediateInstructionProcessing.h"
+#include "RegisterInstructionProcessing.h"
+#include "singleMTransfer.h"
+#include "branchInstructions.h"
+
 
 #define MEM_SIZE 16394
 #define HLT 0x8a000000

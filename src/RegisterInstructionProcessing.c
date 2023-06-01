@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include "Definitions.h"
+#include "RegisterInstructionProcessing.h"
 
 #define BIT24 16777216 // == 2 ^ 24
 #define BITm 268435456 // == 2 ^ 28
@@ -19,7 +19,7 @@
 #define BIT32 4294967296 // == 2 ^ 32, MASK
 
 
-void andd(struct CompState* state, int instruction, char Rn, int Op) {
+static void andd(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -67,7 +67,7 @@ void andd(struct CompState* state, int instruction, char Rn, int Op) {
 
 //Only functions and orr eor and ands are written below because the other function
 //are achieved by passing a negated Op parameter to these functions. This significantly simplifies the code
-void orr(struct CompState* state, int instruction, char Rn, int Op) {
+static void orr(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -109,7 +109,7 @@ void orr(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-void eor(struct CompState* state, int instruction, char Rn, int Op) {
+static void eor(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -151,7 +151,7 @@ void eor(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-void ands(struct CompState* state, int instruction, char Rn, int Op) {
+static void ands(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -212,7 +212,7 @@ void ands(struct CompState* state, int instruction, char Rn, int Op) {
 
 
 // Multiply-Add: Rd := Ra + (Rn * Rm)
-int madd(instruction) {
+static int madd(instruction) {
     char Ra = BITra & instruction;
     char Rn = BITrn & instruction;
     char Rm = BITrm & instruction;
@@ -220,7 +220,7 @@ int madd(instruction) {
 }
 
 // Multiply-Sub: Rd := Ra - (Rn * Rm)
-int msub(instruction) {
+static int msub(instruction) {
     char Ra = BITra & instruction;
     char Rn = BITrn & instruction;
     char Rm = BITrm & instruction;
@@ -228,7 +228,7 @@ int msub(instruction) {
 }
 
 // Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
-void arithmetic(struct CompState* state, int instruction) {
+static void arithmetic(struct CompState* state, int instruction) {
     char Opnew = BITrm;
     if ((instruction >> 22) & 1) {
         Opnew = lsl_64 ((instruction & BITrm), (instruction & BIToperand));
@@ -255,7 +255,7 @@ void arithmetic(struct CompState* state, int instruction) {
 }
 
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
-void logical(struct CompState* state, int instruction) {
+static void logical(struct CompState* state, int instruction) {
     char Opnew = ~(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
     char Rn = (BITrn & instruction) >> 5;
     // Bit wise shift should be included and some things will be added / altered
@@ -276,7 +276,7 @@ void logical(struct CompState* state, int instruction) {
 };
 
 
-void multiply(struct CompState* state, int instruction) {
+static void multiply(struct CompState* state, int instruction) {
   char Rd = instruction & BITrd;
   if (instruction & BITx) {
       state->Regs[Rd] = msub(instruction);
@@ -299,7 +299,7 @@ void determineTypeRegister(struct CompState* state, int instruction) {
         }
 };
 
-void main() {
+static void main() {
     
 }
 

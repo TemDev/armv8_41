@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <math.h>
-#include "Definitions.h"
+#include "emulate.h"
+#include "immediateInstructionProcessing.h"
 
 #define BIT24 16777216 // == 2 ^ 24, MASK
 #define BIT2523 41943040 // == 2 ^ 25 + 2 ^ 23, MASK
@@ -15,7 +15,7 @@
 #define BIT31 2147483648 // == 2 ^ 31, MASK
 #define BIT32 4294967296 // == 2 ^ 32, MASK
 
-void add(struct CompState* state, int instruction, char Rn, int Op) {
+static void add(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -57,7 +57,7 @@ void add(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-void adds(struct CompState* state, int instruction, char Rn, int Op) {
+static void adds(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -114,7 +114,7 @@ void adds(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-void subs(struct CompState* state, int instruction, char Rn, int Op) {
+static void subs(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -179,7 +179,7 @@ void subs(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-void arithmeticImmediate(struct CompState* state, int instruction) {
+static void arithmeticImmediate(struct CompState* state, int instruction) {
     const int sh = 4194304;
     const int imm12 = 4293280;
     const short rn = 992;
@@ -201,7 +201,7 @@ void arithmeticImmediate(struct CompState* state, int instruction) {
     }
 };
 
-void movn(struct CompState* state, int instruction, long Op) {
+static void movn(struct CompState* state, int instruction, long Op) {
     char Rd = BITrd & instruction;
     if (BITsf & instruction) { // 64 bit mode.
         state->Regs[Rd] = ~Op;
@@ -211,7 +211,7 @@ void movn(struct CompState* state, int instruction, long Op) {
     };
 };
 
-void movz(struct CompState* state, int instruction, long Op) {
+static void movz(struct CompState* state, int instruction, long Op) {
     char Rd = BITrd & instruction;
     if (BITsf & instruction) { // 64 bit mode.
         state->Regs[Rd] = Op;
@@ -221,13 +221,13 @@ void movz(struct CompState* state, int instruction, long Op) {
     };
 };
 
-void movk(struct CompState* state, int instruction, int imm16, char hw) {
+static void movk(struct CompState* state, int instruction, int imm16, char hw) {
     char Rd = BITrd & instruction;
     const long MASK = imm16 * pow(2, hw * 16);
     state->Regs[Rd] = state->Regs[Rd] ^ MASK;
 };
 
-void wideMove(struct CompState* state, int instruction) {
+static void wideMove(struct CompState* state, int instruction) {
     char hw = (instruction >> 21) & 3;
     char opc = (instruction >> 29) & 3;
     short imm16MASK = 65535; // 2 ^ 16 - 1
@@ -252,6 +252,6 @@ void determineTypeImmediate(struct CompState* state, int instruction) {
     };
 };
 
-void main() {
+static void main() {
     
 };

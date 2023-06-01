@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <math.h>
-#include "Definitions.h"
+#include "branchInstructions.h"
 
 #define BIT2826 335544320 // == 2 ^ 28 + 2 ^ 26
 #define BIT313029282726 4227858432 // == 2 ^ 31 + 2 ^ 30 + 2 ^ 29 + 2 ^ 28 + 2 ^ 27 + 2 ^ 26
@@ -14,17 +13,17 @@
 #define BIT235MASK 16777184 // == 2 ^ 24 - 2 ^ 5
 #define BIT4MASK 15 // == 2 ^ 4 - 1
 
-void unconditional(struct CompState* state, long simm26) {
+static void unconditional(struct CompState* state, long simm26) {
     state->PC = simm26 * 4;
 };
 
-void registerBranch(struct CompState* state, char Rn) {
+static void registerBranch(struct CompState* state, char Rn) {
     if (Rn != 31) {
         state->PC = state->Regs[Rn];
     };
 };
 
-void conditional(struct CompState* state, long offset, char cond) {
+static void conditional(struct CompState* state, long offset, char cond) {
     switch (cond) {
         case 0:
         if (state->PSTATE.Z == 1) {
@@ -78,6 +77,6 @@ void branch(struct CompState* state, int instruction) {
     };
 };
 
-void mainBranch() {
+static void mainBranch() {
     
 };

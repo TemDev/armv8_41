@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdint.h>
+#include "bitwise.h"
 #define BIT_MASK_32 ((1UL << 32) - 1)
 
 int64_t lsl_64(int64_t operand, int shift_amount)
