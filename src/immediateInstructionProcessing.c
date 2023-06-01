@@ -114,48 +114,6 @@ void adds(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-void sub(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    
-    if (BITsf & instruction) {
-        long long result;
-        if (Rn == REGISTER31) {
-            result = state->SP - Op;
-        } else {
-            result = state->Regs[Rn] - Op;
-        };
-        
-        if (Rd == REGISTER31) {
-            if (result < 0) {
-                state->SP = result;
-            } else {
-                state->SP = result & BIT64MASK;
-            };
-        } else {
-            state->Regs[Rd] = result & BIT64MASK;
-        };
-        
-    } else {
-        long result;
-        if (Rn == REGISTER31) {
-            result = (state->SP & BIT32MASK) - Op;
-        } else {
-            result = (state->Regs[Rn] & BIT32MASK) - Op;
-        };
-        
-        if (Rd == REGISTER31) {
-            if (result < 0) {
-                int res = result;
-                state->SP = res;
-            } else {
-                state->SP = result & BIT32MASK;
-            };
-        } else {
-            state->Regs[Rd] = result & BIT32MASK;
-        };
-    };
-};
-
 void subs(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
@@ -233,7 +191,7 @@ void arithmeticImmediate(struct CompState* state, int instruction) {
         subs(state, instruction, Rn, Op);
         break;
         case 2:
-        sub(state, instruction, Rn, Op);
+        add(state, instruction, Rn, (-Op));
         break;
         case 1:
         adds(state, instruction, Rn, Op);
