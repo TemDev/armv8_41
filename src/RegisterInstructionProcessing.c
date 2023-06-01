@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include "bitwise.c"
-#include "definition.h"
+#include "Definitions.h"
 
 #define BIT24 16777216 // == 2 ^ 24
 #define BITm 268435456 // == 2 ^ 28
@@ -18,8 +17,6 @@
 #define BIT64MASK 18446744073709551615 // == 2 ^ 64 - 1, MASK
 #define BIT64 18446744073709551616 // == 2 ^ 64, MASK
 #define BIT32 4294967296 // == 2 ^ 32, MASK
-#define NUM_GEN_REG 32
-
 
 
 void andd(struct CompState* state, int instruction, char Rn, int Op) {
@@ -462,7 +459,7 @@ void multiply(struct CompState* state, int instruction) {
 };
 
 // Determines type of immediate instruction, arithmetic or wideMove.
-void determineType(struct CompState* state, int instruction) {
+void determineTypeRegister(struct CompState* state, int instruction) {
     char m = instruction & BITm;
     char r24 = instruction & BIT24;
     if (instruction && (~m) && (~r24)) {
@@ -475,6 +472,6 @@ void determineType(struct CompState* state, int instruction) {
         }
 };
 
-void mainRegister() {
+void main() {
     
 }

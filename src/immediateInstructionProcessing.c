@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
-#include Definitions.h
-#include bitwise.c
+#include "Definitions.h"
+
 #define BIT24 16777216 // == 2 ^ 24, MASK
 #define BIT2523 41943040 // == 2 ^ 25 + 2 ^ 23, MASK
 #define BITsf 2147483648 // == 2 ^ 31, MASK
@@ -221,7 +221,7 @@ void subs(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-void arithmetic(struct CompState* state, int instruction) {
+void arithmeticImmediate(struct CompState* state, int instruction) {
     const int sh = 4194304;
     const int imm12 = 4293280;
     const short rn = 992;
@@ -286,9 +286,9 @@ void wideMove(struct CompState* state, int instruction) {
 };
 
 // Determines type of immediate instruction, arithmetic or wideMove.
-void determineType(struct CompState* state, int instruction) {
+void determineTypeImmediate(struct CompState* state, int instruction) {
     if (instruction & (BIT24)) {
-        arithmetic(state, instruction);
+        arithmeticImmediate(state, instruction);
     } else if (instruction & (BIT2523) == BIT2523) {
         wideMove(state, instruction);
     };
