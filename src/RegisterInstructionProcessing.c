@@ -66,6 +66,7 @@ void andd(struct CompState* state, int instruction, char Rn, int Op) {
     
 };
 
+// All the possible commands that might be asked to be performed
 void bic(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
@@ -402,26 +403,7 @@ int msub(instruction) {
     return Ra - (Rn * Rm);
 }
 
-void logical(struct CompState* state, int instruction) {
-    char Opnew = ror_64 ((instruction & BITrm), (instruction & BIToperand));
-    char Rn = (BITrn & instruction) >> 5;
-    // Bit wise shift should be included and some things will be added / altered
-    char opc = (instruction >> 29) & 3;
-    switch (opc) {
-        case 3:
-        bics(state, instruction, Rn, Opnew);
-        break;
-        case 2:
-        eon(state, instruction, Rn, Opnew);
-        break;
-        case 1:
-        orn(state, instruction, Rn, Opnew);
-        break;
-        default:
-        bic(state, instruction, Rn, Opnew);
-    }
-};
-
+// Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
 void arithmetic(struct CompState* state, int instruction) {
     char Opnew = BITrm;
     if ((instruction >> 22) & 1) {
@@ -447,6 +429,27 @@ void arithmetic(struct CompState* state, int instruction) {
         andd(state, instruction, Rn, Opnew);
     }
 }
+
+//Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
+void logical(struct CompState* state, int instruction) {
+    char Opnew = ror_64 ((instruction & BITrm), (instruction & BIToperand));
+    char Rn = (BITrn & instruction) >> 5;
+    // Bit wise shift should be included and some things will be added / altered
+    char opc = (instruction >> 29) & 3;
+    switch (opc) {
+        case 3:
+        bics(state, instruction, Rn, Opnew);
+        break;
+        case 2:
+        eon(state, instruction, Rn, Opnew);
+        break;
+        case 1:
+        orn(state, instruction, Rn, Opnew);
+        break;
+        default:
+        bic(state, instruction, Rn, Opnew);
+    }
+};
 
 
 void multiply(struct CompState* state, int instruction) {
