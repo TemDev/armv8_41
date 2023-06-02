@@ -1,50 +1,83 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include "Definitions.h"
+#include "emulate.h"
 
 
-int accessMemory(int address, char *mem, size_t n) {
-	assert(address % 4 == 0);
+void accessMemory(void *location, int address, char *mem, size_t n) {
+        assert(address % 4 == 0);
         assert(address < MEM_SIZE);
-        int p;
-        memcpy(&p, &mem[address], n);
-        return p;
+        memcpy(location, &mem[address], n);
 }
 
-void unsignedImmOffset(struct CompState* state, int inst, char *mem) {
-	// check that U is one
-	int L,U,I, Literal;
-	long temp;
-	int n; // number of bytes to be loaded 8 for 64bit and 4 for 32bit
-	int xn, rt, xm;// register number
-	unsigned int offset, simm19;
-	long address;
-	xn = (int) (0b11111 << 5) & inst;
+void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
+        // check that U is one
+        int L,U,I, Literal;
+        long temp;
+        int n; // number of bytes to be loaded 8 for 64bit and 4 for 32bit
+        int xn, rt, xm;// register number
+        unsigned long imm12, simm19;
+        long simm9;
+        long address = 0;
+        printf("%d \n", inst);
+        xn = (31) & (inst>>5);
+        xm = (31) & (inst >> 16);
+        rt = (31) & inst;
+        imm12 = ((1 << 13) - 1) & (inst >> 10);
+        simm9 = (255 & (inst >> 12 ));
+        simm19 = ((1<<20)-1) & (inst >> 5);
+        Literal = 1 & (inst>> 29);
+        U = 1 & (inst>> 24);
+        L = 1 & (inst>> 22);
+        I = 1 & (inst>>11);
+        printf("Literal:%d L:%d U:%d I:%d\n", Literal, U, L, I);
 
-	printf("%.32b", xn);
-	if (Literal == 0) {
-		if (U != 0) {
-        		address = state -> Regs[xn] + (offset << 3);
-		} else {
-			int simm9;
-			if (I != 0) {
-				address = state -> Regs[xn] + simm9;
-			} else {
-				address = state -> Regs[xn];
-				state -> Regs[xn] += simm9;
-			}		
-		}
-	
-		if (L == 0) {
-			mem[address] = state -> Regs[xn];		
-		} else {
-			state -> Regs[xn] = accessMemory(address, *mem, n * sizeof (char));
-		}
-	} else {
-	address = (long) state -> PC + simm19 << 2;
-		state -> Regs[xn] = accessMemory(address, *mem, n * sizeof (char));
-	}
+        if (1 & (inst>>30) == 0) {
+                n = 4; //sf is 0 and
+        } else {
+                n = 8;
+        }
+        printf("%d \n", n);
+        printf("xn:%d rt:%d xm:%d\n", xn, rt, xm);
+
+        if (Literal == 1) {
+                if (U != 0) {
+                        printf("unsigned offset mode\n");
+                        address = state -> Regs[xn] + (imm12 << 3);
+                } else {
+                        if (I != 0) {
+                                printf("simm9 is %d\n", simm9);
+                                address = state -> Regs[xn] + simm9;
+                                printf("pre index\naddress is %ld\n", address);
+                        } else {
+                                printf("post index\n");
+                                address = state -> Regs[xn];
+                                state -> Regs[xn] += simm9;
+                        }
+                }
+
+                if (L == 0) {
+                        printf("store\n");
+                        memcpy(&mem[address], &(state -> Regs[xn]), n * sizeof(char));
+                } else {
+                        printf("load\n");
+                        accessMemory(&(state -> Regs[rt]), address, mem, n * sizeof (char));
+                        /*long *lp = &(state -> Regs[30]);
+                        printf("%ld this is the addresss\n", lp);
+                        printf("%ld value before\n", *lp);
+                        *lp = 0xabcdef;
+                        printf("%ld value before\n", *lp);*/
+
+                }
+        } else {
+                printf("literal\n");
+                address = (long) state -> PC + (simm19 << 2);
+                accessMemory(&(state -> Regs[rt]), address, mem, n * sizeof (char));
+        }
+
+        printf("%d \n", address);
 }
 
-
+int main(void) {
+	return 0;
+}
