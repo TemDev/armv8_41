@@ -31,13 +31,13 @@ static void add(struct CompState* state, int instruction, char Rn, int Op) {
         int result;
         if (Rn == REGISTER31) {
 	        if (state->SP & BIT31) {
-	            result = state->SP | BIT6432;
+                result = state->SP | BIT6432;
 	        } else {
-	            result = state->SP & (BIT32 - 1);
+                result = state->SP & (BIT32 - 1);
 	        };
-	        result += Op;
+            result += Op;
             state->SP = result;
-	        state->SP = state->SP & (BIT32 - 1);
+            state->SP = state->SP & (BIT32 - 1);
         } else {
             if (state->Regs[Rd] & BIT31) {
                 result = state->Regs[Rd] | BIT6432;
@@ -57,10 +57,9 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
     if (BITsf & instruction) {
         long result;
         if (Rn == REGISTER31) {
-	        result = state->SP + Op;
-            state->PSTATE.V = (state->SP > 0 && Op > 0 && result < 0) || (state->SP < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->SP < 0 && Op < 0) || (state->SP < 0 && Op > 0 && result >= 0) || (state->SP > 0 && Op < 0 && result >= 0);
-	        state->SP = result;
+            result = state->ZR + Op;
+            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
         } else {
             result = state->Regs[Rn] + Op;
             state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
@@ -73,16 +72,14 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
     } else {
         int result;
         if (Rn == REGISTER31) {
-	        if (state->SP & BIT31) {
-	            result = state->SP | BIT6432;
+	        if (state->ZR & BIT31) {
+	            result = state->ZR | BIT6432;
 	        } else {
-                result = state->SP & (BIT32 - 1);
+                result = state->ZR & (BIT32 - 1);
 	        };
 	        result += Op;
-            state->PSTATE.V = (state->SP > 0 && Op > 0 && result < 0) || (state->SP < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->SP < 0 && Op < 0) || (state->SP < 0 && Op > 0 && result >= 0) || (state->SP > 0 && Op < 0 && result >= 0);
-            state->SP = result;
-	        state->SP = state->SP & (BIT32 - 1);
+            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
         } else {
 	        if (state->Regs[Rd] & BIT31) {
 	            result = state->Regs[Rd] | BIT6432;
