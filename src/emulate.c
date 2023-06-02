@@ -14,7 +14,7 @@
 
 int main(int argc, char** argv) {
 	// checks whether there is exactly one output
-	if( argc != 2 ) {
+	if( argc != 3 ) {
 	        fprintf( stderr, "Usage: cat filename!\n" );
 	        exit(1);
 	}
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 	unsignedImmOffset(&state, 0b11111000010000000001110001000001,memory);
 	
 	
-	FILE *file = fopen("hello.out", "w");
+	FILE *file = fopen(argv[2], "w");
 	printf("size of the memory is %d\n", count);
 
 	for (int i = 0; i < MEM_SIZE; i += 4){
