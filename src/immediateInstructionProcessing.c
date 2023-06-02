@@ -57,10 +57,10 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
     if (BITsf & instruction) {
         long result;
         if (Rn == REGISTER31) {
-	  result = state->SP + Op;
-          state->PSTATE.V = (state->SP > 0 && Op > 0 && result < 0) || (state->SP < 0 && Op < 0 && result > 0);
-          state->PSTATE.C = (state->SP < 0 && Op < 0) || (state->SP < 0 && Op > 0 && result >= 0) || (state->SP > 0 && Op < 0 && result >= 0);
-	  state->SP = result;
+	        result = state->SP + Op;
+            state->PSTATE.V = (state->SP > 0 && Op > 0 && result < 0) || (state->SP < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->SP < 0 && Op < 0) || (state->SP < 0 && Op > 0 && result >= 0) || (state->SP > 0 && Op < 0 && result >= 0);
+	        state->SP = result;
         } else {
             result = state->Regs[Rn] + Op;
             state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
