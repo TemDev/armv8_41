@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "RegisterInstructionProcessing.h"
+#include <bitwise.h>
 
 #define BIT24 16777216 // == 2 ^ 24
 #define BITm 268435456 // == 2 ^ 28
@@ -67,148 +68,124 @@ static void andd(struct CompState* state, int instruction, char Rn, int Op) {
 
 //Only functions and orr eor and ands are written below because the other function
 //are achieved by passing a negated Op parameter to these functions. This significantly simplifies the code
+
+static int LOCAL_AND(int x, int y) {
+    return x & y;
+}
+
+static int LOCAL_OR(int x, int y) {
+    return x | y;
+}
+
+static int LOCAL_BAND(int x, int y) {
+    return x ^ y;
+}
+
+static void andd(struct CompState* state, int instruction, char Rn, int Op) {
+    return bin_op1(state, instruction, Rn, Op, LOCAL_AND);
+}
+
 static void orr(struct CompState* state, int instruction, char Rn, int Op) {
+    return bin_op1(state, instruction, Rn, Op, LOCAL_OR);
+}
+
+static void eor(struct CompState* state, int instruction, char Rn, int Op) {
+    return bin_op1(state, instruction, Rn, Op, LOCAL_BAND);
+}
+
+static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, int (fn*)(int, int)) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
-        long long result;
-        if (Rn == BITrd) {
-            result = state->SP | Op;
+        long result;
+        if (Rn == REGISTER31) {
+            result = fn(state->SP, Op);
+            state->SP = result;
         } else {
-            result = state->Regs[Rn] | Op;
-        };
-        
-        if (Rd == BITrd) {
-            if (result < 0) {
-                state->SP = result;
-            } else {
-                state->SP = result & BIT64MASK;
-            };
-        } else {
-            state->Regs[Rd] = result & BIT64MASK;
+            result = fn(state->Regs[Rn], Op);
+            state->Regs[Rd] = result;
         };
         
     } else {
-        long result;
-        if (Rn == BITrd) {
-            result = (state->SP & BIT32MASK) | Op;
+        int result;
+        if (Rn == REGISTER31) {
+	        if (state->SP & BIT31) {
+                result = state->SP | BIT6432;
+	        } else {
+                result = state->SP & (BIT32 - 1);
+	        };
+            result = fn(result, Op);
+            state->SP = result;
+            state->SP = state->SP & (BIT32 - 1);
         } else {
-            result = (state->Regs[Rn] & BIT32MASK) | Op;
-        };
-        
-        if (Rd == BITrd) {
-            if (result < 0) {
-                int res = result;
-                state->SP = res;
+            if (state->Regs[Rd] & BIT31) {
+                result = state->Regs[Rd] | BIT6432;
             } else {
-                state->SP = result & BIT32MASK;
+                result = state->Regs[Rd] & (BIT32 - 1);
             };
-        } else {
-            state->Regs[Rd] = result & BIT32MASK;
+            result = fn(result, Op);
+            state->Regs[Rd] = result;
+            state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
         };
     };
 };
 
-static void eor(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    
-    if (BITsf & instruction) {
-        long long result;
-        if (Rn == BITrd) {
-            result = state->SP ^ Op;
-        } else {
-            result = state->Regs[Rn] ^ Op;
-        };
-        
-        if (Rd == BITrd) {
-            if (result < 0) {
-                state->SP = result;
-            } else {
-                state->SP = result & BIT64MASK;
-            };
-        } else {
-            state->Regs[Rd] = result & BIT64MASK;
-        };
-        
-    } else {
-        long result;
-        if (Rn == BITrd) {
-            result = (state->SP & BIT32MASK) ^ Op;
-        } else {
-            result = (state->Regs[Rn] & BIT32MASK) ^ Op;
-        };
-        
-        if (Rd == BITrd) {
-            if (result < 0) {
-                int res = result;
-                state->SP = res;
-            } else {
-                state->SP = result & BIT32MASK;
-            };
-        } else {
-            state->Regs[Rd] = result & BIT32MASK;
-        };
-    };
-};
+
 
 static void ands(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
-        long long result;
-        if (Rn == BITrd) {
-            result = state->ZR & Op;
+        long result;
+        if (Rn == REGISTER31) {
+            result = fn(state->ZR, Op);
+            if ()
+            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
         } else {
-            result = state->Regs[Rn] & Op;
+            result = fn(state->Regs[Rn], Op);
+            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
+            state->Regs[Rd] = result;
         };
-        
-        //Setting Flags
-        state->PSTATE.N = result < 0 ? true : false;
-        state->PSTATE.Z = result == 0 ? true : false;
-        if (result > 0) {
-            state->PSTATE.C = result & BIT64 ? true : false;
-        } else {
-            state->PSTATE.C = false;
-        };
-        state->PSTATE.V = state->PSTATE.C;
-        if (!(Rd == BITrd)) {
-            if (result < 0) {
-                state->Regs[Rd] = result;
-            } else {
-                state->Regs[Rd] = result & BIT64MASK;
-            };
-        };
+        state->PSTATE.N = result < 0;
+        state->PSTATE.Z = result == 0;
         
     } else {
-        long result;
-        if (Rn == BITrd) {
-            result = (state->ZR & BIT32MASK) & Op;
+        int result;
+        if (Rn == REGISTER31) {
+	        if (state->ZR & BIT31) {
+	            result = state->ZR | BIT6432;
+	        } else {
+                result = state->ZR & (BIT32 - 1);
+	        };
+	        result = fn(result, Op);
+            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
         } else {
-            result = (state->Regs[Rn] & BIT32MASK) & Op;
+	        if (state->Regs[Rd] & BIT31) {
+	            result = state->Regs[Rd] | BIT6432;
+	        } else {
+	            result = state->Regs[Rd] & (BIT32 - 1);
+	        };
+	        result = fn(result, Op);
+            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
+	        state->Regs[Rd] = result;
+	        state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
         };
-        
-        //Setting Flags
-        state->PSTATE.N = result < 0 ? true : false;
-        state->PSTATE.Z = result == 0 ? true : false;
-        if (result > 0) {
-            state->PSTATE.C = result & BIT32 ? true : false;
-        } else {
-            state->PSTATE.C = false;
-        };
-        state->PSTATE.V = state->PSTATE.C;
-        
-        if (!(Rd == BITrd)) {
-            if (result < 0) {
-                int res = result;
-                state->Regs[Rd] = res;
-            } else {
-                state->Regs[Rd] = result & BIT32MASK;
-            };
-        };
+        state->PSTATE.N = result < 0;
+        state->PSTATE.Z = result == 0;
     };
-
-
 };
+
+static void and_flag(struct CompState* state, int instruction, char Rn, int Op) {
+    result = add(state, instruction, Rn, Op)
+    state->PSTATE.N = result < 0;
+    state->PSTATE.Z = result == 0;
+    state->PSTATE.C = 0;
+    state->PSTATE.V = 0;
+}
 
 
 // Multiply-Add: Rd := Ra + (Rn * Rm)
@@ -271,7 +248,11 @@ static void logical(struct CompState* state, int instruction) {
         orr(state, instruction, Rn, Opnew);
         break;
         default:
+<<<<<<< HEAD
         ands(state, instruction, Rn, Opnew);
+=======
+        andd(state, instruction, Rn, Opnew);
+>>>>>>> ac3163c3203773fb235ac642a1db26126d4e6c5d
     }
 };
 

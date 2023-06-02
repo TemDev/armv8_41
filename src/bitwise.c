@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "bitwise.h"
+#include "test_functions.h"
 #define BIT_MASK_32 ((1UL << 32) - 1)
 
 int64_t lsl_64(int64_t operand, int shift_amount)
@@ -52,15 +53,34 @@ int32_t ror_32(int64_t operand, int shift_amount)
 
 static int main(void) {
     int64_t testvals[] = {21, -21, 51294967296, -5194967296};
+    char *function_names[] = {"logical LS", "arithmetic RS", "logical RS", "rotation"};
+    typedef int64_t (*func_pointer_64)(int64_t, int);
+    func_pointer_64 shift_functions_64[] = {&lsl_64, &asr_64, &lsr_64, &ror_64};
+    typedef int32_t (*func_pointer_32)(int64_t, int);
+    func_pointer_32 shift_functions_32[] = {&lsl_32, &asr_32, &lsr_32, &ror_32};
 	for(int i = 0; i < 4; i++) {
         int64_t x = testvals[i];
-		printf("logical LS of %ld is %ld\n", x, lsl_64(x, 1));
-		printf("using 32 bit mode, it is %d\n\n", lsl_32(x, 1));
-		printf("arithmetic RS of %ld is %ld\n", x, asr_64(x, 1));
-		printf("using 32 bit mode, it is %d\n\n", asr_32(x, 1));
-		printf("logical RS of %ld is %ld\n", x, lsr_64(x, 1));
-		printf("using 32 bit mode, it is %d\n\n", lsr_32(x, 1));
-		printf("rotation R of %ld is %ld\n", x, ror_64(x, 1));
-		printf("using 32 bit mode, it is %d\n\n-----------------------------------\n\n", ror_32(x, 1));
+        for(int j = 0; j < 4; j++) {
+            printf("%s of %ld is %ld\n", function_names[j] x, shift_functions_64[j](x, 1));
+            printBits(x, 64);
+            printBits(shift_functions_64[j](x, 1), 64)
+            printf("\nusing 32 bit mode, it is %d\n", shift_functions_32[j](x, 1));
+            printBits(x, 32);
+            printBits(shift_functions_32[j](x, 1), 32)
+            printf("\n");
+        }
+        printf("-------------------------------------------\n")
+		// printf("logical LS of %ld is %ld\n", x, lsl_64(x, 1));
+        // printBits(x, 64);
+        // printBits(lsl_64(x, 1), 64)
+		// printf("using 32 bit mode, it is %d\n\n", lsl_32(x, 1));
+        // printBits(x, 32);
+        // printBits(lsl_32(x, 1), 32)
+		// printf("arithmetic RS of %ld is %ld\n", x, asr_64(x, 1));
+		// printf("using 32 bit mode, it is %d\n\n", asr_32(x, 1));
+		// printf("logical RS of %ld is %ld\n", x, lsr_64(x, 1));
+		// printf("using 32 bit mode, it is %d\n\n", lsr_32(x, 1));
+		// printf("rotation R of %ld is %ld\n", x, ror_64(x, 1));
+		// printf("using 32 bit mode, it is %d\n\n-----------------------------------\n\n", ror_32(x, 1));
 	}
 }
