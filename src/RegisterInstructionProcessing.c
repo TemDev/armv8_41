@@ -271,7 +271,7 @@ static void logical(struct CompState* state, int instruction) {
         orr(state, instruction, Rn, Opnew);
         break;
         default:
-        and(state, instruction, Rn, Opnew);
+        ands(state, instruction, Rn, Opnew);
     }
 };
 

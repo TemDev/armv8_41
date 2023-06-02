@@ -50,7 +50,7 @@ int32_t ror_32(int64_t operand, int shift_amount)
     return (int32_t) (((uint32_t) lsl_32(operand, shift_amount)) + new_bits);
 }
 
-int main(void) {
+static int main(void) {
     int64_t testvals[] = {21, -21, 51294967296, -5194967296};
 	for(int i = 0; i < 4; i++) {
         int64_t x = testvals[i];
