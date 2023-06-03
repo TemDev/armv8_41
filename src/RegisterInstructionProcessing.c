@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "RegisterInstructionProcessing.h"
-#include <bitwise.h>
+#include "bitwise.h"
 
 #define BIT24 16777216 // == 2 ^ 24
 #define BITm 268435456 // == 2 ^ 28
@@ -180,7 +180,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
 };
 
 static void and_flag(struct CompState* state, int instruction, char Rn, int Op) {
-    result = add(state, instruction, Rn, Op)
+    result = add(state, instruction, Rn, Op);
     state->PSTATE.N = result < 0;
     state->PSTATE.Z = result == 0;
     state->PSTATE.C = 0;
