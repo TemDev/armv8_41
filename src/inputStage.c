@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <armstate.h>
+// #include <armstate.h> does not exist anymore
 
 int main (int argv, char** argc) {
 // read the binary file
