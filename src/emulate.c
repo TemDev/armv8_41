@@ -37,10 +37,10 @@ void initial(struct CompState* statep) {
 
 int main(int argc, char** argv) {
 	// checks whether there is exactly one output
-	if( argc != 3 ) {
+	/*if( argc != 3 ) {
 	        fprintf( stderr, "Usage: cat filename!\n" );
 	        exit(1);
-	}
+	}*/
 	FILE *fp = fopen(argv[1], "rb");
 	char *memory = (char*) malloc(MEM_SIZE * sizeof(char));
 	int count = 0;
