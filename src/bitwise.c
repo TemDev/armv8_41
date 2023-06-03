@@ -23,7 +23,7 @@ int64_t ror_64(int64_t operand, int shift_amount)
     int mask = (1 << shift_amount) - 1;
     int64_t rotated_bits = operand & mask;
     int64_t new_bits = rotated_bits << (64 - shift_amount);
-    return (int64_t) (((uint64_t) lsl_64(operand, shift_amount)) + new_bits);
+    return (int64_t) (((uint64_t) lsr_64(operand, shift_amount)) + new_bits);
 }
 
 int32_t lsl_32(int64_t operand, int shift_amount)
@@ -48,7 +48,7 @@ int32_t ror_32(int64_t operand, int shift_amount)
     int mask = (1 << shift_amount) - 1;
     int32_t rotated_bits = operand & mask;
     int32_t new_bits = rotated_bits << (32 - shift_amount);
-    return (int32_t) (((uint32_t) lsl_32(operand, shift_amount)) + new_bits);
+    return (int32_t) (((uint32_t) lsr_32(operand, shift_amount)) + new_bits);
 }
 
 int main(void) {
