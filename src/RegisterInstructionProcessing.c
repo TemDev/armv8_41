@@ -59,43 +59,34 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, i
     if (BITsf & instruction) {
         long result;
         if (Rn == REGISTER31) {
-            result = state->ZR & Op;
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
+            result = fn(state->SP, Op);
+            state->SP = result;
         } else {
-            result = state->Regs[Rn] & Op;
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
+            result = fn(state->SP, Op);
             state->Regs[Rd] = result;
         };
-        state->PSTATE.N = result < 0;
-        state->PSTATE.Z = result == 0;
         
     } else {
         int result;
         if (Rn == REGISTER31) {
-	        if (state->ZR & BIT31) {
-	            result = state->ZR | BIT6432;
+	        if (state->SP & BIT31) {
+                result = state->SP | BIT6432;
 	        } else {
-                result = state->ZR & (BIT32 - 1);
+                result = state->SP & (BIT32 - 1);
 	        };
-	        result += Op;
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
+            result = fn(result, Op);
+            state->SP = result;
+            state->SP = state->SP & (BIT32 - 1);
         } else {
-	        if (state->Regs[Rd] & BIT31) {
-	            result = state->Regs[Rd] | BIT6432;
-	        } else {
-	            result = state->Regs[Rd] & (BIT32 - 1);
-	        };
-	        result += Op;
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
-	        state->Regs[Rd] = result;
-	        state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
+            if (state->Regs[Rd] & BIT31) {
+                result = state->Regs[Rd] | BIT6432;
+            } else {
+                result = state->Regs[Rd] & (BIT32 - 1);
+            };
+            result = fn(result, Op);
+            state->Regs[Rd] = result;
+            state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
         };
-        state->PSTATE.N = result < 0;
-        state->PSTATE.Z = result == 0;
     };
 
 };
@@ -109,7 +100,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
         long result;
         if (Rn == REGISTER31) {
             result = fn(state->ZR, Op);
-            if ()
+
             state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
         } else {
@@ -150,7 +141,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
 };
 
 static void and_flag(struct CompState* state, int instruction, char Rn, int Op) {
-    result = andd(state, instruction, Rn, (~Op));
+    int result = andd(state, instruction, Rn, (~Op));
     state->PSTATE.N = result < 0;
     state->PSTATE.Z = result == 0;
     state->PSTATE.C = 0;
@@ -209,7 +200,7 @@ static void logical(struct CompState* state, int instruction) {
     char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
-        ands(state, instruction, Rn, Opnew);
+        and_flag(state, instruction, Rn, Opnew);
         break;
         case 2:
         eor(state, instruction, Rn, Opnew);
