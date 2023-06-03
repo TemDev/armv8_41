@@ -1,17 +1,17 @@
-CC      ?= gcc
-CFLAGS  ?= -std=c17 -g\
-	-D_POSIX_SOURCE -D_DEFAULT_SOURCE\
-	-Wall -Werror -pedantic
+CC	= gcc
+CFLAGS	= -Wall
+BUILD	= assemble bitwise emulate immediateInstructionProcessing
 
-.SUFFIXES: .c .o
-
-.PHONY: all clean
-
-all: assemble emulate
-
-assemble: assemble.o
-emulate: emulate.o
+all:	$(BUILD)
 
 clean:
-	$(RM) *.o assemble emulate
+	/bin/rm -f $(BUILD) *.o core a.out
+
+RegisterInstructionProcessing.o:	RegisterInstructionProcessing.c RegisterInstructionProcessing.h emulate.h
+bitwise.o:	bitwise.c bitwise.h
+branchInstructions.o:	branchInstructions.c branchInstructions.h
+emulate:	emulate.o RegisterInstructionProcessing.o bitwise.o branchInstructions.o immediateInstructionProcessing.o singleMTransfer.o
+emulate.o:	emulate.c RegisterInstructionProcessing.h bitwise.h branchInstructions.h emulate.h immediateInstructionProcessing.h singleMTransfer.h
+immediateInstructionProcessing.o:	immediateInstructionProcessing.c bitwise.h emulate.h immediateInstructionProcessing.h
+singleMTransfer.o:	singleMTransfer.c Definitions.h
 	
