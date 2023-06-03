@@ -79,17 +79,8 @@ int main(int argc, char** argv) {
 		
 	} while (instruction != HLT );
 	
-<<<<<<< HEAD
-=======
-	state.Regs[1] = 2;
-	state.Regs[2] = 3;
-	unsignedImmOffset(&state, 0b11111000010000000001110001000001,memory);
-	
-	
-	FILE *file = fopen(argv[2], "w");
-	printf("size of the memory is %d\n", count);
->>>>>>> ac3163c3203773fb235ac642a1db26126d4e6c5d
 
+	
 	/*state.Regs[1] = 2;
 	state.Regs[2] = 20;
 	long x = 0x6789678967896789;

@@ -248,11 +248,8 @@ static void logical(struct CompState* state, int instruction) {
         orr(state, instruction, Rn, Opnew);
         break;
         default:
-<<<<<<< HEAD
         ands(state, instruction, Rn, Opnew);
-=======
         andd(state, instruction, Rn, Opnew);
->>>>>>> ac3163c3203773fb235ac642a1db26126d4e6c5d
     }
 };
 

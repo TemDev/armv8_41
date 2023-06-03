@@ -20,11 +20,11 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	long simm9;
 	long address = 0;
 	printf("%d \n", inst);
-	xn = (B("11111")) & (inst>>5);
-	xm = (B("11111")) & (inst >> 16);
-	rt = (B("11111")) & inst;
+	xn = (31) & (inst>>5);
+	xm = (31) & (inst >> 16);
+	rt = (31) & inst;
 	imm12 = ((1 << 13) - 1) & (inst >> 10);
-	simm9 = (B("111111111") & (inst >> 12 ));
+	simm9 = (255 & (inst >> 12 ));
 	simm19 = ((1<<20)-1) & (inst >> 5);
 	Literal = 1 & (inst>> 29);
 	U = 1 & (inst>> 24);
