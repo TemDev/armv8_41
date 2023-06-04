@@ -12,13 +12,33 @@
 #define HLT 0x8a000000
      
 void printCompState(FILE *fp, struct CompState* state) {
-	fprintf(fp, "%5s : %.16x \n", "PC",  state->PC);
-	fprintf(fp, "%5s : %.16x \n", "ZR", state->ZR);
-	fprintf(fp, "%5s : %.16x \n", "PSTATE", state->PSTATE);
-	fprintf(fp, "%5s : %.16x \n", "SP",state->SP);
-	for (int i = 0; i<NUM_GEN_REG; i++) {
-		fprintf(fp, "X%d: %.16x \n", i, state -> Regs[i]);
+	fprintf(fp, "Registers:\n");
+	for (int i = 0; i<31; i++) {
+		fprintf(fp, "X%02d   = %.16x\n", i, state -> Regs[i]);
 	}
+	fprintf(fp, "PC    = %.16x\n",  state->PC);
+	char st[4];
+	if (state -> PSTATE.V) {
+		st[0] = 'N';
+	} else {
+		st[0] = '-';
+	}
+	if (state -> PSTATE.Z) {
+		st[1] = 'Z';
+	} else {
+		st[1] = '-';
+	}
+	if (state -> PSTATE.C) {
+		st[2] = 'C';
+	} else {
+		st[2] = '-';
+	}
+	if (state -> PSTATE.V) {
+		st[3] = 'V';
+	} else {
+		st[3] = '-';
+	}
+	fprintf(fp, "PSTATE : %s\n", st);
 }
 
 void initial(struct CompState* statep) {
@@ -52,11 +72,18 @@ int main(int argc, char** argv) {
 	struct CompState state;
 	initial(&state);
 	int instruction;
+	accessMemory(&instruction, state.PC, memory, 4);
 	do { // it is supposed to be != but in this case is in infinite loop
-		char Op0 = (instruction >> 25) & 15;
 		accessMemory(&instruction, state.PC, memory, 4);
+
+		char Op0 = (instruction >> 25) & 15;
+		printf("%.8x \n", instruction);
 		printf("instruction is %d \n", instruction);
-		if (Op0 == 8 || Op0 == 9) {
+		if (instruction == HLT) {
+			printf("Halt instruction\n");
+			break;
+		}
+		else if (Op0 == 8 || Op0 == 9) {
 			printf("Immediate Arithmetic \n");	
 		    determineTypeImmediate(&state, instruction);
 		    state.PC += 4;
@@ -76,6 +103,8 @@ int main(int argc, char** argv) {
 			printf("other \n");
 		    state.PC += 4;
 		}
+		
+
 		
 	} while (instruction != HLT );
 	
@@ -98,15 +127,17 @@ int main(int argc, char** argv) {
 	
 	
 	FILE *file = fopen(argv[2], "w");
-	printf("size of the memory is %d\n", count);
+	//printf("size of the memory is %d\n", count);
 	printCompState(file, &state);
+	fprintf(fp,"Non-Zero Memory:\n");
 	for (int i = 0; i < MEM_SIZE; i += 4){
 		int location;
 	        accessMemory(&location, i, memory, 4);
 		if (location != 0) {      
-			fprintf(file,"0x%.8x : 0x%.8x\n", i, location);
+			fprintf(file,"0x%.8x : %.8x\n", i, location);
 		}
 	}
+
 
 	//closes opened files and frees the memory
 	free(memory);
