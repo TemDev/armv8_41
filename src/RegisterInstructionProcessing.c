@@ -24,6 +24,15 @@
 //are achieved by passing a negated Op parameter to these functions. This significantly simplifies the code
 
 //Bitwise AND
+
+static int LOCAL_ADD(int x, int y) {
+    return x + y;
+}
+
+static int LOCAL_SUB(int x, int y) {
+    return x - y;
+}
+
 static int LOCAL_AND(int x, int y) {
     return x & y;
 }
@@ -89,17 +98,38 @@ static void eor(struct CompState* state, int instruction, char Rn, int Op) {
 	    return bin_op1(state, instruction, Rn, Op, LOCAL_EOR);
 }
 
+static void add(struct CompState* state, int instruction, char Rn, int Op) {
+	    return bin_op1(state, instruction, Rn, Op, LOCAL_ADD);
+}
+
+static void sub(struct CompState* state, int instruction, char Rn, int Op) {
+	    return bin_op1(state, instruction, Rn, Op, LOCAL_SUB);
+}
+
+static void adds(struct CompState* state, int instruction, char Rn, int Op) {
+	    return bin_op2(state, instruction, Rn, Op, LOCAL_ADD);
+}
+
+static void subs(struct CompState* state, int instruction, char Rn, int Op) {
+	    return bin_op2(state, instruction, Rn, Op, LOCAL_SUB);
+}
+
 static void ands(struct CompState* state, int instruction, char Rn, int Op) {
+	    return bin_op2(state, instruction, Rn, Op, LOCAL_AND);
+}
+
+
+static void bin_op2(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
         long result;
         if (Rn == BITrd) {
-            result = state->ZR & Op;
+            result = (*fn)(state->ZR, Op);
             state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
         } else {
-            result = state->Regs[Rn] & Op;
+            result = (*fn)(state->Regs[Rn], Op);
             state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
             state->Regs[Rd] = result;
@@ -115,7 +145,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
 	        } else {
                 result = state->ZR & (BIT32 - 1);
 	        };
-	        result = result & Op;
+	        result = (*fn)(result, Op);
             state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
         } else {
@@ -124,7 +154,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
 	        } else {
 	            result = state->Regs[Rd] & (BIT32 - 1);
 	        };
-	        result = result & Op;
+	        result = (*fn)(result, Op);
             state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
 	        state->Regs[Rd] = result;
@@ -146,7 +176,7 @@ static void and_flag(struct CompState* state, int instruction, char Rn, int Op) 
 }
 
 // Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
-static void arithmetic(struct CompState* state, int instruction) {
+static void logical(struct CompState* state, int instruction) {
     int Opnew;
     char Rm = ((31) & (instruction>>16));
     if ((instruction >> 22) & 3 == 0) {
@@ -160,14 +190,26 @@ static void arithmetic(struct CompState* state, int instruction) {
     char opc = (instruction >> 29) & 3;
     printf("Rn:%d opc:%d\n", Rn, opc);
     switch (opc) {
-        case 3:
+        case 7:
+        ands(state, instruction, Rn, -Opnew);
+        break;
+        case 6:
         ands(state, instruction, Rn, Opnew);
         break;
+        case 5:
+        eon(state, instruction, Rn, -Opnew);
+        break;
+        case 4:
+        eon(state, instruction, Rn, Opnew);
+        break;
+        case 3:
+        orr(state, instruction, Rn, -Opnew);
+        break;
         case 2:
-        eor(state, instruction, Rn, Opnew);
+        orr(state, instruction, Rn, Opnew);
         break;
         case 1:
-        orr(state, instruction, Rn, Opnew);
+        andd(state, instruction, Rn, -Opnew);
         break;
         default:
         andd(state, instruction, Rn, Opnew);
@@ -175,23 +217,23 @@ static void arithmetic(struct CompState* state, int instruction) {
 }
 
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
-static void logical(struct CompState* state, int instruction) {
+static void arithmatic(struct CompState* state, int instruction) {
     char Opnew = -(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
     char Rn = ((31) & (instruction>>5));
     // Bit wise shift should be included and some things will be added / altered
     char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
-        and_flag(state, instruction, Rn, Opnew);
+        subs(state, instruction, Rn, Opnew);
         break;
         case 2:
-        eor(state, instruction, Rn, Opnew);
+        sub(state, instruction, Rn, Opnew);
         break;
         case 1:
-        orr(state, instruction, Rn, Opnew);
+        adds(state, instruction, Rn, Opnew);
         break;
         default:
-        andd(state, instruction, Rn, Opnew);
+        add(state, instruction, Rn, Opnew);
     }
 };
 
