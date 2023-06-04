@@ -101,9 +101,10 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
 static void arithmeticImmediate(struct CompState* state, int instruction) {
     printf("Arithmetic");
     const int sh = 4194304;
-    const int imm12 = 4293280;
+    const int imm12 = 4095; // 2 ^ 12 - 1
     const short rn = 992;
-    int Op = ((imm12 & instruction) >> 10) << (12 * ((sh & instruction) >> 31));
+    int Op = ((instruction >> 10) & imm12) << (12 * ((sh & instruction) >> 31));
+    printf("%d\n", Op);
     char Rn = (rn & instruction) >> 5;
     char opc = (instruction >> 29) & 3;
     switch (opc) {
@@ -124,6 +125,7 @@ static void arithmeticImmediate(struct CompState* state, int instruction) {
 static void movn(struct CompState* state, int instruction, long Op) {
     char Rd = BITrd & instruction;
     if (BITsf & instruction) { // 64 bit mode.
+      printf("%ld", ~Op);
         state->Regs[Rd] = ~Op;
     } else { // 32 bit mode.
         int op = Op;
@@ -150,9 +152,10 @@ static void movk(struct CompState* state, int instruction, int imm16, char hw) {
 static void wideMove(struct CompState* state, int instruction) {
     char hw = (instruction >> 21) & 3;
     char opc = (instruction >> 29) & 3;
-    short imm16MASK = 65535; // 2 ^ 16 - 1
-    int imm16 = (instruction >> 5) & imm16MASK;
-    long Op = lsl_64(imm16, hw * 16);
+    long imm16MASK = 65535; // 2 ^ 16 - 1
+    long imm16 = (instruction >> 5) & imm16MASK;
+    long Op = imm16 << hw * 16;
+    printf("opc %d", opc);
     if (opc == 3) {
         movk(state, instruction, imm16, hw);
     } else if (opc == 2) {
@@ -165,9 +168,11 @@ static void wideMove(struct CompState* state, int instruction) {
 
 // Determines type of immediate instruction, arithmetic or wideMove.
 void determineTypeImmediate(struct CompState* state, int instruction) {
+  printf("determineType\n");
     if (instruction & (BIT24)) {
         arithmeticImmediate(state, instruction);
-    } else if (instruction & (BIT2523) == BIT2523) {
+    } else if ((instruction >> 23) & 5 == 5) {
+      printf("wideMOve\n");
         wideMove(state, instruction);
     };
 };
