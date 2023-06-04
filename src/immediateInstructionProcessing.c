@@ -15,6 +15,7 @@
 #define BIT32 4294967296 // == 2 ^ 32, MASK
 
 static void add(struct CompState* state, int instruction, char Rn, int Op) {
+    printf("ADD");
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -98,6 +99,7 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
 };
 
 static void arithmeticImmediate(struct CompState* state, int instruction) {
+    printf("Arithmetic");
     const int sh = 4194304;
     const int imm12 = 4293280;
     const short rn = 992;
