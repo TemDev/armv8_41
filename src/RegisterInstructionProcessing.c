@@ -145,35 +145,19 @@ static void and_flag(struct CompState* state, int instruction, char Rn, int Op) 
     state->PSTATE.V = 0;
 }
 
-
-// Multiply-Add: Rd := Ra + (Rn * Rm)
-static int madd(instruction) {
-    char Ra = (31) & (instruction>>10);
-    char Rn = (31) & (instruction>>5);
-    char Rm = (31) & (instruction>>16);
-    return Ra + (Rn * Rm);
-}
-
-// Multiply-Sub: Rd := Ra - (Rn * Rm)
-static int msub(instruction) {
-    char Ra = BITra & instruction;
-    char Rn = BITrn & instruction;
-    char Rm = BITrm & instruction;
-    return Ra - (Rn * Rm);
-}
-
 // Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
 static void arithmetic(struct CompState* state, int instruction) {
-    char Opnew = BITrm;
-    if ((instruction >> 22) & 1) {
+    int Opnew;
+    if ((instruction >> 22) & 3 == 0) {
         Opnew = lsl_64 ((instruction & BITrm), (instruction & BIToperand));
-    } else if ((instruction >> 22) & 2) {
+    } else if ((instruction >> 22) & 3 == 1) {
         Opnew = lsr_64 ((instruction & BITrm), (instruction & BIToperand));
     } else {
         Opnew = asr_64 ((instruction & BITrm), (instruction & BIToperand));
     }
     char Rn = ((31) & (instruction>>5));
     char opc = (instruction >> 29) & 3;
+    printf("Rn:%d opc:%d\n", Rn, opc);
     switch (opc) {
         case 3:
         ands(state, instruction, Rn, Opnew);
@@ -191,7 +175,7 @@ static void arithmetic(struct CompState* state, int instruction) {
 
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
 static void logical(struct CompState* state, int instruction) {
-    char Opnew = ~(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
+    char Opnew = -(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
     char Rn = ((31) & (instruction>>5));
     // Bit wise shift should be included and some things will be added / altered
     char opc = (instruction >> 29) & 3;
@@ -212,13 +196,13 @@ static void logical(struct CompState* state, int instruction) {
 
 
 static void multiply(struct CompState* state, int instruction) {
-  char Rd = instruction & BITrd;
-  char Ra = (31) & (instruction>>10);
-  char Rn = (31) & (instruction>>5);
-  char Rm = (31) & (instruction>>16);
-  if (1 & (instruction>>15)) {
+  int Rd = (int)((31) & instruction);
+  int Ra = (int)((31) & (instruction>>10));
+  int Rn = (int)((31) & (instruction>>5));
+  int Rm = (int)((31) & (instruction>>16));
+if (1 & (instruction>>15)) {
       state->Regs[Rd] = state->Regs[Ra] - (state->Regs[Rn] * state->Regs[Rm]);
-  } else {
+  } else ;{
       state->Regs[Rd] = state->Regs[Ra] + (state->Regs[Rn] * state->Regs[Rm]);
   }
 };
@@ -227,14 +211,24 @@ static void multiply(struct CompState* state, int instruction) {
 void determineTypeRegister(struct CompState* state, int instruction) {
     char m = 1 & (instruction>>28);
     char r24 = 1 & (instruction>>24);
-    if ((~m) && (~r24)) {
+    printf("m:%d R24:%d\n", m, r24);
+    printf("Printing\n");
+    if ((m == 0) && (r24 == 1)) {
+	    printf("Arithmetic\n");
         arithmetic(state, instruction);
-    } else if ((~m) && (~r24)) {
+	printf("Arithmetic\n");
+    } else if ((m == 0) && (r24 == 0)) {
         logical(state, instruction);
+	printf("Logical\n");
     }
-        else if (m && (r24)) {
-            multiply(state, instruction);
+        else if ((m == 1) && (r24 == 1)) {
+            printf("Multiply\n");
+	    multiply(state, instruction);
+	    printf("Multiply\n");
         }
+    else {
+	    printf("Nothing\n");
+    }
 };
 
 static void main() {
