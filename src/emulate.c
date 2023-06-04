@@ -14,7 +14,7 @@
 void printCompState(FILE *fp, struct CompState* state) {
 	fprintf(fp, "Registers:\n");
 	for (int i = 0; i<31; i++) {
-		fprintf(fp, "X%02d   = %.16x\n", i, state -> Regs[i]);
+		fprintf(fp, "X%02d   = %.16lx\n", i, state -> Regs[i]);
 	}
 	fprintf(fp, "PC    = %.16x\n",  state->PC);
 	char st[4];
@@ -49,6 +49,7 @@ void initial(struct CompState* statep) {
 	statep->PSTATE.C = false;
 	statep->PSTATE.V = false;
 	statep->SP = 0;
+	
 	for (int i = 0; i < NUM_GEN_REG; i++) {
 		statep->Regs[i] = 0;
 	}
@@ -70,34 +71,34 @@ int main(int argc, char** argv) {
 	}
 	fclose(fp);
 	struct CompState state;
+
 	initial(&state);
 	int instruction;
-	accessMemory(&instruction, state.PC, memory, 4);
+	//accessMemory(&instruction, state -> PC, memory, 4);
 	do { // it is supposed to be != but in this case is in infinite loop
-		accessMemory(&instruction, state.PC, memory, 4);
+		accessMemory(&instruction, memory,state.PC, 4, 'w');
 
 		char Op0 = (instruction >> 25) & 15;
-		printf("%.8x \n", instruction);
-		printf("instruction is %d \n", instruction);
+		printf("Instruction is %.8x \n", instruction);
 		if (instruction == HLT) {
-			printf("Halt instruction\n");
+			printf("Type: Halt instruction\n");
 			break;
 		}
 		else if (Op0 == 8 || Op0 == 9) {
-			printf("Immediate Arithmetic \n");	
+			printf("Type: Immediate Arithmetic \n");	
 		    determineTypeImmediate(&state, instruction);
 		    state.PC += 4;
 		} else if (Op0 == 5 || Op0 == 13) {
-			printf("register Arithmetic \n");
+			printf("Type: register Arithmetic \n");
 		    determineTypeRegister(&state, instruction);
 		    state.PC += 4;
 		} else if (Op0 == 4 || Op0 == 6 || Op0 == 12 || Op0 == 14) {
 			// Single Data Transfer determineType to go here
-			printf("Memory \n");
+			printf("Type: Memory \n");
 		    	unsignedImmOffset(&state, instruction, memory);
 			state.PC += 4;
 		} else if (Op0 == 10 || Op0 == 11) {
-			printf("branch \n");
+			printf("Type: branch \n");
 		    branch(&state, instruction);
 		} else {
 			printf("other \n");
@@ -132,7 +133,7 @@ int main(int argc, char** argv) {
 	fprintf(fp,"Non-Zero Memory:\n");
 	for (int i = 0; i < MEM_SIZE; i += 4){
 		int location;
-	        accessMemory(&location, i, memory, 4);
+	        accessMemory(&location,memory, i, 4, 'r');
 		if (location != 0) {      
 			fprintf(file,"0x%.8x : %.8x\n", i, location);
 		}
@@ -141,7 +142,8 @@ int main(int argc, char** argv) {
 
 	//closes opened files and frees the memory
 	free(memory);
- 	fclose(file);
+ 	
+	fclose(file);
 
 	return EXIT_SUCCESS;
 
