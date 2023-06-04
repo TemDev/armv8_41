@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <math>
+#include <math.h>
 #include "emulate.h"
 #include "immediateInstructionProcessing.h"
 #include "bitwise.h"
