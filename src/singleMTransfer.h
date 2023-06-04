@@ -4,10 +4,15 @@
 #include "emulate.h"
 
 
-void accessMemory(void *location, int address, char *mem, size_t n) {
-	assert(address % 4 == 0);
+void accessMemory(void *location, char *mem, int address, size_t n, char t) {
+	//assert(address % 4 == 0);
+
         assert(address < MEM_SIZE);
-        memcpy(location, &mem[address], n);
+	if (t == 'w') {
+        	memcpy(location, &mem[address], n);
+	} else if (t =='r') {
+		memcpy(&mem[address],location, n);
+	}
 }
 
 void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
@@ -16,16 +21,20 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	long temp;
 	int n; // number of bytes to be loaded 8 for 64bit and 4 for 32bit
 	int xn, rt, xm;// register number
-	unsigned long imm12, simm19;
+	long imm12, simm19;
 	long simm9;
 	long address = 0;
-	printf("%d \n", inst);
+	printf("instruction: %x \n", inst);
 	xn = (31) & (inst>>5);
 	xm = (31) & (inst >> 16);
 	rt = (31) & inst;
-	imm12 = ((1 << 13) - 1) & (inst >> 10);
-	simm9 = (255 & (inst >> 12 ));
-	simm19 = ((1<<20)-1) & (inst >> 5);
+	imm12 = 0;
+	//printf("imm12 before %x", imm12);
+       	imm12 += (4095 & (inst >> 10));
+	//printf("imm12 after %x",imm12);
+	//printf("firt 22 bits of inst: %x", inst >> 10 );
+	simm9 = (512 & (inst >> 12 ));
+	simm19 = ((1<<19)-1) & (inst >> 5);
 	Literal = 1 & (inst>> 29);
 	U = 1 & (inst>> 24);
 	L = 1 & (inst>> 22);
@@ -33,17 +42,20 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	printf("Literal:%d L:%d U:%d I:%d\n", Literal, U, L, I);
 
 	if (1 & (inst>>30) == 0) {
-		n = 4; //sf is 0 and 
+		n = sizeof(int); //sf is 0 and 
 	} else {
-		n = 8;
+		n = sizeof(long);
 	}
-	printf("%d \n", n);
 	printf("xn:%d rt:%d xm:%d\n", xn, rt, xm);
 	
 	if (Literal == 1) {
 		if (U != 0) {
 			printf("unsigned offset mode\n");
-        		address = state -> Regs[xn] + (imm12 << 3);
+			printf("value of the xn register:%ld\n", (*state).Regs[xn]);
+        		printf("immediate offset:%d\n", imm12);
+
+
+			address = state -> Regs[xn] + (imm12 << 3);
 		} else {
 			if (I != 0) {
 				printf("simm9 is %d\n", simm9);
@@ -58,10 +70,19 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	
 		if (L == 0) {
 			printf("store\n");
-			memcpy(&mem[address], &(state -> Regs[xn]), n * sizeof(char));		
+			accessMemory(&(*state).Regs[rt], mem, address, n, 'r');
+			//memcpy(&mem[address], &(*state).Regs[rt], n);		
 		} else {
-			printf("load\n");
-			accessMemory(&(state -> Regs[rt]), address, mem, n * sizeof (char));
+			printf("load size of load%d\n", n);
+			printf("Regs[0] location:%ld  Regs[1] location: %ld \n",state -> Regs,
+			     &(state -> Regs[1]));
+			accessMemory(&(*state).Regs[rt], mem, address, n, 'w');
+			//memcpy(&(*state).Regs[rt], &mem[address],n);
+			
+
+			//printf("the memory to be copied %x\n", smth);
+			//memcpy(&(*state).Regs[rt], &mem[address], n);
+			//(*state).Regs[rt] = 0xabcdefaa;
 			/*long *lp = &(state -> Regs[30]);
 			printf("%ld this is the addresss\n", lp);
 			printf("%ld value before\n", *lp);
@@ -72,10 +93,10 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	} else {
 		printf("literal\n");
 		address = (long) state -> PC + (simm19 << 2);
-		accessMemory(&(state -> Regs[rt]), address, mem, n * sizeof (char));
+		accessMemory(&(state -> Regs[rt]), address, mem, n, 'w');
 	}
 
-	printf("%d \n", address);
+	printf("address where taken from%x \n", address);
 }
 
 

@@ -3,22 +3,16 @@
 #include "RegisterInstructionProcessing.h"
 #include "bitwise.h"
 
-#define BIT24 16777216 // == 2 ^ 24
-#define BITm 268435456 // == 2 ^ 28
-#define BITshift 50331648 // 2 ^ 25 + 2 ^ 24
-#define BITsf 2147483648 // == 2 ^ 31
-#define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0
-#define BITx 32768 // == 2 ^ 15
-#define BITra 31744 // == 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10
-#define BITrn 992 // == 2 ^ 9 + 2 ^ 8 + 2 ^ 7 + 2 ^ 6 + 2 ^ 5
-#define BITrm 2031616 // == 2 ^ 20 + 2 ^ 19 + 2 ^ 18 + 2 ^ 17 + 2 ^ 16
-#define rd 4294967295 // 2 ^ 32 - 1
-#define BIToperand 64512 // 2 ^ 15 + 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10
-#define BIT32MASK 4294967295 // == 2 ^ 32 - 1, MASK
-#define BIT64MASK 18446744073709551615 // == 2 ^ 64 - 1, MASK
-#define BIT64 18446744073709551616 // == 2 ^ 64, MASK
+#define BIT24 16777216 // == 2 ^ 24, MASK
+#define BITm 268435456 // == 2 ^ 28, MASK
+#define BITsf 2147483648 // == 2 ^ 31, MASK
+#define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0, MASK
+#define BITx 32768 // == 2 ^ 15, MASK
+#define BITra 31744 // == 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10, MASK
+#define BITrn 992 // == 2 ^ 9 + 2 ^ 8 + 2 ^ 7 + 2 ^ 6 + 2 ^ 5, MASK
+#define BITrm 2031616 // == 2 ^ 20 + 2 ^ 19 + 2 ^ 18 + 2 ^ 17 + 2 ^ 16, MASK
+#define BIToperand 64512 // 2 ^ 15 + 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10, MASK
 #define BIT32 4294967296 // == 2 ^ 32, MASK
-#define REGISTER31 31
 #define BIT6432 0b1111111111111111111111111111111100000000000000000000000000000000
 #define BIT31 2147483648 // == 2 ^ 31, MASK
 
@@ -29,25 +23,28 @@
 //Only functions and orr eor and ands are written below because the other function
 //are achieved by passing a negated Op parameter to these functions. This significantly simplifies the code
 
+//Bitwise AND
 static int LOCAL_AND(int x, int y) {
     return x & y;
 }
 
-static int LOCAL_OR(int x, int y) {
+// Bitwise inclusive OR
+static int LOCAL_IOR(int x, int y) {
     return x | y;
 }
 
-static int LOCAL_BAND(int x, int y) {
+//Bitwise eclusive OR function 
+static int LOCAL_EOR(int x, int y) {
     return x ^ y;
 }
 
-
+// Standard look of the finction and, orr, eon. Correct operators will the applied using the function pointers above and Op will be negated in required cases to chieve bic, orn and eor
 static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(int, int)) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
         long result;
-        if (Rn == REGISTER31) {
+        if (Rn == BITrd) {
             result = (*fn)(state->SP, Op);
             state->SP = result;
         } else {
@@ -57,7 +54,7 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, i
         
     } else {
         int result;
-        if (Rn == REGISTER31) {
+        if (Rn == BITrd) {
 	        if (state->SP & BIT31) {
                 result = state->SP | BIT6432;
 	        } else {
@@ -85,11 +82,11 @@ static void andd(struct CompState* state, int instruction, char Rn, int Op) {
 }
 
 static void orr(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_OR);
+	    return bin_op1(state, instruction, Rn, Op, LOCAL_IOR);
 }
 
 static void eor(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_BAND);
+	    return bin_op1(state, instruction, Rn, Op, LOCAL_EOR);
 }
 
 static void ands(struct CompState* state, int instruction, char Rn, int Op) {
@@ -97,7 +94,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
     
     if (BITsf & instruction) {
         long result;
-        if (Rn == REGISTER31) {
+        if (Rn == BITrd) {
             result = state->ZR & Op;
             state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
@@ -112,7 +109,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
         
     } else {
         int result;
-        if (Rn == REGISTER31) {
+        if (Rn == BITrd) {
 	        if (state->ZR & BIT31) {
 	            result = state->ZR | BIT6432;
 	        } else {
@@ -223,16 +220,16 @@ static void multiply(struct CompState* state, int instruction) {
   }
 };
 
-// Determines type of immediate instruction, arithmetic or wideMove.
+// Determines type of Register instruction - arithmetic, logical or multiplication.
 void determineTypeRegister(struct CompState* state, int instruction) {
     char m = instruction & BITm;
-    char r24 = instruction & BIT24;
-    if (instruction && (~m) && (~r24)) {
+    char r24 = instruction & (BIT24);
+    if ((~m) && (~r24)) {
         arithmetic(state, instruction);
-    } else if (instruction && (~m) && (~r24)) {
+    } else if ((~m) && (~r24)) {
         logical(state, instruction);
     }
-        else if (instruction && (m) && (r24)) {
+        else if (m && (r24)) {
             multiply(state, instruction);
         }
 };
