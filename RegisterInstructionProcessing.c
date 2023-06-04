@@ -172,7 +172,7 @@ static void arithmetic(struct CompState* state, int instruction) {
     } else {
         Opnew = asr_64 ((instruction & BITrm), (instruction & BIToperand));
     }
-    char Rn = (BITrn & instruction) >> 5;
+    char Rn = ((31) & (instruction>>5));
     char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
@@ -192,7 +192,7 @@ static void arithmetic(struct CompState* state, int instruction) {
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
 static void logical(struct CompState* state, int instruction) {
     char Opnew = ~(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
-    char Rn = (BITrn & instruction) >> 5;
+    char Rn = ((31) & (instruction>>5));
     // Bit wise shift should be included and some things will be added / altered
     char opc = (instruction >> 29) & 3;
     switch (opc) {
