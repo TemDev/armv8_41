@@ -44,10 +44,10 @@ void printCompState(FILE *fp, struct CompState* state) {
 void initial(struct CompState* statep) {
 	statep->ZR = 0;
 	statep->PC  = 0;
-	statep->PSTATE.N = 0;
-	statep->PSTATE.Z = 0;
-	statep->PSTATE.C = 0;
-	statep->PSTATE.V = 0;
+	statep->PSTATE.N = false;
+	statep->PSTATE.Z = true;
+	statep->PSTATE.C = false;
+	statep->PSTATE.V = false;
 	statep->SP = 0;
 	for (int i = 0; i < NUM_GEN_REG; i++) {
 		statep->Regs[i] = 0;

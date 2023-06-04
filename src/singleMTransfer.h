@@ -37,12 +37,12 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	} else {
 		n = 8;
 	}
-	printf("%d \n", n);
 	printf("xn:%d rt:%d xm:%d\n", xn, rt, xm);
 	
 	if (Literal == 1) {
 		if (U != 0) {
 			printf("unsigned offset mode\n");
+			printf("value of the xn register:%ld\n", (*state).Regs[xn]);
         		address = state -> Regs[xn] + (imm12 << 3);
 		} else {
 			if (I != 0) {
@@ -58,9 +58,11 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	
 		if (L == 0) {
 			printf("store\n");
-			memcpy(&mem[address], &(state -> Regs[xn]), n * sizeof(char));		
+			memcpy(&mem[address], &(state -> Regs[rt]), n * sizeof(char));		
 		} else {
 			printf("load\n");
+			printf("Regs[0] location:%ld  state location: %ld \n",state,
+			     &(state -> Regs[rt]) );
 			accessMemory(&(state -> Regs[rt]), address, mem, n * sizeof (char));
 			/*long *lp = &(state -> Regs[30]);
 			printf("%ld this is the addresss\n", lp);
@@ -75,7 +77,7 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 		accessMemory(&(state -> Regs[rt]), address, mem, n * sizeof (char));
 	}
 
-	printf("%d \n", address);
+	printf("address where taken from%x \n", address);
 }
 
 
