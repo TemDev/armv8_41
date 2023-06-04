@@ -148,9 +148,9 @@ static void and_flag(struct CompState* state, int instruction, char Rn, int Op) 
 
 // Multiply-Add: Rd := Ra + (Rn * Rm)
 static int madd(instruction) {
-    char Ra = BITra & instruction;
-    char Rn = BITrn & instruction;
-    char Rm = BITrm & instruction;
+    char Ra = (31) & (instruction>>10);
+    char Rn = (31) & (instruction>>5);
+    char Rm = (31) & (instruction>>16);
     return Ra + (Rn * Rm);
 }
 
@@ -172,7 +172,7 @@ static void arithmetic(struct CompState* state, int instruction) {
     } else {
         Opnew = asr_64 ((instruction & BITrm), (instruction & BIToperand));
     }
-    char Rn = (BITrn & instruction) >> 5;
+    char Rn = ((31) & (instruction>>5));
     char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
@@ -192,7 +192,7 @@ static void arithmetic(struct CompState* state, int instruction) {
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
 static void logical(struct CompState* state, int instruction) {
     char Opnew = ~(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
-    char Rn = (BITrn & instruction) >> 5;
+    char Rn = ((31) & (instruction>>5));
     // Bit wise shift should be included and some things will be added / altered
     char opc = (instruction >> 29) & 3;
     switch (opc) {
@@ -213,17 +213,20 @@ static void logical(struct CompState* state, int instruction) {
 
 static void multiply(struct CompState* state, int instruction) {
   char Rd = instruction & BITrd;
-  if (instruction & BITx) {
-      state->Regs[Rd] = msub(instruction);
+  char Ra = (31) & (instruction>>10);
+  char Rn = (31) & (instruction>>5);
+  char Rm = (31) & (instruction>>16);
+  if (1 & (instruction>>15)) {
+      state->Regs[Rd] = state->Regs[Ra] - (state->Regs[Rn] * state->Regs[Rm]);
   } else {
-      state->Regs[Rd] = madd(instruction);
+      state->Regs[Rd] = state->Regs[Ra] + (state->Regs[Rn] * state->Regs[Rm]);
   }
 };
 
 // Determines type of Register instruction - arithmetic, logical or multiplication.
 void determineTypeRegister(struct CompState* state, int instruction) {
-    char m = instruction & BITm;
-    char r24 = instruction & (BIT24);
+    char m = 1 & (instruction>>28);
+    char r24 = 1 & (instruction>>24);
     if ((~m) && (~r24)) {
         arithmetic(state, instruction);
     } else if ((~m) && (~r24)) {
