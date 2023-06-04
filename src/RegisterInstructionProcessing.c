@@ -23,19 +23,22 @@
 //Only functions and orr eor and ands are written below because the other function
 //are achieved by passing a negated Op parameter to these functions. This significantly simplifies the code
 
+//Bitwise AND
 static int LOCAL_AND(int x, int y) {
     return x & y;
 }
 
-static int LOCAL_OR(int x, int y) {
+// Bitwise inclusive OR
+static int LOCAL_IOR(int x, int y) {
     return x | y;
 }
 
-static int LOCAL_BAND(int x, int y) {
+//Bitwise eclusive OR function 
+static int LOCAL_EOR(int x, int y) {
     return x ^ y;
 }
 
-
+// Standard look of the finction and, orr, eon. Correct operators will the applied using the function pointers above and Op will be negated in required cases to chieve bic, orn and eor
 static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(int, int)) {
     char Rd = BITrd & instruction;
     
@@ -79,11 +82,11 @@ static void andd(struct CompState* state, int instruction, char Rn, int Op) {
 }
 
 static void orr(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_OR);
+	    return bin_op1(state, instruction, Rn, Op, LOCAL_IOR);
 }
 
 static void eor(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_BAND);
+	    return bin_op1(state, instruction, Rn, Op, LOCAL_EOR);
 }
 
 static void ands(struct CompState* state, int instruction, char Rn, int Op) {
@@ -217,16 +220,16 @@ static void multiply(struct CompState* state, int instruction) {
   }
 };
 
-// Determines type of immediate instruction, arithmetic or wideMove.
+// Determines type of Register instruction - arithmetic, logical or multiplication.
 void determineTypeRegister(struct CompState* state, int instruction) {
     char m = instruction & BITm;
-    char r24 = instruction & BIT24;
-    if (instruction && (~m) && (~r24)) {
+    char r24 = instruction & (BIT24);
+    if ((~m) && (~r24)) {
         arithmetic(state, instruction);
-    } else if (instruction && (~m) && (~r24)) {
+    } else if ((~m) && (~r24)) {
         logical(state, instruction);
     }
-        else if (instruction && (m) && (r24)) {
+        else if (m && (r24)) {
             multiply(state, instruction);
         }
 };
