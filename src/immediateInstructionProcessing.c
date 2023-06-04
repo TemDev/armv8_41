@@ -15,17 +15,19 @@
 #define BIT32 4294967296 // == 2 ^ 32, MASK
 
 static void add(struct CompState* state, int instruction, char Rn, int Op) {
-    printf("ADD");
+  printf("ADD %d \n", Op);
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
+      printf("64-bit \n");
         long result;
         if (Rn == REGISTER31) {
             result = state->SP + Op;
             state->SP = result;
         } else {
-            result = state->Regs[Rn] + Op;
+	    result = state->Regs[Rn] + ((long) Op);
             state->Regs[Rd] = result;
+	    printf("%x", state->Regs[Rd]);
         };
         
     } else {
@@ -103,7 +105,7 @@ static void arithmeticImmediate(struct CompState* state, int instruction) {
     const int sh = 4194304;
     const int imm12 = 4095; // 2 ^ 12 - 1
     const short rn = 992;
-    int Op = ((instruction >> 10) & imm12) << (12 * ((sh & instruction) >> 31));
+    int Op = ((instruction >> 10) & imm12) << (12 * ((instruction >> 22) & 1));
     printf("%d\n", Op);
     char Rn = (rn & instruction) >> 5;
     char opc = (instruction >> 29) & 3;
@@ -128,8 +130,8 @@ static void movn(struct CompState* state, int instruction, long Op) {
       printf("%ld", ~Op);
         state->Regs[Rd] = ~Op;
     } else { // 32 bit mode.
-        int op = Op;
-        state->Regs[Rd] = ~op;
+        state->Regs[Rd] = ~Op;
+	state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
     };
 };
 
@@ -138,24 +140,34 @@ static void movz(struct CompState* state, int instruction, long Op) {
     if (BITsf & instruction) { // 64 bit mode.
         state->Regs[Rd] = Op;
     } else {
-        int op = Op;
-        state->Regs[Rd] = op;
+        state->Regs[Rd] = Op;
+	state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
     };
 };
 
-static void movk(struct CompState* state, int instruction, int imm16, char hw) {
+static void movk(struct CompState* state, int instruction, long imm16, int hw) {
+    printf("movk");
     char Rd = BITrd & instruction;
-    const long MASK = imm16 * pow(2, hw * 16);
-    state->Regs[Rd] = state->Regs[Rd] ^ MASK;
+    long MASK2 = (long)  ~((long) 65535 << (((long) hw) * ((long) 16)));
+    printf("MASK2 %lx \n", MASK2);
+    long MASK = imm16 << (hw * 16);
+    printf("MASK1 %lx \n", MASK);
+    printf("Before %lx \n", state->Regs[Rd]);
+    state->Regs[Rd] = (state->Regs[Rd] & MASK2) + MASK;
+    printf("After %lx \n", state->Regs[Rd]);
+    if (!(BITsf & instruction)) {
+      state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
+    };
 };
 
 static void wideMove(struct CompState* state, int instruction) {
-    char hw = (instruction >> 21) & 3;
-    char opc = (instruction >> 29) & 3;
+  int hw = (instruction >> 21) & 3;
+  int opc = (instruction >> 29) & 3;
     long imm16MASK = 65535; // 2 ^ 16 - 1
-    long imm16 = (instruction >> 5) & imm16MASK;
-    long Op = imm16 << hw * 16;
-    printf("opc %d", opc);
+    long imm16 = lsr_32(instruction, 5) & imm16MASK;
+    long Op = imm16 <<( hw * 16);
+    printf("shifted %d\n", (instruction >> 29));
+    printf("opc %d\n", opc);
     if (opc == 3) {
         movk(state, instruction, imm16, hw);
     } else if (opc == 2) {
