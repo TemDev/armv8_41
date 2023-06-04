@@ -61,7 +61,7 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, i
                 result = state->SP & (BIT32 - 1);
 	        };
             result = (*fn)(result, Op);
-            state->SP = result;
+              state->SP = result;
             state->SP = state->SP & (BIT32 - 1);
         } else {
             if (state->Regs[Rd] & BIT31) {
@@ -148,12 +148,13 @@ static void and_flag(struct CompState* state, int instruction, char Rn, int Op) 
 // Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
 static void arithmetic(struct CompState* state, int instruction) {
     int Opnew;
+    char Rm = ((31) & (instruction>>16));
     if ((instruction >> 22) & 3 == 0) {
-        Opnew = lsl_64 ((instruction & BITrm), (instruction & BIToperand));
+        Opnew = lsl_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     } else if ((instruction >> 22) & 3 == 1) {
-        Opnew = lsr_64 ((instruction & BITrm), (instruction & BIToperand));
+        Opnew = lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     } else {
-        Opnew = asr_64 ((instruction & BITrm), (instruction & BIToperand));
+        Opnew = asr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     }
     char Rn = ((31) & (instruction>>5));
     char opc = (instruction >> 29) & 3;
@@ -200,11 +201,12 @@ static void multiply(struct CompState* state, int instruction) {
   int Ra = (int)((31) & (instruction>>10));
   int Rn = (int)((31) & (instruction>>5));
   int Rm = (int)((31) & (instruction>>16));
-if (1 & (instruction>>15)) {
+  printf("Rd:%d Ra:%d Rn:%n Rm:%d\n", Rd, Ra, Rn, Rm);
+/* if (1 & (instruction>>15)) {
       state->Regs[Rd] = state->Regs[Ra] - (state->Regs[Rn] * state->Regs[Rm]);
   } else ;{
       state->Regs[Rd] = state->Regs[Ra] + (state->Regs[Rn] * state->Regs[Rm]);
-  }
+  }*/
 };
 
 // Determines type of Register instruction - arithmetic, logical or multiplication.
