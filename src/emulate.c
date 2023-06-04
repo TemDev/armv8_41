@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
 	fprintf(fp,"Non-Zero Memory:\n");
 	for (int i = 0; i < MEM_SIZE; i += 4){
 		int location;
-	        accessMemory(&location,memory, i, 4, 'r');
+	        accessMemory(&location,memory, i, 4, 'w');
 		if (location != 0) {      
 			fprintf(file,"0x%.8x : %.8x\n", i, location);
 		}
