@@ -82,44 +82,10 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, i
             state->Regs[Rd] = result;
             state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
         };
-    };
-
-};
-
-static void andd(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_AND);
+    }
 }
 
-static void orr(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_IOR);
-}
-
-static void eor(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_EOR);
-}
-
-static void add(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_ADD);
-}
-
-static void sub(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_SUB);
-}
-
-static void adds(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op2(state, instruction, Rn, Op, LOCAL_ADD);
-}
-
-static void subs(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op2(state, instruction, Rn, Op, LOCAL_SUB);
-}
-
-static void ands(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op2(state, instruction, Rn, Op, LOCAL_AND);
-}
-
-
-static void bin_op2(struct CompState* state, int instruction, char Rn, int Op) {
+static void bin_op2(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(int, int)) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -165,6 +131,38 @@ static void bin_op2(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
+static void andd(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op1(state, instruction, Rn, Op, LOCAL_AND);
+}
+
+static void orr(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op1(state, instruction, Rn, Op, LOCAL_IOR);
+}
+
+static void eor(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op1(state, instruction, Rn, Op, LOCAL_EOR);
+}
+
+static void add(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op1(state, instruction, Rn, Op, LOCAL_ADD);
+}
+
+static void sub(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op1(state, instruction, Rn, Op, LOCAL_SUB);
+}
+
+static void adds(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op2(state, instruction, Rn, Op, LOCAL_ADD);
+}
+
+static void subs(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op2(state, instruction, Rn, Op, LOCAL_SUB);
+}
+
+static void ands(struct CompState* state, int instruction, char Rn, int Op) {
+	            return bin_op2(state, instruction, Rn, Op, LOCAL_AND);
+}
+
 static void and_flag(struct CompState* state, int instruction, char Rn, int Op) {
     andd(state, instruction, Rn, (~Op));
     char Rd = BITrd & instruction;
@@ -197,10 +195,10 @@ static void logical(struct CompState* state, int instruction) {
         ands(state, instruction, Rn, Opnew);
         break;
         case 5:
-        eon(state, instruction, Rn, -Opnew);
+        eor(state, instruction, Rn, -Opnew);
         break;
         case 4:
-        eon(state, instruction, Rn, Opnew);
+        eor(state, instruction, Rn, Opnew);
         break;
         case 3:
         orr(state, instruction, Rn, -Opnew);
@@ -217,7 +215,7 @@ static void logical(struct CompState* state, int instruction) {
 }
 
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
-static void arithmatic(struct CompState* state, int instruction) {
+static void arithmetic(struct CompState* state, int instruction) {
     char Opnew = -(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
     char Rn = ((31) & (instruction>>5));
     // Bit wise shift should be included and some things will be added / altered
