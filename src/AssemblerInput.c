@@ -4,7 +4,17 @@ typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
 typedef enum { REGISTER, IMMEDIATE } operand_type;
 
-typedef union { char *register, int64_t immediate } operand_value;
+typedef enum { GENERAL, SPECIAL } register_type;
+
+typedef enum { SP, ZR, PC } special_register_type;
+
+typedef enum { BIT_64, BIT_32 } register_size;
+
+typedef union { special_register_type special_register, int number }
+
+typedef struct { register_type type, register_size size, int register_number } register;
+
+typedef union { register register_operand, int64_t immediate } operand_value;
 
 typedef struct { operand_type type, operand_value value; } operand; 
 
@@ -21,6 +31,14 @@ typedef union {
 } line_contents;
 
 typedef struct { line_type type, line_contents contents; } line_data;
+
+char **register_names(void) {
+    char **registers[67]
+    for (int i = 0; i < 31; i++) {
+        char register_name[4];
+        sprintf(register_name, "x%d", i);
+    }
+}
 
 
 int in_string(char val, char *str) {
@@ -43,20 +61,21 @@ void get_next_word(char start, char* end, char* string, char** word) {
     }
 }
 
-void process_input(char *input_file, char *output_file) {
-    FILE *fp = fopen(input_file, "rb");
-    if(fp != NULL) {
-        // something
-    } else {
-        printf("Could not find the input file %s. Please try again.", input_file);
-    }
-}
-
 line_type get_line_type(char *file_line) {
     int length = strlen(file_line);
     if(file_line[0] == '.') return DIRECTIVE;
     if(file_line[length-2] == ':') return LABEL;
     return INSTRUCTION;
+}
+
+operand process_operand(char* operand_text) {
+    ret_operand = operand;
+    if(operand_text[0] == '#') {
+        ret_operand.type = IMMEDIATE;
+        ret_operand.value = atoi(operand_text + 1);
+    } else if()
+
+
 }
 
 instruction_data process_instruction(char *file_line) {
@@ -66,10 +85,11 @@ instruction_data process_instruction(char *file_line) {
     int operand_index;
     get_next_word(0, &operand_index, file_line, &name);
     data.instruction_name = name;
-    operand *instr_operands = {};
+    operand *instr_operands[5];  // todo: check max operands
     while(operand_index < length) {
-        char new_operand[64];  // not sure how big this should be
-        get_next_word(operand_index + 1, &operand_index, file_line, &new_operand);
+        char new_operand_text[64];  // not sure how big this should be
+        get_next_word(operand_index + 1, &operand_index, file_line, &new_operand_text);
+        new_operand = process_operand(new_operand_text);
         instr_operands[data.no_operands] = new_operand;
         data.no_operands++;
     }
@@ -96,5 +116,14 @@ line_data process_line(char *file_line) {
         printf("Something went very wrong (process_line)");
     }
     line_data data = {get_line_type(file_line)};
+}
+
+void process_input(char *input_file, char *output_file) {
+    FILE *fp = fopen(input_file, "rb");
+    if(fp != NULL) {
+        // something
+    } else {
+        printf("Could not find the input file %s. Please try again.", input_file);
+    }
 }
 
