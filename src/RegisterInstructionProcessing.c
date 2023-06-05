@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "RegisterInstructionProcessing.h"
 #include "bitwise.h"
+#include "immediateInstructionProcessing.h"
 
 #define BIT24 16777216 // == 2 ^ 24, MASK
 #define BITm 268435456 // == 2 ^ 28, MASK
@@ -46,39 +47,20 @@ static int LOCAL_EOR(long x, long y) {
 // Standard look of the finction and, orr, eon. Correct operators will the applied using the function pointers above and Op will be negated in required cases to chieve bic, orn and eor
 static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(long, long)) {
     char Rd = BITrd & instruction;
-    
-    if (BITsf & instruction) {
-        long result;
-        if (Rn == BITrd) {
-            result = (*fn)(state->SP, Op);
-            state->SP = result;
-        } else {
-            result = (*fn)(state->SP, Op);
-            state->Regs[Rd] = result;
-        };
-        
+    long result;
+    if (Rn == BITrd) {
+        result = (*fn)(state->ZR, Op);
     } else {
-        int result;
-        if (Rn == BITrd) {
-	        if (state->SP & BIT31) {
-                result = state->SP | BIT6432;
-	        } else {
-                result = state->SP & (BIT32 - 1);
-	        };
-            result = (*fn)(result, Op);
-              state->SP = result;
-            state->SP = state->SP & (BIT32 - 1);
-        } else {
-            if (state->Regs[Rd] & BIT31) {
-                result = state->Regs[Rd] | BIT6432;
-            } else {
-                result = state->Regs[Rd] & (BIT32 - 1);
-            };
-            result = (*fn)(result, Op);
-            state->Regs[Rd] = result;
-            state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
-        };
+        result = (*fn)(state->Regs[Rn], Op);
     }
+
+    if (!(Rd == BITrd)) {
+	if ((instruction & BITsf) == BITsf) {
+            state->Regs[Rd] = result;
+	} else {
+    	    state->Regs[Rd] = result & (BIT32 - 1);
+	}
+    }	
 }
 
 static void bin_op2(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(long, long)) {
@@ -127,32 +109,17 @@ static void bin_op2(struct CompState* state, int instruction, char Rn, int Op, i
     };
 };
 
-static void andd(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op1(state, instruction, Rn, Op, LOCAL_AND);
-}
-
-static void orr(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op1(state, instruction, Rn, Op, LOCAL_IOR);
-}
-
-static void eor(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op1(state, instruction, Rn, Op, LOCAL_EOR);
-}
-
-static void add(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op1(state, instruction, Rn, Op, LOCAL_ADD);
-}
-
-static void adds(struct CompState* state, int instruction, char Rn, int Op) {
-		            return bin_op2(state, instruction, Rn, Op, LOCAL_ADD);
-}
-
 static void ands(struct CompState* state, int instruction, char Rn, int Op) {
-    andd(state, instruction, Rn, Op);
+    bin_op1(state, instruction, Rn, Op, LOCAL_AND);
     char Rd = BITrd & instruction;
-    int result = state -> Regs[Rd]; 
-    state->PSTATE.N = result < 0;
-    state->PSTATE.Z = result == 0;
+
+   if (instruction & BITsf == 0)  {
+       int result = (int) (state->Regs[Rd]);
+       state->PSTATE.N = result < 0;       
+   } else {
+       state->PSTATE.N = state->Regs[Rd] < 0;
+   }	   
+    state->PSTATE.Z = state->Regs[Rd] == 0;
     state->PSTATE.C = 0;
     state->PSTATE.V = 0;
 }
@@ -175,28 +142,28 @@ static void logical(struct CompState* state, int instruction) {
     printf("Rn:%d opc:%d\n", Rn, opcN);
     switch (opcN) {
         case 7:
-        ands(state, instruction, Rn, (~Opnew));
+        bin_op2(state, instruction, Rn,(~Opnew), LOCAL_ADD);
         break;
         case 6:
-        ands(state, instruction, Rn, Opnew);
+        bin_op2(state, instruction, Rn,(Opnew), LOCAL_ADD);
         break;
         case 5:
-        eor(state, instruction, Rn, (~Opnew));
+        bin_op1(state, instruction, Rn,(~Opnew), LOCAL_EOR);
         break;
         case 4:
-        eor(state, instruction, Rn, Opnew);
+        bin_op1(state, instruction, Rn,(Opnew), LOCAL_EOR);
         break;
         case 3:
-        orr(state, instruction, Rn, (~Opnew));
+        bin_op1(state, instruction, Rn,(~Opnew), LOCAL_IOR);
         break;
         case 2:
-        orr(state, instruction, Rn, Opnew);
+        bin_op1(state, instruction, Rn,(Opnew), LOCAL_IOR);
         break;
         case 1:
-        andd(state, instruction, Rn, (~Opnew));
+        bin_op1(state, instruction, Rn,(~Opnew), LOCAL_AND);
         break;
         default:
-        andd(state, instruction, Rn, Opnew);
+        bin_op1(state, instruction, Rn,(Opnew), LOCAL_AND);
     }
 }
 
