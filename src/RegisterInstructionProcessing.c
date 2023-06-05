@@ -26,10 +26,6 @@
 
 //Bitwise AND
 
-static int LOCAL_ADD(long x, long y) {
-    return x + y;
-}
-
 static int LOCAL_AND(long x, long y) {
     return x & y;
 }
@@ -63,52 +59,6 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, i
     }	
 }
 
-static void bin_op2(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(long, long)) {
-    char Rd = BITrd & instruction;
-    
-    if (BITsf & instruction) {
-        long result;
-        if (Rn == BITrd) {
-            result = (*fn)(state->ZR, Op);
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
-        } else {
-            result = (*fn)(state->Regs[Rn], Op);
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
-            state->Regs[Rd] = result;
-        };
-        state->PSTATE.N = result < 0;
-        state->PSTATE.Z = result == 0;
-        
-    } else {
-        int result;
-        if (Rn == BITrd) {
-	        if (state->ZR & BIT31) {
-	            result = state->ZR | BIT6432;
-	        } else {
-                result = state->ZR & (BIT32 - 1);
-	        };
-	        result = (*fn)(result, Op);
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
-        } else {
-	        if (state->Regs[Rd] & BIT31) {
-	            result = state->Regs[Rd] | BIT6432;
-	        } else {
-	            result = state->Regs[Rd] & (BIT32 - 1);
-	        };
-	        result = (*fn)(result, Op);
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
-	        state->Regs[Rd] = result;
-	        state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
-        };
-        state->PSTATE.N = result < 0;
-        state->PSTATE.Z = result == 0;
-    };
-};
-
 static void ands(struct CompState* state, int instruction, char Rn, int Op) {
     bin_op1(state, instruction, Rn, Op, LOCAL_AND);
     char Rd = BITrd & instruction;
@@ -138,7 +88,7 @@ static void logical(struct CompState* state, int instruction) {
 	Opnew = ror_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     }
     char Rn = ((31) & (instruction>>5));
-    char opcN = ((instruction >> 28) & 6) | ((instruction >> 24) & 1);
+    char opcN = ((instruction >> 28) & 6) | ((instruction >> 21) & 1);
     printf("Rn:%d opc:%d\n", Rn, opcN);
     switch (opcN) {
         case 7:
