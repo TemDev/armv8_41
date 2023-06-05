@@ -26,39 +26,53 @@ static void conditional(struct CompState* state, long offset, char cond) {
         case 0:
         if (state->PSTATE.Z == 1) {
             state->PC = offset;
-        };
+        } else {
+	  state->PC += 4;
+	};
         break;
         case 1:
         if (state->PSTATE.Z == 0) {
             state->PC = offset;
-        };
+        } else {
+	  state->PC += 4;
+	};
         break;
         case 6:
         if (state->PSTATE.N == state->PSTATE.V) {
             state->PC = offset;
-        };
+        } else {
+	  state->PC += 4;
+	};
         break;
         case 7:
         if (state->PSTATE.N != state->PSTATE.V) {
             state->PC = offset;
-        };
+        } else {
+	  state->PC += 4;
+	};
         break;
         case 8:
         if (state->PSTATE.Z == 0 && state->PSTATE.N == state->PSTATE.V) {
             state->PC = offset;
-        };
+        } else {
+	  state->PC += 4;
+	};
         break;
         case 9:
         if (!(state->PSTATE.Z == 0 && state->PSTATE.N == state->PSTATE.V)) {
             state->PC = offset;
-        };
+        } else {
+	  state->PC += 4;
+	};
         break;
         case 10:
         if (state->PSTATE.N == 1 || state->PSTATE.Z == 1 || state->PSTATE.C == 1
          || state-> PSTATE.V == 1) {
             state->PC = offset;
-        };
-    }
+        } else {
+	  state->PC += 4;
+	};
+    };
 };
 
 void branch(struct CompState* state, int instruction) {

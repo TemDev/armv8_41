@@ -58,32 +58,33 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
+      printf("64 bit version\n");
         long result;
         if (Rn == REGISTER31) {
             result = state->ZR + Op;
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
+            state->PSTATE.V = 0;
+            state->PSTATE.C = 0;
         } else {
             result = state->Regs[Rn] + Op;
             state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
-            state->Regs[Rd] = result;
         };
+	if (!(Rd == REGISTER31)) {
+	  state->Regs[Rd] = result;
+	};
         state->PSTATE.N = result < 0;
         state->PSTATE.Z = result == 0;
         
     } else {
+      printf("32 bit version\n");
         int result;
         if (Rn == REGISTER31) {
-	        if (state->ZR & BIT31) {
-	            result = state->ZR | BIT6432;
-	        } else {
-                result = state->ZR & (BIT32 - 1);
-	        };
+                result = state->ZR;
 	        result += Op;
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
+            state->PSTATE.V = 0;
+            state->PSTATE.C = 0;
         } else {
+	  printf("state regs mask%d\n", state->Regs[Rd] & BIT31);
 	        if (state->Regs[Rd] & BIT31) {
 	            result = state->Regs[Rd] | BIT6432;
 	        } else {
@@ -95,6 +96,8 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
 	        state->Regs[Rd] = result;
 	        state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
         };
+	printf("state.Regs[Rd]: %ld state.Regs[Rn] %ld Op: %ld result; %ld\n", state->Regs[Rd], state-> Regs[Rn], Op, result);
+	printf("result < 0 : %d\n", (result < 0));
         state->PSTATE.N = result < 0;
         state->PSTATE.Z = result == 0;
     };

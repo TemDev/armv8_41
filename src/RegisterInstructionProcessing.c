@@ -238,12 +238,12 @@ static void multiply(struct CompState* state, int instruction) {
   int Ra = (int)((31) & (instruction>>10));
   int Rn = (int)((31) & (instruction>>5));
   int Rm = (int)((31) & (instruction>>16));
-  printf("Rd:%d Ra:%d Rn:%n Rm:%d\n", Rd, Ra, Rn, Rm);
-/* if (1 & (instruction>>15)) {
+  printf("Rd:%d Ra:%d Rn:%d Rm:%d", Rd, Ra, Rn, Rm);
+  if (1 & (instruction>>15)) {
       state->Regs[Rd] = state->Regs[Ra] - (state->Regs[Rn] * state->Regs[Rm]);
-  } else ;{
+  } else {
       state->Regs[Rd] = state->Regs[Ra] + (state->Regs[Rn] * state->Regs[Rm]);
-  }*/
+  }
 };
 
 // Determines type of Register instruction - arithmetic, logical or multiplication.
@@ -273,7 +273,6 @@ void determineTypeRegister(struct CompState* state, int instruction) {
 static void main() {
     
 }
-
 
 
 

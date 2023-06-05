@@ -18,7 +18,7 @@ void printCompState(FILE *fp, struct CompState* state) {
 	}
 	fprintf(fp, "PC    = %.16x\n",  state->PC);
 	char st[4];
-	if (state -> PSTATE.V) {
+	if (state -> PSTATE.N) {
 		st[0] = 'N';
 	} else {
 		st[0] = '-';
