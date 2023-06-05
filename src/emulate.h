@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 #define NUM_GEN_REG 32
 #define MEM_SIZE 2097152
 extern struct Flags {

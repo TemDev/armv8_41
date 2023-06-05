@@ -33,8 +33,12 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
        	imm12 += (4095 & (inst >> 10));
 	//printf("imm12 after %x",imm12);
 	//printf("firt 22 bits of inst: %x", inst >> 10 );
-	simm9 = (512 & (inst >> 12 ));
+	simm9 = (511 & (inst >> 12 ));
+	simm9 = simm9 << 55;
+	simm9 = simm9 >> 55;
 	simm19 = ((1<<19)-1) & (inst >> 5);
+	simm19 = simm19 << 46;
+	simm19 = simm19 >> 46;
 	Literal = 1 & (inst>> 29);
 	U = 1 & (inst>> 24);
 	L = 1 & (inst>> 22);
@@ -60,6 +64,7 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 			if (I != 0) {
 				printf("simm9 is %d\n", simm9);
 				address = state -> Regs[xn] + simm9;
+				state -> Regs[xn] = address;
 				printf("pre index\naddress is %ld\n", address);
 			} else {
 				printf("post index\n");
@@ -91,6 +96,9 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 
 		}
 	} else {
+
+		printf("simm19 is %d\n", simm19);
+		
 		printf("literal\n");
 		address = (long) state -> PC + (simm19 << 2);
 		accessMemory(&(state -> Regs[rt]), address, mem, n, 'w');
