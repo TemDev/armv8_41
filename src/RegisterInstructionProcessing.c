@@ -177,13 +177,13 @@ static void arithmetic(struct CompState* state, int instruction) {
     char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
-        adds(state, instruction, Rn, (-Opnew));
+        adds(state, instruction, Rn, (-Opnew), 1);
         break;
         case 2:
         add(state, instruction, Rn, (-Opnew));
         break;
         case 1:
-        adds(state, instruction, Rn, Opnew);
+        adds(state, instruction, Rn, Opnew, 0);
         break;
         default:
         add(state, instruction, Rn, Opnew);
