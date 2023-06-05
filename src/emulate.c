@@ -10,6 +10,7 @@
 
 
 #define HLT 0x8a000000
+#define NOP 0xd503201f
      
 void printCompState(FILE *fp, struct CompState* state) {
 	fprintf(fp, "Registers:\n");
@@ -83,8 +84,9 @@ int main(int argc, char** argv) {
 		if (instruction == HLT) {
 			printf("Type: Halt instruction\n");
 			break;
-		}
-		else if (Op0 == 8 || Op0 == 9) {
+		} else if (instruction == NOP) {
+		  state.PC += 4;
+		}else if (Op0 == 8 || Op0 == 9) {
 			printf("Type: Immediate Arithmetic \n");	
 		    determineTypeImmediate(&state, instruction);
 		    state.PC += 4;

@@ -61,12 +61,14 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, long Op, 
     printf("result: %ld\n", result);
 }
 
-static void ands(struct CompState* state, int instruction, char Rn, int Op) {
+static void ands(struct CompState* state, int instruction, char Rn, long Op) {
     bin_op1(state, instruction, Rn, Op, LOCAL_AND);
     char Rd = BITrd & instruction;
 
-   if (instruction & BITsf == 0)  {
+    if ((instruction & BITsf) == 0)  {
        int result = (int) (state->Regs[Rd]);
+       printf("Register: %x\n", state->Regs[Rd]);
+       printf("Result: %d \n", result);
        state->PSTATE.N = result < 0;       
    } else {
        state->PSTATE.N = state->Regs[Rd] < 0;
@@ -81,26 +83,44 @@ static void logical(struct CompState* state, int instruction) {
     long Opnew;
     char Rm = ((31) & (instruction>>16));
     char shift = (instruction >> 22) & 3;
-    if (!(instruction & BITsf)) {
+    printf("REGisTer: %ldx ", state->Regs[Rm]);
+    if (instruction & BITsf == 0) {
       Opnew = (int) state->Regs[Rm];
     } else {
       Opnew = state->Regs[Rm];
     };
     if (shift == 0) {
-        Opnew = lsl_64 ((Opnew), ((63) & (instruction >> 10)));
+        if (!(instruction & BITsf)) {
+           Opnew = lsl_32 ((Opnew), ((63) & (instruction >> 10)));
+        } else {
+           Opnew = lsl_64 ((Opnew), ((63) & (instruction >> 10)));
+        };
 	printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("lsl Opnew: %ld\n", Opnew);
     } else if (shift  == 1) {
-        Opnew = lsr_64 ((Opnew), ((63) & (instruction >> 10)));
+      printf("OPNeW: %ld\n", Opnew);
+        if (!(instruction & BITsf)) {
+           Opnew = lsr_32 ((Opnew), ((63) & (instruction >> 10)));
+        } else {
+           Opnew = lsr_64 ((Opnew), ((63) & (instruction >> 10)));
+        };
         printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("lsr Opnew: %ld\n", Opnew);
     } else if (shift == 2) {
         printf("OPNEW: %ld\n", Opnew);
-        Opnew = asr_64 ((Opnew), ((63) & (instruction >> 10)));
+	if (!(instruction & BITsf)) {
+           Opnew = asr_32 ((Opnew), ((63) & (instruction >> 10)));
+        } else {
+           Opnew = asr_64 ((Opnew), ((63) & (instruction >> 10)));
+        };
 	printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("asr Opnew: %ld\n", Opnew);
     } else {
-      Opnew = ror_64 ((Opnew), ((63) & (instruction >> 10)));
+        if (!(instruction & BITsf)) {
+           Opnew = ror_32 ((Opnew), ((63) & (instruction >> 10)));
+        } else {
+           Opnew = ror_64 ((Opnew), ((63) & (instruction >> 10)));
+        };
 	printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("ror Opnew: %ld\n", Opnew);
     }
@@ -115,12 +135,13 @@ static void logical(struct CompState* state, int instruction) {
         ands(state, instruction, Rn, (Opnew));
         break;
         case 5:
-	 bin_op1(state, instruction, Rn, (~Opnew), LOCAL_EOR);
+	bin_op1(state, instruction, Rn, (~Opnew), LOCAL_EOR);
         break;
         case 4:
         bin_op1(state, instruction, Rn, (Opnew), LOCAL_EOR);
         break;
         case 3:
+	  printf("Vanya %ld\n", (~Opnew));
         bin_op1(state, instruction, Rn, (~Opnew), LOCAL_IOR);
         break;
         case 2:
