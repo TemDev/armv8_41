@@ -66,7 +66,7 @@ void add(struct CompState* state, int instruction, char Rn, long Op) {
     };
 };
 
-void adds(struct CompState* state, int instruction, char Rn, long Op) {
+void adds(struct CompState* state, int instruction, char Rn, long Op, char subOrNot) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -79,7 +79,7 @@ void adds(struct CompState* state, int instruction, char Rn, long Op) {
         } else {
             result = state->Regs[Rn] + Op;
             state->PSTATE.V = (state->Regs[Rn] > 0 && Op > 0 && result < 0) || (state->Regs[Rn] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op > 0 && result >= 0) || (state->Regs[Rn] > 0 && Op < 0 && result >= 0);
+            state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op >= 0 && result >= 0) || (state->Regs[Rn] >= 0 && Op < 0 && result >= 0) || (state->Regs[Rn] == 0 && Op == 0 && subOrNot);
         };
 	if (!(Rd == REGISTER31)) {
 	  state->Regs[Rd] = result;
@@ -102,9 +102,10 @@ void adds(struct CompState* state, int instruction, char Rn, long Op) {
 	        } else {
 	            result = state->Regs[Rn] & (BIT32 - 1);
 	        };
-	        result += Op;
-            state->PSTATE.V = (state->Regs[Rn] > 0 && Op > 0 && result < 0) || (state->Regs[Rn] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op > 0 && result >= 0) || (state->Regs[Rn] > 0 && Op < 0 && result >= 0);
+		int res = result;
+		result += Op;
+            state->PSTATE.V = (res > 0 && Op > 0 && result < 0) || (res < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (res < 0 && Op < 0) || (res < 0 && Op >= 0 && result >= 0) || (res >= 0 && Op < 0 && result >= 0) || (res == 0 && Op == 0 && subOrNot);
         };
 
 	if (!(Rd == REGISTER31)) {
@@ -114,6 +115,7 @@ void adds(struct CompState* state, int instruction, char Rn, long Op) {
         state->PSTATE.N = result < 0;
         state->PSTATE.Z = result == 0;
     };
+    
 };
 
 static void arithmeticImmediate(struct CompState* state, int instruction) {
@@ -127,13 +129,13 @@ static void arithmeticImmediate(struct CompState* state, int instruction) {
     char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
-        adds(state, instruction, Rn, (-Op));
+	adds(state, instruction, Rn, (-Op), 1);
         break;
         case 2:
         add(state, instruction, Rn, (-Op));
         break;
         case 1:
-        adds(state, instruction, Rn, Op);
+	adds(state, instruction, Rn, Op, 0);
         break;
         default:
         add(state, instruction, Rn, Op);
