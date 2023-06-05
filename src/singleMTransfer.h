@@ -17,7 +17,7 @@ void accessMemory(void *location, char *mem, int address, size_t n, char t) {
 
 void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	// check that U is one
-	int L,U,I, Literal;
+	int L,U,I, Literal, R;
 	long temp;
 	int n; // number of bytes to be loaded 8 for 64bit and 4 for 32bit
 	int xn, rt, xm;// register number
@@ -55,6 +55,7 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	U = 1 & (inst>> 24);
 	L = 1 & (inst>> 22);
 	I = 1 & (inst>>11);
+	R = 1 & (inst >> 21);
 	printf("Literal:%d L:%d U:%d I:%d\n", Literal, L, U, I);
 
 	if ((1 & (inst>>30)) == 0) {
@@ -63,7 +64,7 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 		n = sizeof(long);
 	}
 	printf("xn:%d rt:%d xm:%d\n", xn, rt, xm);
-	
+
 	if (Literal == 1) {
 		if (U != 0) {
 			printf("unsigned offset mode\n");
@@ -72,8 +73,12 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 
 
 			address = state -> Regs[xn] + (imm12 << 3);
-		} else {
-			if (I != 0) {
+		} else {	
+			if ((R == 1)) {
+				//register offset
+				printf("Register Offset");
+				address = state -> Regs[xn] + state -> Regs[xm];
+			} else if (I != 0) {
 				printf("simm9 is %d\n", simm9);
 				address = state -> Regs[xn] + simm9;
 				state -> Regs[xn] = address;
