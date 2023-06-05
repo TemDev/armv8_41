@@ -23,12 +23,16 @@ static void add(struct CompState* state, int instruction, char Rn, int Op) {
         long result;
         if (Rn == REGISTER31) {
             result = state->SP + Op;
-            state->SP = result;
         } else {
 	    result = state->Regs[Rn] + ((long) Op);
-            state->Regs[Rd] = result;
 	    printf("%x", state->Regs[Rd]);
         };
+
+	if (Rd == REGISTER31) {
+	  state->SP = result;
+	} else {
+	  state->Regs[Rd] = result;
+	};
         
     } else {
         int result;
@@ -39,8 +43,6 @@ static void add(struct CompState* state, int instruction, char Rn, int Op) {
                 result = state->SP & (BIT32 - 1);
 	        };
             result += Op;
-            state->SP = result;
-            state->SP = state->SP & (BIT32 - 1);
         } else {
             if (state->Regs[Rd] & BIT31) {
                 result = state->Regs[Rd] | BIT6432;
@@ -48,9 +50,15 @@ static void add(struct CompState* state, int instruction, char Rn, int Op) {
                 result = state->Regs[Rd] & (BIT32 - 1);
             };
             result += Op;
-            state->Regs[Rd] = result;
-            state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
         };
+
+	if (Rd == REGISTER31) {
+	  state->SP = result;
+            state->SP = state->SP & (BIT32 - 1);
+	} else {
+	  state->Regs[Rd] = result;
+	  state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
+	};
     };
 };
 
@@ -93,11 +101,12 @@ static void adds(struct CompState* state, int instruction, char Rn, int Op) {
 	        result += Op;
             state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
             state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
-	        state->Regs[Rd] = result;
-	        state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
         };
-	printf("state.Regs[Rd]: %ld state.Regs[Rn] %ld Op: %ld result; %ld\n", state->Regs[Rd], state-> Regs[Rn], Op, result);
-	printf("result < 0 : %d\n", (result < 0));
+
+	if (!(Rd == REGISTER31)) {
+	  state->Regs[Rd] = result;
+	  state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
+	};
         state->PSTATE.N = result < 0;
         state->PSTATE.Z = result == 0;
     };
