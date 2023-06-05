@@ -12,7 +12,7 @@ typedef enum { BIT_64, BIT_32 } register_size;
 
 typedef union { special_register_type special_register, int number }
 
-typedef struct { register_type type, register_size size, int register_number } register;
+typedef struct { register_type type, register_size size} register;
 
 typedef union { register register_operand, int64_t immediate } operand_value;
 
@@ -95,9 +95,12 @@ operand process_operand(char* operand_text) {
     ret_operand = operand;
     if(operand_text[0] == '#') {
         ret_operand.type = IMMEDIATE;
-        ret_operand.value = atoi(operand_text + 1);  // assumes immediate value is valid, else is set to 0
+        ret_operand.value.immediate = atoi(operand_text + 1);  // assumes immediate value is valid, else is set to 0
     } else if(is_register(operand_text)) {
-        
+        ret_operand.type = REGISTER;
+        if(operand_text == "sp") {
+            ret_operand.value.register_operand.type = SPECIAL;  // move this
+        } 
     }
 
 
