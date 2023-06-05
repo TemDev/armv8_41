@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
@@ -32,7 +33,7 @@ typedef union {
 
 typedef struct { line_type type, line_contents contents; } line_data;
 
-
+// built in func exists strchr BUT don't think it works as can't check if '\0' ?
 int char_in_str(char val, char *str) {
     for(int i = 0; i < strlen(str); i++) {
         if(val == str[i]) return 1;  // if char is in str
@@ -40,19 +41,20 @@ int char_in_str(char val, char *str) {
     return 0;
 }
 
-int compare_str(char *str1, char *str2) {
-    for(int j = 0; j < strlen(str1); j++) {
-        if(str1[j] != str2[j]) {
-            return 0;
-        }
-    return 1;  // if two strings are equal
-    }
-}
+// built in func exists strcmp
+// int compare_str(char *str1, char *str2) {
+//     for(int j = 0; j < strlen(str1); j++) {
+//         if(str1[j] != str2[j]) {
+//             return 0;
+//         }
+//     return 1;  // if two strings are equal
+//     }
+// }
 
 int str_in_str_arr(char *str, char **str_arr, int str_arr_len) {
     for(int i = 0; i < str_arr_len; i++) {
         if(strlen(str) == strlen(str_arr[i])) {
-            if (compare_str(str, str_arr[i]) == 1) return 1;  // if str is in str_arr
+            if (strcmp(str, str_arr[i]) == 0) return 1;  // if str is in str_arr
         }
     }
     return 0;
