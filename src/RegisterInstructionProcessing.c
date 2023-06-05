@@ -25,26 +25,26 @@
 
 //Bitwise AND
 
-static int LOCAL_ADD(int x, int y) {
+static int LOCAL_ADD(long x, long y) {
     return x + y;
 }
 
-static int LOCAL_AND(int x, int y) {
+static int LOCAL_AND(long x, long y) {
     return x & y;
 }
 
 // Bitwise inclusive OR
-static int LOCAL_IOR(int x, int y) {
+static int LOCAL_IOR(long x, long y) {
     return x | y;
 }
 
 //Bitwise eclusive OR function 
-static int LOCAL_EOR(int x, int y) {
+static int LOCAL_EOR(long x, long y) {
     return x ^ y;
 }
 
 // Standard look of the finction and, orr, eon. Correct operators will the applied using the function pointers above and Op will be negated in required cases to chieve bic, orn and eor
-static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(int, int)) {
+static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(long, long)) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -81,7 +81,7 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, i
     }
 }
 
-static void bin_op2(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(int, int)) {
+static void bin_op2(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(long, long)) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -159,7 +159,7 @@ static void ands(struct CompState* state, int instruction, char Rn, int Op) {
 
 // Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
 static void logical(struct CompState* state, int instruction) {
-    int Opnew;
+    long Opnew;
     char Rm = ((31) & (instruction>>16));
     if ((instruction >> 22) & 3 == 0) {
         Opnew = lsl_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
@@ -171,9 +171,9 @@ static void logical(struct CompState* state, int instruction) {
 	Opnew = ror_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     }
     char Rn = ((31) & (instruction>>5));
-    char opc = (instruction >> 29) & 3;
-    printf("Rn:%d opc:%d\n", Rn, opc);
-    switch (opc) {
+    char opcN = ((instruction >> 28) & 6) | ((instruction >> 24) & 1);
+    printf("Rn:%d opc:%d\n", Rn, opcN);
+    switch (opcN) {
         case 7:
         ands(state, instruction, Rn, (~Opnew));
         break;
@@ -202,15 +202,18 @@ static void logical(struct CompState* state, int instruction) {
 
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
 static void arithmetic(struct CompState* state, int instruction) {
-    int Opnew;
+    long Opnew;
     char Rm = ((31) & (instruction>>16));
     if ((instruction >> 22) & 3 == 0) {
 	Opnew = lsl_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     } else if ((instruction >> 22) & 3 == 1) {
 	Opnew = lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
-    } else {
+    } else if ((instruction >> 22) & 3 == 2) {
 	Opnew = asr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+    } else {
+	Opnew = state->Regs[Rm];
     }
+
     char Rn = ((31) & (instruction>>5));
     // Bit wise shift should be included and some things will be added / altered
     char opc = (instruction >> 29) & 3;
