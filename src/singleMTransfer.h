@@ -28,24 +28,25 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	xn = (31) & (inst>>5);
 	xm = (31) & (inst >> 16);
 	rt = (31) & inst;
-	imm12 = 0;
 	//printf("imm12 before %x", imm12);
-       	imm12 += (4095 & (inst >> 10));
+       	imm12 = (4095 & (inst >> 10));
 	//printf("imm12 after %x",imm12);
 	//printf("firt 22 bits of inst: %x", inst >> 10 );
 	simm9 = (511 & (inst >> 12 ));
-	simm9 = simm9 << 55;
-	simm9 = simm9 >> 55;
+	if (((simm9 >> 8) & 1) == 1) {
+		simm9 |= 0xffffffffffffffff << 9;	
+	}	
 	simm19 = ((1<<19)-1) & (inst >> 5);
-	simm19 = simm19 << 46;
-	simm19 = simm19 >> 46;
+	if (((simm19 >> 18) & 1) == 1) {
+		simm19 |= 0xffffffffffffffff << 19;	
+	}
 	Literal = 1 & (inst>> 29);
 	U = 1 & (inst>> 24);
 	L = 1 & (inst>> 22);
 	I = 1 & (inst>>11);
 	printf("Literal:%d L:%d U:%d I:%d\n", Literal, U, L, I);
 
-	if (1 & (inst>>30) == 0) {
+	if ((1 & (inst>>30)) == 0) {
 		n = sizeof(int); //sf is 0 and 
 	} else {
 		n = sizeof(long);
@@ -72,15 +73,14 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 				state -> Regs[xn] += simm9;
 			}		
 		}
-	
+		printf("address is %lx \n ", address);
+
 		if (L == 0) {
 			printf("store\n");
 			accessMemory(&(*state).Regs[rt], mem, address, n, 'r');
 			//memcpy(&mem[address], &(*state).Regs[rt], n);		
 		} else {
-			printf("load size of load%d\n", n);
-			printf("Regs[0] location:%ld  Regs[1] location: %ld \n",state -> Regs,
-			     &(state -> Regs[1]));
+			printf("load\n");
 			accessMemory(&(*state).Regs[rt], mem, address, n, 'w');
 			//memcpy(&(*state).Regs[rt], &mem[address],n);
 			
@@ -100,8 +100,9 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 		printf("simm19 is %d\n", simm19);
 		
 		printf("literal\n");
+		printf("address is %lx \n ", address);
 		address = (long) state -> PC + (simm19 << 2);
-		accessMemory(&(state -> Regs[rt]), address, mem, n, 'w');
+		accessMemory(&(state -> Regs[rt]),mem,address, n, 'w');
 	}
 
 	printf("address where taken from%x \n", address);
