@@ -41,7 +41,7 @@ static long LOCAL_EOR(long x, long y) {
 }
 
 // Standard look of the finction and, orr, eon. Correct operators will the applied using the function pointers above and Op will be negated in required cases to chieve bic, orn and eor
-static void bin_op1(struct CompState* state, int instruction, char Rn, long Op, long (*fn)(long, long)) {
+static long bin_op1(struct CompState* state, int instruction, char Rn, long Op, long (*fn)(long, long)) {
     printf("bin_op Op: %ld\n", Op);
     char Rd = BITrd & instruction;
     long result;
@@ -59,21 +59,21 @@ static void bin_op1(struct CompState* state, int instruction, char Rn, long Op, 
 	}
     }
     printf("result: %ld\n", result);
+    return result;
 }
 
 static void ands(struct CompState* state, int instruction, char Rn, long Op) {
-    bin_op1(state, instruction, Rn, Op, LOCAL_AND);
+    long resultMain = bin_op1(state, instruction, Rn, Op, LOCAL_AND);
     char Rd = BITrd & instruction;
-
     if ((instruction & BITsf) == 0)  {
-       int result = (int) (state->Regs[Rd]);
+       int result = (int) (resultMain);
        printf("Register: %x\n", state->Regs[Rd]);
        printf("Result: %d \n", result);
        state->PSTATE.N = result < 0;       
-   } else {
-       state->PSTATE.N = state->Regs[Rd] < 0;
-   }	   
-    state->PSTATE.Z = state->Regs[Rd] == 0;
+    } else {
+       state->PSTATE.N = resultMain < 0;
+    }
+    state->PSTATE.Z = resultMain == 0;
     state->PSTATE.C = 0;
     state->PSTATE.V = 0;
 }
