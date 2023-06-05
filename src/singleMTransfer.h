@@ -33,18 +33,29 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 	//printf("imm12 after %x",imm12);
 	//printf("firt 22 bits of inst: %x", inst >> 10 );
 	simm9 = (511 & (inst >> 12 ));
-	if (((simm9 >> 8) & 1) == 1) {
-		simm9 |= 0xffffffffffffffff << 9;	
+	printf("simm9 >> 8 :  %ld \n", simm9>>8);
+	printf("mask :  %lx \n", 0xffffffffffffffff << 8 );	
+	printf("simm9 :  %ld \n", simm9 | (0xffffffffffffffff << 8));
+		
+
+	if ((simm9 >> 8) == 1) {
+		printf("simm9 >> 8 :  %ld \n", simm9>>8);
+		simm9 = simm9 | (0xffffffffffffffff << 9);		
+		printf("mask :  %lx \n", 0xffffffffffffffff << 9 );	
+		printf("simm9 >> 8 :  %ld \n", simm9>>8);
+		
+	
 	}	
 	simm19 = ((1<<19)-1) & (inst >> 5);
-	if (((simm19 >> 18) & 1) == 1) {
-		simm19 |= 0xffffffffffffffff << 19;	
+	if ((simm19 >> 18) == 1) {
+		simm19 = simm19 | (0xffffffffffffffff << 19);	
 	}
-	Literal = 1 & (inst>> 29);
+	// can cause issues
+	Literal = 1 & (inst>> 31);
 	U = 1 & (inst>> 24);
 	L = 1 & (inst>> 22);
 	I = 1 & (inst>>11);
-	printf("Literal:%d L:%d U:%d I:%d\n", Literal, U, L, I);
+	printf("Literal:%d L:%d U:%d I:%d\n", Literal, L, U, I);
 
 	if ((1 & (inst>>30)) == 0) {
 		n = sizeof(int); //sf is 0 and 
@@ -82,7 +93,7 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 		} else {
 			printf("load\n");
 			accessMemory(&(*state).Regs[rt], mem, address, n, 'w');
-			//memcpy(&(*state).Regs[rt], &mem[address],n);
+				//memcpy(&(*state).Regs[rt], &mem[address],n);
 			
 
 			//printf("the memory to be copied %x\n", smth);
@@ -94,7 +105,7 @@ void unsignedImmOffset(struct CompState *state, int inst, char *mem) {
 			*lp = 0xabcdef;
 			printf("%ld value before\n", *lp);*/
 
-		}
+	}
 	} else {
 
 		printf("simm19 is %d\n", simm19);
