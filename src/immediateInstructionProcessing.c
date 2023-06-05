@@ -14,7 +14,7 @@
 #define BIT31 2147483648 // == 2 ^ 31, MASK
 #define BIT32 4294967296 // == 2 ^ 32, MASK
 
-static void add(struct CompState* state, int instruction, char Rn, int Op) {
+void add(struct CompState* state, int instruction, char Rn, long Op) {
   printf("ADD %d \n", Op);
     char Rd = BITrd & instruction;
     
@@ -62,7 +62,7 @@ static void add(struct CompState* state, int instruction, char Rn, int Op) {
     };
 };
 
-static void adds(struct CompState* state, int instruction, char Rn, int Op) {
+void adds(struct CompState* state, int instruction, char Rn, long Op) {
     char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
@@ -117,7 +117,7 @@ static void arithmeticImmediate(struct CompState* state, int instruction) {
     const int sh = 4194304;
     const int imm12 = 4095; // 2 ^ 12 - 1
     const short rn = 992;
-    int Op = ((instruction >> 10) & imm12) << (12 * ((instruction >> 22) & 1));
+    long Op = ((instruction >> 10) & imm12) << (12 * ((instruction >> 22) & 1));
     printf("%d\n", Op);
     char Rn = (rn & instruction) >> 5;
     char opc = (instruction >> 29) & 3;
