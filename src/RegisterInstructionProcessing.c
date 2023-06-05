@@ -29,10 +29,6 @@ static int LOCAL_ADD(int x, int y) {
     return x + y;
 }
 
-static int LOCAL_SUB(int x, int y) {
-    return x - y;
-}
-
 static int LOCAL_AND(int x, int y) {
     return x & y;
 }
@@ -147,24 +143,12 @@ static void add(struct CompState* state, int instruction, char Rn, int Op) {
 	            return bin_op1(state, instruction, Rn, Op, LOCAL_ADD);
 }
 
-static void sub(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op1(state, instruction, Rn, Op, LOCAL_SUB);
-}
-
 static void adds(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op2(state, instruction, Rn, Op, LOCAL_ADD);
-}
-
-static void subs(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op2(state, instruction, Rn, Op, LOCAL_SUB);
+		            return bin_op2(state, instruction, Rn, Op, LOCAL_ADD);
 }
 
 static void ands(struct CompState* state, int instruction, char Rn, int Op) {
-	            return bin_op2(state, instruction, Rn, Op, LOCAL_AND);
-}
-
-static void and_flag(struct CompState* state, int instruction, char Rn, int Op) {
-    andd(state, instruction, Rn, (~Op));
+    andd(state, instruction, Rn, Op);
     char Rd = BITrd & instruction;
     int result = state -> Regs[Rd]; 
     state->PSTATE.N = result < 0;
@@ -181,33 +165,35 @@ static void logical(struct CompState* state, int instruction) {
         Opnew = lsl_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     } else if ((instruction >> 22) & 3 == 1) {
         Opnew = lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
-    } else {
+    } else if ((instruction >> 22) & 3 == 2) {
         Opnew = asr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+    } else {
+	Opnew = ror_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
     }
     char Rn = ((31) & (instruction>>5));
     char opc = (instruction >> 29) & 3;
     printf("Rn:%d opc:%d\n", Rn, opc);
     switch (opc) {
         case 7:
-        ands(state, instruction, Rn, -Opnew);
+        ands(state, instruction, Rn, (~Opnew));
         break;
         case 6:
         ands(state, instruction, Rn, Opnew);
         break;
         case 5:
-        eor(state, instruction, Rn, -Opnew);
+        eor(state, instruction, Rn, (~Opnew));
         break;
         case 4:
         eor(state, instruction, Rn, Opnew);
         break;
         case 3:
-        orr(state, instruction, Rn, -Opnew);
+        orr(state, instruction, Rn, (~Opnew));
         break;
         case 2:
         orr(state, instruction, Rn, Opnew);
         break;
         case 1:
-        andd(state, instruction, Rn, -Opnew);
+        andd(state, instruction, Rn, (~Opnew));
         break;
         default:
         andd(state, instruction, Rn, Opnew);
@@ -216,16 +202,24 @@ static void logical(struct CompState* state, int instruction) {
 
 //Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
 static void arithmetic(struct CompState* state, int instruction) {
-    char Opnew = -(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
+    int Opnew;
+    char Rm = ((31) & (instruction>>16));
+    if ((instruction >> 22) & 3 == 0) {
+	Opnew = lsl_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+    } else if ((instruction >> 22) & 3 == 1) {
+	Opnew = lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+    } else {
+	Opnew = asr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+    }
     char Rn = ((31) & (instruction>>5));
     // Bit wise shift should be included and some things will be added / altered
     char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
-        subs(state, instruction, Rn, Opnew);
+        adds(state, instruction, Rn, (-Opnew));
         break;
         case 2:
-        sub(state, instruction, Rn, Opnew);
+        add(state, instruction, Rn, (-Opnew));
         break;
         case 1:
         adds(state, instruction, Rn, Opnew);
