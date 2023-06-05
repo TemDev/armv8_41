@@ -197,10 +197,29 @@ static void multiply(struct CompState* state, int instruction) {
   int Rn = (int)((31) & (instruction>>5));
   int Rm = (int)((31) & (instruction>>16));
   printf("Rd:%d Ra:%d Rn:%d Rm:%d", Rd, Ra, Rn, Rm);
+  long rrn, rrm, rra, mask;
+  rrm  = state-> Regs[Rm];
+  rrn  = state-> Regs[Rn];
+  rra  = state-> Regs[Ra];
+  mask = -1;
+  if (!(instruction & BITsf)) {
+    mask = BIT32 - 1;
+    rrm = rrm & (BIT32 -1);
+    rrn = rrn & (BIT32 -1);
+    rra = rra & (BIT32 -1);
+    
+  }
   if (1 & (instruction>>15)) {
-      state->Regs[Rd] = state->Regs[Ra] - (state->Regs[Rn] * state->Regs[Rm]);
+    if (Ra == 31) {
+      state->Regs[Rd] = state->ZR - (mask & ( rrn * rrm));
+      } else {
+	state->Regs[Rd] = rra -(mask & (rrn * rrm));
+      };
   } else {
-      state->Regs[Rd] = state->Regs[Ra] + (state->Regs[Rn] * state->Regs[Rm]);
+      state->Regs[Rd] = rra + (mask & (rrn * rrm));
+  };
+  if (!(instruction & BITsf)) {
+    state->Regs[Rd] = (state -> Regs[Rd]) & (BIT32 -1); 
   }
 };
 

@@ -78,8 +78,8 @@ void adds(struct CompState* state, int instruction, char Rn, long Op) {
             state->PSTATE.C = 0;
         } else {
             result = state->Regs[Rn] + Op;
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
+            state->PSTATE.V = (state->Regs[Rn] > 0 && Op > 0 && result < 0) || (state->Regs[Rn] < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op > 0 && result >= 0) || (state->Regs[Rn] > 0 && Op < 0 && result >= 0);
         };
 	if (!(Rd == REGISTER31)) {
 	  state->Regs[Rd] = result;
@@ -103,8 +103,8 @@ void adds(struct CompState* state, int instruction, char Rn, long Op) {
 	            result = state->Regs[Rn] & (BIT32 - 1);
 	        };
 	        result += Op;
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
+            state->PSTATE.V = (state->Regs[Rn] > 0 && Op > 0 && result < 0) || (state->Regs[Rn] < 0 && Op < 0 && result > 0);
+            state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op > 0 && result >= 0) || (state->Regs[Rn] > 0 && Op < 0 && result >= 0);
         };
 
 	if (!(Rd == REGISTER31)) {
