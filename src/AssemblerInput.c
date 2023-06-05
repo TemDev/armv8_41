@@ -32,18 +32,28 @@ typedef union {
 
 typedef struct { line_type type, line_contents contents; } line_data;
 
-char **register_names(void) {
-    char **registers[67]
-    for (int i = 0; i < 31; i++) {
-        char register_name[4];
-        sprintf(register_name, "x%d", i);
+
+int char_in_str(char val, char *str) {
+    for(int i = 0; i < strlen(str); i++) {
+        if(val == str[i]) return 1;  // if char is in str
+    }
+    return 0;
+}
+
+int compare_str(char *str1, char *str2) {
+    for(int j = 0; j < strlen(str1); j++) {
+        if(str1[j] != str2[j]) {
+            return 0;
+        }
+    return 1;  // if two strings are equal
     }
 }
 
-
-int in_string(char val, char *str) {
-    for(int i = 0; i < strlen(str); i++) {
-        if(val == str[i]) return 1;
+int str_in_str_arr(char *str, char **str_arr, int str_arr_len) {
+    for(int i = 0; i < str_arr_len; i++) {
+        if(strlen(str) == strlen(str_arr[i])) {
+            if (compare_str(str, str_arr[i]) == 1) return 1;  // if str is in str_arr
+        }
     }
     return 0;
 }
@@ -52,7 +62,7 @@ void get_next_word(char start, char* end, char* string, char** word) {
     int length = strlen(string);
     char end_characters[] = {' ', '\n', '\0'};
     for (int i = start; i < length ; i++) {
-        if(~in_str(string[i], end_characters)) (*word)[i] = string[i];
+        if(~char_in_str(string[i], end_characters)) (*word)[i] = string[i];
         else {
             (*word)[i] = '\0';
             *end = i;  // technically the index of the end char after the word
@@ -68,12 +78,27 @@ line_type get_line_type(char *file_line) {
     return INSTRUCTION;
 }
 
+int is_register(char* operand_text) {
+    char special_register_names[][4] = {"sp", "wsp", "xzr", "wzr", "PC"};
+    if(str_in_str_arr(operand_text, special_register_names)) return 1;
+    if(operand_text[0] == 'x' || operand_text[0] == 'w') {
+        char *str;
+        long num = strtol(operand_text + 1, &str, 10); 
+        if (str != num && *end == '\0') {
+            if (0 <= num && num <= 31) return 1;
+        }
+    }
+    return 0;
+}
+
 operand process_operand(char* operand_text) {
     ret_operand = operand;
     if(operand_text[0] == '#') {
         ret_operand.type = IMMEDIATE;
-        ret_operand.value = atoi(operand_text + 1);
-    } else if()
+        ret_operand.value = atoi(operand_text + 1);  // assumes immediate value is valid, else is set to 0
+    } else if(is_register(operand_text)) {
+        
+    }
 
 
 }
