@@ -44,12 +44,16 @@ void add(struct CompState* state, int instruction, char Rn, long Op) {
 	        };
             result += Op;
         } else {
-            if (state->Regs[Rd] & BIT31) {
-                result = state->Regs[Rd] | BIT6432;
+	  printf("32-bit");
+            if (state->Regs[Rn] & BIT31) {
+                result = state->Regs[Rn] | BIT6432;
             } else {
-                result = state->Regs[Rd] & (BIT32 - 1);
+                result = state->Regs[Rn] & (BIT32 - 1);
             };
+	    printf("Result after: %ld\n", state->Regs[Rn]);
+	    printf("Result before: %ld\n", result);
             result += Op;
+	    printf("Result after: %ld\n", result);
         };
 
 	if (Rd == REGISTER31) {
@@ -93,10 +97,10 @@ void adds(struct CompState* state, int instruction, char Rn, long Op) {
             state->PSTATE.C = 0;
         } else {
 	  printf("state regs mask%d\n", state->Regs[Rd] & BIT31);
-	        if (state->Regs[Rd] & BIT31) {
-	            result = state->Regs[Rd] | BIT6432;
+	        if (state->Regs[Rn] & BIT31) {
+	            result = state->Regs[Rn] | BIT6432;
 	        } else {
-	            result = state->Regs[Rd] & (BIT32 - 1);
+	            result = state->Regs[Rn] & (BIT32 - 1);
 	        };
 	        result += Op;
             state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);

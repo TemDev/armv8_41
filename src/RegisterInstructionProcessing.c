@@ -81,20 +81,26 @@ static void logical(struct CompState* state, int instruction) {
     long Opnew;
     char Rm = ((31) & (instruction>>16));
     char shift = (instruction >> 22) & 3;
+    if (!(instruction & BITsf)) {
+      Opnew = (int) state->Regs[Rm];
+    } else {
+      Opnew = state->Regs[Rm];
+    };
     if (shift == 0) {
-        Opnew = lsl_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        Opnew = lsl_64 ((Opnew), ((63) & (instruction >> 10)));
 	printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("lsl Opnew: %ld\n", Opnew);
     } else if (shift  == 1) {
-        Opnew = lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        Opnew = lsr_64 ((Opnew), ((63) & (instruction >> 10)));
         printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("lsr Opnew: %ld\n", Opnew);
     } else if (shift == 2) {
-        Opnew = asr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        printf("OPNEW: %ld\n", Opnew);
+        Opnew = asr_64 ((Opnew), ((63) & (instruction >> 10)));
 	printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("asr Opnew: %ld\n", Opnew);
     } else {
-	Opnew = ror_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+      Opnew = ror_64 ((Opnew), ((63) & (instruction >> 10)));
 	printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
 	printf("ror Opnew: %ld\n", Opnew);
     }
@@ -124,6 +130,8 @@ static void logical(struct CompState* state, int instruction) {
         bin_op1(state, instruction, Rn, (~Opnew), LOCAL_AND);
         break;
         default:
+	printf("RN: %d\n", Rn);
+	printf("OPNEW: %ld \n", Opnew);
         bin_op1(state, instruction, Rn, (Opnew), LOCAL_AND);
     }
 }
@@ -157,7 +165,6 @@ static void arithmetic(struct CompState* state, int instruction) {
         adds(state, instruction, Rn, Opnew);
         break;
         default:
-	printf("OPNEW: %ld \n", Opnew);
         add(state, instruction, Rn, Opnew);
     }
 };
