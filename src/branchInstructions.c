@@ -13,6 +13,7 @@
 
 static void unconditional(struct CompState* state, long simm26) {
     state->PC += simm26 * 4;
+    printf("STATE OF PC: %ld\n", state->PC);
 };
 
 static void registerBranch(struct CompState* state, char Rn) {
@@ -26,25 +27,24 @@ static void conditional(struct CompState* state, long offset, char cond) {
 	printf("Cond %d\n",cond);
 	switch (cond) {
         case 0:
-
         condRes = (state->PSTATE.Z);
         break;
         case 1:
         condRes = !(state->PSTATE.Z);
         break;
-        case 6:
+        case 10:
         condRes = !(state->PSTATE.N ^ state->PSTATE.V);
         break;
-        case 7:
+        case 11:
         condRes = (state->PSTATE.N ^ state->PSTATE.V);
         break;
-        case 8:
+        case 12:
         condRes = (!(state->PSTATE.Z) && !(state->PSTATE.N ^ state->PSTATE.V));
         break;
-        case 9:
+        case 13:
         condRes = (!(!(state->PSTATE.Z) && !(state->PSTATE.N ^ state->PSTATE.V)));
         break;
-        case 10:
+        case 14:
         condRes =(state->PSTATE.N) || (state->PSTATE.Z) || (state->PSTATE.C) || (state-> PSTATE.V);
     	break;
 	default:
@@ -62,9 +62,10 @@ static void conditional(struct CompState* state, long offset, char cond) {
 
 void branch(struct CompState* state, int instruction) {
     if ((instruction >> 26) == 5) {
+      printf("UNCONDITIONAL\n");
         long simm26 = instruction & BIT26MASK;
 	if ((simm26 >> 25) == 1) {
-		simm26 = simm26 | (((long)-1)<<26);
+	  simm26 = simm26 | (( (long) -1) << (long) 26);
 	}
         unconditional(state, simm26);
     } else if (((instruction>>31) & 1) == 1) {
