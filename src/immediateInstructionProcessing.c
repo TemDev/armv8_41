@@ -1,9 +1,12 @@
+// Handles immediate instructions by determining their type and changing appropriate registers and flags.
+
 #include <stdio.h>
 #include <math.h>
 #include "emulate.h"
 #include "immediateInstructionProcessing.h"
-#include "bitwise.h"#define BIT32MASK 4294967295 // == 2 ^ 32 - 1, MASK
+#include "bitwise.h"
 
+#define BIT32MASK 4294967295 // == 2 ^ 32 - 1, MASK
 #define BIT24 16777216 // == 2 ^ 24, MASK
 #define BITsf 2147483648 // == 2 ^ 31, MASK
 #define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0, MASK
@@ -13,15 +16,15 @@
 #define BIT32 4294967296 // == 2 ^ 32, MASK
 
 // Function used to add contentsof register Rn and an operand Op and load into register. Does not set flags.
-void add(struct CompState* state, int instruction, char Rn, long Op) {
-    char Rd = BITrd & instruction;
+void add(struct CompState* state, int instruction, unsigned char Rn, int64_t Op) {
+    unsigned char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
-        long result;
+        int64_t result;
         if (Rn == REGISTER31) {
             result = state->SP + Op;
         } else {
-	    result = state->Regs[Rn] + ((long) Op);
+	    result = state->Regs[Rn] + ((int64_t) Op);
         };
 
 	if (Rd == REGISTER31) {
@@ -58,11 +61,11 @@ void add(struct CompState* state, int instruction, char Rn, long Op) {
 };
 
 // Function used to add contentsof register Rn and an operand Op and load into register. Sets flags. 
-void adds(struct CompState* state, int instruction, char Rn, long Op, char subOrNot) {
-    char Rd = BITrd & instruction;
+void adds(struct CompState* state, int32_t instruction, unsigned char Rn, int64_t Op, char subOrNot) {
+    unsigned char Rd = BITrd & instruction;
     
     if (BITsf & instruction) {
-        long result;
+        int64_t result;
         if (Rn == REGISTER31) {
             result = state->ZR + Op;
             state->PSTATE.V = false;
@@ -70,13 +73,6 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
         } else {
             result = state->Regs[Rn] + Op;
             state->PSTATE.V = (state->Regs[Rn] > 0 && Op > 0 && result < 0) || (state->Regs[Rn] < 0 && Op < 0 && result > 0);
-	    /*
-	    long temp = ((lsr_64(state->Regs[Rn], 1) + (lsr_64(Op, 1)) + ((state->Regs[Rn] & Op) & 1))); 
-            if (subOrNot ==1) {
-	        state -> PSTATE.C = temp <= 0;
-	    } else {
-	        state ->PSTATE.C = temp < 0;
-	    }*/	  
 	    state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op >= 0 && result >= 0) || (state->Regs[Rn] >= 0 && Op < 0 && result >= 0) || (Op == 0 && subOrNot);
         };
 	
@@ -100,21 +96,13 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
 	    } else {
 	        result = state->Regs[Rn] & (BIT32 - 1);
 	    };
-	    int res = result;
-	    int opp = Op;
+	    int32_t res = result;
+	    int32_t opp = Op;
 
-	    result += ((int) Op);
+	    result += ((int32_t) Op);
 
             state->PSTATE.V = (res > 0 && opp > 0 && result < 0) || (res < 0 && opp < 0 && result > 0);
-	    /*
-	    int temp = ((lsr_32(res, 1) + (lsr_32(Op, 1)) + ((state->Regs[Rn] & Op) & 1)));
-            if (subOrNot ==1) {
-	        state -> PSTATE.C = temp <= 0;
-	    } else {
-	        state ->PSTATE.C = temp < 0;
-	    }*/
-	    
-	    state->PSTATE.C = (res < 0 && opp < 0) || (res < 0 && opp >= 0 && result >= 0) || (res >= 0 && opp < 0 && result >= 0) || ( opp == 0 && subOrNot);
+	    state->PSTATE.C = (res < 0 && opp < 0) || (res < 0 && opp >= 0 && result >= 0) || (res >= 0 && opp < 0 && result >= 0) || (opp == 0 && subOrNot);
 	};
 
 	if (!(Rd == REGISTER31)) {
@@ -129,15 +117,13 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
 };
 
 // Function used to handle arithmetic operations - add, adds, sub, subs
-static void arithmeticImmediate(struct CompState* state, int instruction) {
+static void arithmeticImmediate(struct CompState* state, int32_t instruction) {
     printf("Arithmetic");
-    const int sh = 4194304;
-    const int imm12 = 4095; // 2 ^ 12 - 1
+    const int32_t imm12 = 4095; // 2 ^ 12 - 1
     const short rn = 992;
-    long Op = ((instruction >> 10) & imm12) << (12 * ((instruction >> 22) & 1));
-    printf("%d\n", Op);
-    char Rn = (rn & instruction) >> 5;
-    char opc = (instruction >> 29) & 3;
+    int64_t Op = ((instruction >> 10) & imm12) << (12 * ((instruction >> 22) & 1));
+    unsigned char Rn = (rn & instruction) >> 5;
+    unsigned char opc = (instruction >> 29) & 3;
     switch (opc) {
         case 3:
 	adds(state, instruction, Rn, (-Op), 1);
@@ -154,8 +140,8 @@ static void arithmeticImmediate(struct CompState* state, int instruction) {
 };
 
 // Function that handles movn operations
-static void movn(struct CompState* state, int instruction, long Op) {
-    char Rd = BITrd & instruction;
+static void movn(struct CompState* state, int32_t instruction, int64_t Op) {
+    unsigned char Rd = BITrd & instruction;
     if (BITsf & instruction) { // 64 bit mode.
       printf("%ld", ~Op);
         state->Regs[Rd] = ~Op;
@@ -166,8 +152,8 @@ static void movn(struct CompState* state, int instruction, long Op) {
 };
 
 // Function that handles movz operations
-static void movz(struct CompState* state, int instruction, long Op) {
-    char Rd = BITrd & instruction;
+static void movz(struct CompState* state, int32_t instruction, int64_t Op) {
+    unsigned char Rd = BITrd & instruction;
     if (BITsf & instruction) { // 64 bit mode.
         state->Regs[Rd] = Op;
     } else {
@@ -177,12 +163,12 @@ static void movz(struct CompState* state, int instruction, long Op) {
 };
 
 // Function that handles movk operations
-static void movk(struct CompState* state, int instruction, long imm16, int hw) {
+static void movk(struct CompState* state, int32_t instruction, int64_t imm16, int32_t hw) {
     printf("movk");
-    char Rd = BITrd & instruction;
-    long MASK2 = (long)  ~((long) 65535 << (((long) hw) * ((long) 16)));
+    unsigned char Rd = BITrd & instruction;
+    int64_t MASK2 = (int64_t)  ~((int64_t) 65535 << (((int64_t) hw) * ((int64_t) 16)));
     printf("MASK2 %lx \n", MASK2);
-    long MASK = imm16 << (hw * 16);
+    int64_t MASK = imm16 << (hw * 16);
     printf("MASK1 %lx \n", MASK);
     printf("Before %lx \n", state->Regs[Rd]);
     state->Regs[Rd] = (state->Regs[Rd] & MASK2) + MASK;
@@ -193,12 +179,12 @@ static void movk(struct CompState* state, int instruction, long imm16, int hw) {
 };
 
 // Function that determines what type of wideMove operation is to be performed
-static void wideMove(struct CompState* state, int instruction) {
-  int hw = (instruction >> 21) & 3;
-  int opc = (instruction >> 29) & 3;
-    long imm16MASK = 65535; // 2 ^ 16 - 1
-    long imm16 = lsr_32(instruction, 5) & imm16MASK;
-    long Op = imm16 <<( hw * 16);
+static void wideMove(struct CompState* state, int32_t instruction) {
+    int hw = (instruction >> 21) & 3;
+    int opc = (instruction >> 29) & 3;
+    int64_t imm16MASK = 65535; // 2 ^ 16 - 1
+    int64_t imm16 = lsr_32(instruction, 5) & imm16MASK;
+    int64_t Op = imm16 <<( hw * 16);
     printf("shifted %d\n", (instruction >> 29));
     printf("opc %d\n", opc);
     if (opc == 3) {
@@ -212,16 +198,10 @@ static void wideMove(struct CompState* state, int instruction) {
 };
 
 // Determines type of immediate instruction, arithmetic or wideMove.
-void determineTypeImmediate(struct CompState* state, int instruction) {
-  printf("determineType\n");
+void determineTypeImmediate(struct CompState* state, int32_t instruction) {
     if (instruction & (BIT24)) {
         arithmeticImmediate(state, instruction);
-    } else if ((instruction >> 23) & 5 == 5) {
-      printf("wideMOve\n");
+    } else if (((instruction >> 23) & 5) == 5) {
         wideMove(state, instruction);
     };
-};
-
-static int main(void) {
-    
 };
