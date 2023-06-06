@@ -163,11 +163,23 @@ static void arithmetic(struct CompState* state, int instruction) {
     char Rm = ((31) & (instruction>>16));
     char shift = (instruction >> 22) & 3;
     if (shift == 0) {
-      Opnew = (long) lsl_64((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        if (!(instruction & BITsf)) {
+           Opnew = (long) lsr_32 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        } else {
+           Opnew = (long) lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        };
     } else if (shift == 1) {
-      Opnew = (long) lsr_64((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        if (!(instruction & BITsf)) {
+           Opnew = (long) lsr_32 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        } else {
+           Opnew = (long) lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        };
     } else if (shift  == 2) {
-      Opnew = (long) asr_64((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        if (!(instruction & BITsf)) {
+           Opnew = (long) lsr_32 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        } else {
+           Opnew = (long) lsr_64 ((state->Regs[Rm]), ((63) & (instruction >> 10)));
+        };
     } else {
 	Opnew = state->Regs[Rm];
     }
