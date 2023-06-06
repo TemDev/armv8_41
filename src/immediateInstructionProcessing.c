@@ -102,16 +102,28 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
 	        } else {
 	            result = state->Regs[Rn] & (BIT32 - 1);
 	        };
+		printf("Rn :%lx RESULT : %x\n",state ->Regs[Rn], result);
+
 		int res = result;
-		result += Op;
-            state->PSTATE.V = (res > 0 && Op > 0 && result < 0) || (res < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (res < 0 && Op < 0) || (res < 0 && Op >= 0 && result >= 0) || (res >= 0 && Op < 0 && result >= 0) || (res == 0 && Op == 0 && subOrNot);
-        };
+		printf("RES : %x\n", res);
+
+
+		 
+		int opp = Op;
+		printf("opp : %.8x Op:%.8lx\n", opp, Op);
+
+
+		result += ((int) Op);
+
+            state->PSTATE.V = (res > 0 && opp > 0 && result < 0) || (res < 0 && opp < 0 && result > 0);
+	    state->PSTATE.C = (res < 0 && opp < 0) || (res < 0 && opp >= 0 && result >= 0) || (res >= 0 && opp < 0 && result >= 0) || (res == 0 && opp == 0 && subOrNot);
+	};
 
 	if (!(Rd == REGISTER31)) {
 	  state->Regs[Rd] = result;
 	  state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
 	};
+	printf("final RES : %x\n", result);
         state->PSTATE.N = result < 0;
         state->PSTATE.Z = result == 0;
     };
