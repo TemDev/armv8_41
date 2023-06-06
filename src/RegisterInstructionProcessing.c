@@ -42,7 +42,7 @@ static long LOCAL_EOR(long x, long y) {
 
 // Standard look of the finction and, orr, eon. Correct operators will the applied using the function pointers above and Op will be negated in required cases to chieve bic, orn and eor
 static long bin_op1(struct CompState* state, int instruction, char Rn, long Op, long (*fn)(long, long)) {
-    printf("bin_op Op: %ld\n", Op);
+    printf("bin_op Op: %lx\n", Op);
     char Rd = BITrd & instruction;
     long result;
     if (Rn == BITrd) {
@@ -58,7 +58,7 @@ static long bin_op1(struct CompState* state, int instruction, char Rn, long Op, 
     	    state->Regs[Rd] = result & (BIT32 - 1);
 	}
     }
-    printf("result: %ld\n", result);
+    printf("result: %lx\n", result);
     return result;
 }
 
@@ -67,10 +67,12 @@ static void ands(struct CompState* state, int instruction, char Rn, long Op) {
     char Rd = BITrd & instruction;
     if ((instruction & BITsf) == 0)  {
        int result = (int) (resultMain);
-       printf("Register: %x\n", state->Regs[Rd]);
+       printf("Register: %x\n", resultMain);
        printf("Result: %d \n", result);
        state->PSTATE.N = result < 0;       
     } else {
+      printf("resultMain %X", resultMain);
+      printf("resultMain %ld", resultMain);
        state->PSTATE.N = resultMain < 0;
     }
     state->PSTATE.Z = resultMain == 0;
@@ -83,12 +85,13 @@ static void logical(struct CompState* state, int instruction) {
     long Opnew;
     char Rm = ((31) & (instruction>>16));
     char shift = (instruction >> 22) & 3;
-    printf("REGisTer: %ldx ", state->Regs[Rm]);
-    if (instruction & BITsf == 0) {
+    printf("REGisTer: %lx\n",  state->Regs[Rm]);
+    if (!(instruction & BITsf)) {
       Opnew = (int) state->Regs[Rm];
     } else {
       Opnew = state->Regs[Rm];
     };
+    printf("opnew %lX\n", Opnew);
     if (shift == 0) {
         if (!(instruction & BITsf)) {
            Opnew = lsl_32 ((Opnew), ((63) & (instruction >> 10)));
@@ -122,7 +125,7 @@ static void logical(struct CompState* state, int instruction) {
            Opnew = ror_64 ((Opnew), ((63) & (instruction >> 10)));
         };
 	printf("instruction >> 10 %ld\n", ((63) & (instruction >> 10)));
-	printf("ror Opnew: %ld\n", Opnew);
+	printf("ror Opnew: %lX\n", Opnew);
     }
     char Rn = ((31) & (instruction>>5));
     char opcN = ((instruction >> 28) & 6) | ((instruction >> 21) & 1);

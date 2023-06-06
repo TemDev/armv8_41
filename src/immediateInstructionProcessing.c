@@ -82,13 +82,14 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
         } else {
             result = state->Regs[Rn] + Op;
             state->PSTATE.V = (state->Regs[Rn] > 0 && Op > 0 && result < 0) || (state->Regs[Rn] < 0 && Op < 0 && result > 0);
+	    /*
 	    long temp = ((lsr_64(state->Regs[Rn], 1) + (lsr_64(Op, 1)) + ((state->Regs[Rn] & Op) & 1))); 
         	if (subOrNot ==1) {
 	      state -> PSTATE.C = temp <= 0;
 		} else {
 	  state ->PSTATE.C = temp < 0;
-		}	  
-	    //state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op >= 0 && result >= 0) || (state->Regs[Rn] >= 0 && Op < 0 && result >= 0) || (state->Regs[Rn] == 0 && Op == 0 && subOrNot);
+	  }*/	  
+	    state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op >= 0 && result >= 0) || (state->Regs[Rn] >= 0 && Op < 0 && result >= 0) || (Op == 0 && subOrNot);
         };
 	if (!(Rd == REGISTER31)) {
 	  state->Regs[Rd] = result;
@@ -128,14 +129,15 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
 		result += ((int) Op);
 
             state->PSTATE.V = (res > 0 && opp > 0 && result < 0) || (res < 0 && opp < 0 && result > 0);
+	    /*
 	    int temp = ((lsr_32(res, 1) + (lsr_32(Op, 1)) + ((state->Regs[Rn] & Op) & 1)));
         	if (subOrNot ==1) {
 	      state -> PSTATE.C = temp <= 0;
 		} else {
 	  state ->PSTATE.C = temp < 0;
-		}	  
+	  }*/
 	    
-	   //state->PSTATE.C = (res < 0 && opp < 0) || (res < 0 && opp >= 0 && result >= 0) || (res >= 0 && opp < 0 && result >= 0) || (res == 0 && opp == 0 && subOrNot);
+	   state->PSTATE.C = (res < 0 && opp < 0) || (res < 0 && opp >= 0 && result >= 0) || (res >= 0 && opp < 0 && result >= 0) || ( opp == 0 && subOrNot);
 	};
 
 	if (!(Rd == REGISTER31)) {
