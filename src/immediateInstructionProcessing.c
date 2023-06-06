@@ -33,6 +33,9 @@ void add(struct CompState* state, int instruction, char Rn, long Op) {
 	} else {
 	  state->Regs[Rd] = result;
 	};
+       	printf("add: Result + Op:%x + %x\n", result, Op);
+
+
         
     } else {
         int result;
@@ -79,12 +82,16 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
         } else {
             result = state->Regs[Rn] + Op;
             state->PSTATE.V = (state->Regs[Rn] > 0 && Op > 0 && result < 0) || (state->Regs[Rn] < 0 && Op < 0 && result > 0);
+	    //state->PSTATE.C = ((lsr_64(state->Regs[Rn], 1) + (lsr_64(Op, 1)) + ((state->Regs[Rn] & Op) & 1)) <= 0); 
             state->PSTATE.C = (state->Regs[Rn] < 0 && Op < 0) || (state->Regs[Rn] < 0 && Op >= 0 && result >= 0) || (state->Regs[Rn] >= 0 && Op < 0 && result >= 0) || (state->Regs[Rn] == 0 && Op == 0 && subOrNot);
         };
 	if (!(Rd == REGISTER31)) {
 	  state->Regs[Rd] = result;
 	};
-        state->PSTATE.N = result < 0;
+        printf("Result + Op:%x + %x\n", result, Op);
+
+
+	state->PSTATE.N = result < 0;
         state->PSTATE.Z = result == 0;
         
     } else {
@@ -116,7 +123,8 @@ void adds(struct CompState* state, int instruction, char Rn, long Op, char subOr
 		result += ((int) Op);
 
             state->PSTATE.V = (res > 0 && opp > 0 && result < 0) || (res < 0 && opp < 0 && result > 0);
-	    state->PSTATE.C = (res < 0 && opp < 0) || (res < 0 && opp >= 0 && result >= 0) || (res >= 0 && opp < 0 && result >= 0) || (res == 0 && opp == 0 && subOrNot);
+	   // state->PSTATE.C = ((lsr_32(res, 1) + (lsr_32(Op, 1)) + ((state->Regs[Rn] & Op) & 1)) <= 0);
+	   state->PSTATE.C = (res < 0 && opp < 0) || (res < 0 && opp >= 0 && result >= 0) || (res >= 0 && opp < 0 && result >= 0) || (res == 0 && opp == 0 && subOrNot);
 	};
 
 	if (!(Rd == REGISTER31)) {

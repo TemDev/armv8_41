@@ -12,7 +12,7 @@
 #define BIT4MASK 15 // == 2 ^ 4 - 1
 
 static void unconditional(struct CompState* state, long simm26) {
-    state->PC = simm26 * 4;
+    state->PC += simm26 * 4;
 };
 
 static void registerBranch(struct CompState* state, char Rn) {
@@ -22,69 +22,64 @@ static void registerBranch(struct CompState* state, char Rn) {
 };
 
 static void conditional(struct CompState* state, long offset, char cond) {
-    switch (cond) {
+    	bool condRes = false;
+	printf("Cond %d\n",cond);
+	switch (cond) {
         case 0:
-        if (state->PSTATE.Z == 1) {
-            state->PC = offset;
-        } else {
-	  state->PC += 4;
-	};
+
+        condRes = (state->PSTATE.Z);
         break;
         case 1:
-        if (state->PSTATE.Z == 0) {
-            state->PC = offset;
-        } else {
-	  state->PC += 4;
-	};
+        condRes = !(state->PSTATE.Z);
         break;
         case 6:
-        if (state->PSTATE.N == state->PSTATE.V) {
-            state->PC = offset;
-        } else {
-	  state->PC += 4;
-	};
+        condRes = !(state->PSTATE.N ^ state->PSTATE.V);
         break;
         case 7:
-        if (state->PSTATE.N != state->PSTATE.V) {
-            state->PC = offset;
-        } else {
-	  state->PC += 4;
-	};
+        condRes = (state->PSTATE.N ^ state->PSTATE.V);
         break;
         case 8:
-        if (state->PSTATE.Z == 0 && state->PSTATE.N == state->PSTATE.V) {
-            state->PC = offset;
-        } else {
-	  state->PC += 4;
-	};
+        condRes = (!(state->PSTATE.Z) && !(state->PSTATE.N ^ state->PSTATE.V));
         break;
         case 9:
-        if (!(state->PSTATE.Z == 0 && state->PSTATE.N == state->PSTATE.V)) {
-            state->PC = offset;
-        } else {
-	  state->PC += 4;
-	};
+        condRes = (!(!(state->PSTATE.Z) && !(state->PSTATE.N ^ state->PSTATE.V)));
         break;
         case 10:
-        if (state->PSTATE.N == 1 || state->PSTATE.Z == 1 || state->PSTATE.C == 1
-         || state-> PSTATE.V == 1) {
-            state->PC = offset;
-        } else {
-	  state->PC += 4;
+        condRes =(state->PSTATE.N) || (state->PSTATE.Z) || (state->PSTATE.C) || (state-> PSTATE.V);
+    	break;
+	default:
+	condRes = false;
+	break;
 	};
-    };
+	if (condRes) {
+		printf("Jump\n");
+		state ->PC += offset;
+	} else {
+		state ->PC +=4;
+	}
+
 };
 
 void branch(struct CompState* state, int instruction) {
     if ((instruction >> 26) == 5) {
         long simm26 = instruction & BIT26MASK;
+	if ((simm26 >> 25) == 1) {
+		simm26 = simm26 | (((long)-1)<<26);
+	}
         unconditional(state, simm26);
-    } else if ((instruction & NOTBIT98765) == BIT31302826252019181716) {
-        char Rn = (instruction & BIT98765) >> 5;
+    } else if (((instruction>>31) & 1) == 1) {
+        char Rn = (char) (instruction >> 5) & 31;
         registerBranch(state, Rn);
-    } else if ((instruction & BIT31302928272625244) == BIT302826) {
+    } else if (((instruction >> 30) & 1) == 1) {
         long simm19 = (instruction >> 5) & BIT19MASK;
-        char cond = instruction & BIT4MASK;
+	printf("simm9 before %lx \n", simm19);
+
+	if ((simm19 >> 18) == 1) {
+		simm19 = simm19 | (((long) -1) << 19);	
+	}
+	 printf("simm9 before %lx \n", simm19);
+
+        char cond = (char) instruction & BIT4MASK;
         conditional(state, simm19 * 4, cond);
     };
 };
