@@ -1,3 +1,3 @@
 #include "emulate.h"
 
-extern void determineTypeRegister(struct CompState* state, int instruction);
+extern void determineTypeRegister(CompState* state, int32_t instruction);
