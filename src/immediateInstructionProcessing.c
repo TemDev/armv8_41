@@ -222,6 +222,6 @@ void determineTypeImmediate(struct CompState* state, int instruction) {
     };
 };
 
-int main(void) {
+static int main(void) {
     
 };
