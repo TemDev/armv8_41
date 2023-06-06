@@ -11,11 +11,11 @@ typedef enum { SP, ZR, PC } special_register_type;
 
 typedef enum { BIT_64, BIT_32 } register_size;
 
-typedef union { special_register_type special_register, int number }
+typedef union { special_register_type special_register, int number } register_id
 
-typedef struct { register_type type, register_size size} register;
+typedef struct { register_type type, register_size size} register_info;
 
-typedef union { register register_operand, int64_t immediate } operand_value;
+typedef union { register_info register_operand, int64_t immediate } operand_value;
 
 typedef struct { operand_type type, operand_value value; } operand; 
 
