@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
@@ -11,31 +12,31 @@ typedef enum { SP, ZR, PC } special_register_type;
 
 typedef enum { BIT_64, BIT_32 } register_size;
 
-typedef union { special_register_type special_register, int number } register_id
+typedef union { special_register_type special_register; int number; } register_id;
 
-typedef struct { register_type type, register_size size; } register_info;
+typedef struct { register_type type; register_id id; register_size size; } register_info;
 
-typedef union { register_info register_operand, int64_t immediate } operand_value;
+typedef union { register_info register_operand; int64_t immediate; } operand_value;
 
-typedef struct { operand_type type, operand_value value; } operand; 
+typedef struct { operand_type type; operand_value value; } operand; 
 
 typedef struct {
-    char *instruction_name,
-    operand *operands,
+    char *instruction_name;
+    operand *operands;
     int no_operands;
 } instruction_data;
 
 typedef union {
-    instruction_data instruction,
-    char *directive_name,
+    instruction_data instruction;
+    char *directive_name;
     char *label_name;
 } line_contents;
 
-typedef struct { line_type type, line_contents contents; } line_data;
+typedef struct { line_type type; line_contents contents; } line_data;
 
 // built in func exists strchr BUT don't think it works as can't check if '\0' ?
-int char_in_str(char val, char *str) {
-    for(int i = 0; i < strlen(str); i++) {
+int char_in_str(char val, char *str, int str_len) {
+    for(int i = 0; i < str_len; i++) {
         if(val == str[i]) return 1;  // if char is in str
     }
     return 0;
@@ -60,13 +61,15 @@ int str_in_str_arr(char *str, char **str_arr, int str_arr_len) {
     return 0;
 }
 
-void get_next_word(char start, char* end, char* string, char** word) {
+void get_next_word(char start, int *end, char* string, char* word) {
+    #define END_CHARS_LENGTH 3
+    #define END_CHARS " \n\0"
     int length = strlen(string);
-    char end_characters[] = {' ', '\n', '\0'};
+    
     for (int i = start; i < length ; i++) {
-        if(~char_in_str(string[i], end_characters)) (*word)[i] = string[i];
+        if(~char_in_str(string[i], END_CHARS, END_CHARS_LENGTH)) word[i] = string[i];
         else {
-            (*word)[i] = '\0';
+            word[i] = '\0';
             *end = i;  // technically the index of the end char after the word
             break;
         }
@@ -81,12 +84,13 @@ line_type get_line_type(char *file_line) {
 }
 
 int is_register(char* operand_text) {
-    char special_register_names[][4] = {"sp", "wsp", "xzr", "wzr", "PC"};
-    if(str_in_str_arr(operand_text, special_register_names)) return 1;
+    #define SRN_LEN 5
+    char *SPECIAL_REGISTER_NAMES[] = {"sp", "wsp", "xzr", "wzr", "PC"};
+    if(str_in_str_arr(operand_text, SPECIAL_REGISTER_NAMES, SRN_LEN)) return 1;
     if(operand_text[0] == 'x' || operand_text[0] == 'w') {
         char *str;
         long num = strtol(operand_text + 1, &str, 10); 
-        if (str != num && *end == '\0') {
+        if (*str != num && *str == '\0') {
             if (0 <= num && num <= 31) return 1;
         }
     }
@@ -94,7 +98,7 @@ int is_register(char* operand_text) {
 }
 
 operand process_operand(char* operand_text) {
-    ret_operand = operand;
+    operand ret_operand;
     if(operand_text[0] == '#') {
         ret_operand.type = IMMEDIATE;
         ret_operand.value.immediate = atoi(operand_text + 1);  // assumes immediate value is valid, else is set to 0
@@ -113,13 +117,13 @@ instruction_data process_instruction(char *file_line) {
     int length = strlen(file_line);
     char name[5];
     int operand_index;
-    get_next_word(0, &operand_index, file_line, &name);
+    get_next_word(0, &operand_index, file_line, name);
     data.instruction_name = name;
-    operand *instr_operands[5];  // todo: check max operands
+    operand instr_operands[5];  // todo: check max operands
     while(operand_index < length) {
         char new_operand_text[64];  // not sure how big this should be
-        get_next_word(operand_index + 1, &operand_index, file_line, &new_operand_text);
-        new_operand = process_operand(new_operand_text);
+        get_next_word(operand_index + 1, &operand_index, file_line, new_operand_text);
+        operand new_operand = process_operand(new_operand_text);
         instr_operands[data.no_operands] = new_operand;
         data.no_operands++;
     }
@@ -135,7 +139,7 @@ line_data process_line(char *file_line) {
     line_contents contents;
     switch (type) {
     case INSTRUCTION:
-        contents.instruction_data = process_instruction(file_line);
+        contents.instruction = process_instruction(file_line);
         break;
     case DIRECTIVE:
         contents.directive_name = file_line + 1;  // remove first char (.)
@@ -156,4 +160,10 @@ void process_input(char *input_file, char *output_file) {
         printf("Could not find the input file %s. Please try again.", input_file);
     }
 }
+
+    
+// int main( void ) {
+//     printf("yay it compiles");
+//     return 0;
+// } 
 
