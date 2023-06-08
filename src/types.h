@@ -14,7 +14,7 @@ typedef struct { register_type type; register_id id; register_size size; } regis
 
 typedef enum { LSL, LSR, ASL, ROR } shift_type;
 
-typedef struct { shift_type shift, int shift_amount } shift_info;
+typedef struct { shift_type shift; int shift_amount; } shift_info;
 
 typedef union { register_info register_operand; int64_t immediate; shift_info shift_operand; } operand_value;
 
