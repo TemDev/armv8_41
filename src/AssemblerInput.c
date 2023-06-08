@@ -26,9 +26,15 @@ typedef struct {
     int no_operands;
 } instruction_data;
 
+// simplified directives as .int is the only one - below code could be used if there were more
+// typdef struct { int64_t number } directive_arguments;
+// typdef struct { char *name; directive_arguments *args; int args_length } directive_data;
+
+typdef struct { char *name; int64_t arg } directive_data;  // as .int takes exactly one integer as an argument
+
 typedef union {
     instruction_data instruction;
-    char *directive_name;
+    directive_data directive;
     char *label_name;
 } line_contents;
 
@@ -131,34 +137,52 @@ instruction_data process_instruction(char *file_line) {
     return data;
 }
 
+directive_name process_directive(char *file_line) {
+    directive_data directive;
+    int arg_index; char *name;
+    get_next_word(0, &arg_index, file_line, name); directive.name = name;
+    char *arg_as_char;
+    get_next_word(arg_index + 1, &arg_index, file_line, arg_as_char);
+    directive.arg = atoi(arg_as_char);   // todo check assembly to make sure this is right
+    return directive;
+}
+
 
 // creates and returns the line_data structure so the line can be processed
 line_data process_line(char *file_line) {
     int length = strlen(file_line);
     line_type type = get_line_type(file_line);
+    line_data data = {.type = type};
     line_contents contents;
-    switch (type) {
+    switch(type) {
     case INSTRUCTION:
         contents.instruction = process_instruction(file_line);
         break;
     case DIRECTIVE:
-        contents.directive_name = file_line + 1;  // remove first char (.)
+        contents.directive = process_directive(file_line);  // remove first char (.)
     case LABEL:
         file_line[length - 1] = '\0';  // removes : by setting last char to NUL
         contents.label_name = file_line;
     default:
         printf("Something went very wrong (process_line)");
     }
-    line_data data = {get_line_type(file_line)};
+    data.contents = contents;
+    return data;
 }
 
 void process_input(char *input_file, char *output_file) {
     FILE *fp = fopen(input_file, "rb");
     if(fp != NULL) {
-        // something
+        char *line;
+        while(fgets(line, 100, fp) != EOF) {
+            line_data data = process_line(line);
+            // call function with (data) here
+        }
     } else {
-        printf("Could not find the input file %s. Please try again.", input_file);
+        fprintf(stderr, "Could not find the input file %s", input_file);
     }
+    fclose(fp);
+    printf("Succesfully assembled");
 }
 
     
