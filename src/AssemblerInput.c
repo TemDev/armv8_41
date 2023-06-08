@@ -30,7 +30,7 @@ typedef struct {
 // typdef struct { int64_t number } directive_arguments;
 // typdef struct { char *name; directive_arguments *args; int args_length } directive_data;
 
-typdef struct { char *name; int64_t arg } directive_data;  // as .int takes exactly one integer as an argument
+typedef struct { char *name; int64_t arg; } directive_data;  // as .int takes exactly one integer as an argument
 
 typedef union {
     instruction_data instruction;
@@ -137,7 +137,7 @@ instruction_data process_instruction(char *file_line) {
     return data;
 }
 
-directive_name process_directive(char *file_line) {
+directive_data process_directive(char *file_line) {
     directive_data directive;
     int arg_index; char *name;
     get_next_word(0, &arg_index, file_line, name); directive.name = name;
@@ -174,7 +174,7 @@ void process_input(char *input_file, char *output_file) {
     FILE *fp = fopen(input_file, "rb");
     if(fp != NULL) {
         char *line;
-        while(fgets(line, 100, fp) != EOF) {
+        while(fgets(line, 100, fp) != NULL) {
             line_data data = process_line(line);
             // call function with (data) here
         }
@@ -190,4 +190,3 @@ void process_input(char *input_file, char *output_file) {
 //     printf("yay it compiles");
 //     return 0;
 // } 
-
