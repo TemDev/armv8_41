@@ -15,4 +15,12 @@ int main(int argc, char **argv) {
   } else {
     printf("Please enter exactly 2 command line arguments in the format <file_in> <file_out>\n")
   }
+
+  // read file
+
+
+  // go over the file
+
+
+  //write into a binary file
 }
