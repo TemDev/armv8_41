@@ -1,5 +1,7 @@
 // Header file for branch instructions.
 
+#include <stdint.h>
 #include "emulate.h"
 
-extern void branch(struct CompState* state, int instruction);
+// Function that determines what type of branch is being requested
+extern void branch(CompState* state, int32_t instruction);
