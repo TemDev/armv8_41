@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "AssemblerInput.h"
+#include "AssemblerDecoder.h"
 #define MAX_INSTRUCTIONS 100
 
 typedef struct label_list{
@@ -18,6 +19,7 @@ void writeFile(int32_t *arr, char *file) {
 int main(int argc, char **argv) {
   if (argc == 3) {
     line_data line_tokens[MAX_INSTRUCTIONS];
+    int output[MAX_INSTRUCTIONS];
     process_input(argv[1], *line_tokens);
 
     label_list label_list_actual[MAX_INSTRUCTIONS];
@@ -46,17 +48,10 @@ int main(int argc, char **argv) {
                 }
             }
         }
+        output[i] = decodeline(line_tokens[i]);
     }
-    // pass argv[1], argv[2] into assembler input
+    writeFile(output, argv[2]);
   } else {
     printf("Please enter exactly 2 command line arguments in the format <file_in> <file_out>\n");
   }
-
-  // read file
-
-
-  // go over the file
-
-
-  //write into a binary file
 }
