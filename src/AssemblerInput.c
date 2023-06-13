@@ -111,10 +111,19 @@ operand process_operand(char* operand_text) {
         ret_operand.value.register_operand.size = (operand_text[0] == 'x') ? BIT_64 : BIT_32;
         ret_operand.value.register_operand.register_id.number = atoi(operand+1);
     } else if(is_shift_operation(operand_text)) { 
-        ret_operand.type = SHIFT;
-        // todo finish this
+        ret_operand.type = SHIFT;  // set shift_operand.shift, shinft_operand.amount type and amount
+        char shift_chars[4];
+        strncpy(shift_chars, operand_text, 3);
+        case (shift_chars) {
+            switch "lsl": ret_operand.value.shift_operand.shift = LSL; break;
+            switch "lsr": ret_operand.value.shift_operand.shift = LSR; break;
+            switch "asr": ret_operand.value.shift_operand.shift = ASR; break;
+            switch "ror": ret_operand.value.shift_operand.shift = ROR; break;
+        }
+        ret_operand.val.shift_operand.amount = atoi(operand_text+5);
+        
     } else {  // todo add label/directive variable things
-        fprintf(stderr ,"operand %s is not real", operand_text)
+        fprintf(stderr ,"operand %s is not real", operand_text);
     }
 
 
@@ -128,7 +137,7 @@ instruction_data process_instruction(char *file_line) {
     // int start_index = 0;
     // get_next_word(start_index, &start_index, file_line, name);  // replace with strtok, then check if there are commas at the end and remove them
     // data.instruction_name = name;
-    // operand instr_operands[5];  // todo: check max operands
+    // operand instr_operands[5]; 
     // while(start_index < length) {
     //     char new_operand_text[64];  // not sure how big this should be
     //     get_next_word(start_index + 1, &start_index, file_line, new_operand_text);
