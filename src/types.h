@@ -1,3 +1,7 @@
+
+#ifndef ASSEMBLE_H
+#define ASSEMBLE_H
+
 typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
 typedef enum { REGISTER, IMMEDIATE, ADDRESS, LITERAL, SHIFT } operand_type;  // process address and literal types
@@ -49,3 +53,5 @@ typedef union {
 } line_contents;
 
 typedef struct { line_type type; line_contents contents; } line_data;
+
+#endif
