@@ -3,7 +3,6 @@
 #include <string.h>
 #include "types.h"
 
-// built in func exists strchr BUT don't think it works as can't check if '\0' ?
 int char_in_str(char val, char *str, int str_len) {
     for(int i = 0; i < str_len; i++) {
         if(val == str[i]) return 1;  // if char is in str
@@ -87,39 +86,34 @@ operand process_operand(char* operand_text) {
     } else if(is_special_register(operand_text)) {
         ret_operand.type = REGISTER;
         ret_operand.value.register_operand.type = SPECIAL;
-        switch(operand_text + 1) {  // remove letter to catch same type registers
-        case "p":
-            ret_operand.value.register_operand.id.special_register_type = SP;
+        if (strcmp(operand_text + 1, "p") == 0) {
+            ret_operand.value.register_operand.id.special_register = SP;
             ret_operand.value.register_operand.size = BIT_64;
-            break;
-        case "sp":
-            ret_operand.value.register_operand.id.special_register_type = SP;
+        } else if (strcmp(operand_text + 1, "sp") == 0) {
+            ret_operand.value.register_operand.id.special_register = SP;
             ret_operand.value.register_operand.size = BIT_32;
-            break;
-        case "zr":
-            ret_operand.value.register_operand.id.special_register_type = ZR;
+        } else if (strcmp(operand_text + 1, "zr") == 0) {
+            ret_operand.value.register_operand.id.special_register = ZR;
             ret_operand.value.register_operand.size = (operand_text[0] == 'x') ? BIT_64 : BIT_32;
-            break;
-        default:  // must be PC
-            ret_operand.value.register_operand.id.special_register_type = PC;
+        } else {  // must be PC
+            ret_operand.value.register_operand.id.special_register = PC;
             ret_operand.value.register_operand.size = BIT_64;
-            break;
         }
     } else if(is_general_register(operand_text)) {
         ret_operand.type = REGISTER;
         ret_operand.value.register_operand.type = GENERAL;
         ret_operand.value.register_operand.size = (operand_text[0] == 'x') ? BIT_64 : BIT_32;
-        ret_operand.value.register_operand.register_id.number = atoi(operand+1);
+        ret_operand.value.register_operand.id.number = atoi(operand+1);
     } else if(is_shift_operation(operand_text)) { 
         ret_operand.type = SHIFT;  // set shift_operand.shift, shinft_operand.amount type and amount
         char shift_chars[4];
         strncpy(shift_chars, operand_text, 3);
-        case (shift_chars) {
-            switch "lsl": ret_operand.value.shift_operand.shift = LSL; break;
-            switch "lsr": ret_operand.value.shift_operand.shift = LSR; break;
-            switch "asr": ret_operand.value.shift_operand.shift = ASR; break;
-            switch "ror": ret_operand.value.shift_operand.shift = ROR; break;
-        }
+        
+        if (strcmp(shift_chars, "lsl") == 0) ret_operand.value.shift_operand.shift = LSL;
+        else if (strcmp(shift_chars, "lsr") == 0) ret_operand.value.shift_operand.shift = LSR;
+        else if (strcmp(shift_chars, "asr") == 0) ret_operand.value.shift_operand.shift = ASR;
+        else ret_operand.value.shift_operand.shift = ROR;  // must be ROR
+        
         ret_operand.val.shift_operand.amount = atoi(operand_text+5);
         
     } else {  // todo add label/directive variable things
@@ -214,7 +208,7 @@ void process_input(char *input_file, char *output_file, line_data *line_tokens) 
 }
 
     
-// int main( void ) {
-//     printf("yay it compiles");
-//     return 0;
-// } 
+int main( void ) {
+    printf("yay it compiles");
+    return 0;
+} 
