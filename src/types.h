@@ -1,3 +1,7 @@
+
+#ifndef ASSEMBLE_H
+#define ASSEMBLE_H
+
 typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
 typedef enum { REGISTER, IMMEDIATE, ADDRESS, LITERAL, SHIFT } operand_type;  // process address and literal types
@@ -16,7 +20,7 @@ typedef enum { LSL, LSR, ASL, ROR } shift_type;
 
 typedef struct { shift_type shift; int shift_amount; } shift_info;
 
-typedef union { register_info register_operand; int64_t immediate; shift_info shift_operand; } operand_value;
+typedef union { register_info register_operand; int64_t immediate; shift_info shift_operand; char* label_name;} operand_value;
 
 typedef struct { operand_type type; operand_value value; } operand; // add label vars
 
@@ -39,3 +43,5 @@ typedef union {
 } line_contents;
 
 typedef struct { line_type type; line_contents contents; } line_data;
+
+#endif
