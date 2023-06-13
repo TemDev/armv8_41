@@ -78,6 +78,10 @@ int is_shift_operation(char* operand_text) {
     return 0;
 }
 
+int is_address(char *operand_text) {
+    return (operand_text[0] == '[') ? 1 : 0;
+}
+
 operand process_operand(char* operand_text) {
     operand ret_operand;
     if(operand_text[0] == '#') {
@@ -116,11 +120,19 @@ operand process_operand(char* operand_text) {
         
         ret_operand.val.shift_operand.amount = atoi(operand_text+5);
         
+    } else if(is_address(operand_text)) {
+        ret_operand.type = ADDRESS;
+        
+
     } else {  // todo add label/directive variable things
         fprintf(stderr ,"operand %s is not real", operand_text);
     }
 
 
+}
+
+static void remove_space_from_operand(char *operand_text) {
+    while(operand_text[0] == ' ') operand_text++;
 }
 
 instruction_data process_instruction(char *file_line) {
@@ -144,11 +156,13 @@ instruction_data process_instruction(char *file_line) {
 
     instruction_data data = {.no_operands = 0};
     int start_index = 0;
-    char *instr_words = strtok(file_line, " ");
+    char *instr_words = strtok(file_line, " ");  // first split on ' ', then for operands split on ','
     data.instruction_name = instr_words[0];
     operand* operands_ptr = (operand*) malloc(MAX_NO_OPS * sizeof(operand));
     while(instr_words != NULL) {
-        instr_words = strtok(NULL, " ");
+        instr_words = strtok(NULL, ",");
+        remove_space_from_operand(instr_words);
+        operand new_operand = process_operand(instr_words);
         operands_ptr[data.no_operands] = new_operand;
         data.no_operands++;
     }

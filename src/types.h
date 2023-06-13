@@ -8,6 +8,8 @@ typedef enum { SP, ZR, PC } special_register_type;
 
 typedef enum { BIT_64, BIT_32 } register_size;
 
+typedef enum { UNSIGNED, PRE_INDEXED, POST_INDEXED, REGISTER } address_type;
+
 typedef union { special_register_type special_register; int number; } register_id;
 
 typedef struct { register_type type; register_id id; register_size size; } register_info;
@@ -16,7 +18,11 @@ typedef enum { LSL, LSR, ASL, ROR } shift_type;
 
 typedef struct { shift_type shift; int amount; } shift_info;
 
-typedef union { register_info register_operand; int64_t immediate; shift_info shift_operand; } operand_value; // add label & addr vars
+typedef union { register_info register; int64_t immediate } address_offset;
+
+typedef struct { address_type shift; register_info register; address_offset offset; } address_info;
+
+typedef union { register_info register_operand; int64_t immediate; shift_info shift_operand; address_info address_operand; } operand_value; // add label & addr vars
 
 typedef struct { operand_type type; operand_value value; } operand; 
 
