@@ -1,246 +1,234 @@
+// Handles register instruction by determining their type and updating appropriate registers and flags
+
 #include <stdio.h>
 #include <stdbool.h>
 #include "RegisterInstructionProcessing.h"
 #include "bitwise.h"
+#include "immediateInstructionProcessing.h"
 
-#define BIT24 16777216 // == 2 ^ 24
-#define BITm 268435456 // == 2 ^ 28
-#define BITshift 50331648 // 2 ^ 25 + 2 ^ 24
-#define BITsf 2147483648 // == 2 ^ 31
-#define BITrd 31 // == 2 ^ 4 + 2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0
-#define BITx 32768 // == 2 ^ 15
-#define BITra 31744 // == 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10
-#define BITrn 992 // == 2 ^ 9 + 2 ^ 8 + 2 ^ 7 + 2 ^ 6 + 2 ^ 5
-#define BITrm 2031616 // == 2 ^ 20 + 2 ^ 19 + 2 ^ 18 + 2 ^ 17 + 2 ^ 16
-#define rd 4294967295 // 2 ^ 32 - 1
-#define BIToperand 64512 // 2 ^ 15 + 2 ^ 14 + 2 ^ 13 + 2 ^ 12 + 2 ^ 11 + 2 ^ 10
-#define BIT32MASK 4294967295 // == 2 ^ 32 - 1, MASK
-#define BIT64MASK 18446744073709551615 // == 2 ^ 64 - 1, MASK
-#define BIT64 18446744073709551616 // == 2 ^ 64, MASK
+#define BITsf 2147483648 // == 2 ^ 31, MASK
+#define BITrd 31         // == 0x1F, MASK
 #define BIT32 4294967296 // == 2 ^ 32, MASK
-#define REGISTER31 31
-#define BIT6432 0b1111111111111111111111111111111100000000000000000000000000000000
-#define BIT31 2147483648 // == 2 ^ 31, MASK
+
+//Function pointer for all types of shifts performed when dealing with arithmetic and logical instructions
+typedef int64_t (*bitwise_pointer)(int64_t, int);
+typedef int32_t (*bitwise_pointer2)(int64_t, int);
+
+/* All logical functions are similar in terms of code needed to imnplement them.
+ * in order to avoid repetition, the functions below */
 
 
-
-// All the possible commands that might be asked to be performed
-
-//Only functions and orr eor and ands are written below because the other function
-//are achieved by passing a negated Op parameter to these functions. This significantly simplifies the code
-
-static int LOCAL_AND(int x, int y) {
+// Bitwise AND operation
+static int64_t LOCAL_AND(int64_t x, int64_t y) {
     return x & y;
 }
 
-static int LOCAL_OR(int x, int y) {
+// Bitwise inclusive OR
+static int64_t LOCAL_IOR(int64_t x, int64_t y) {
     return x | y;
 }
 
-static int LOCAL_BAND(int x, int y) {
+//Bitwise exlusive OR 
+static int64_t LOCAL_EOR(int64_t x, int64_t y) {
     return x ^ y;
 }
 
+/* Standard look of the function for the logical functions. Correct operators will the applied using the function pointers above. 
+ * Op will be negated in required cases to perform the operations using negated operand correctly */
 
-static void bin_op1(struct CompState* state, int instruction, char Rn, int Op, int (*fn)(int, int)) {
-    char Rd = BITrd & instruction;
-    
-    if (BITsf & instruction) {
-        long result;
-        if (Rn == REGISTER31) {
-            result = (*fn)(state->SP, Op);
-            state->SP = result;
-        } else {
-            result = (*fn)(state->SP, Op);
-            state->Regs[Rd] = result;
-        };
-        
+static int64_t bin_op(CompState* state, int32_t instruction, unsigned char Rn, int64_t Op, int64_t (*fn)(int64_t, int64_t)) {
+    unsigned char Rd = BITrd & instruction;
+    int64_t result;
+    if (Rn == BITrd) {
+        result = (*fn)(state->ZR, Op);
     } else {
-        int result;
-        if (Rn == REGISTER31) {
-	        if (state->SP & BIT31) {
-                result = state->SP | BIT6432;
-	        } else {
-                result = state->SP & (BIT32 - 1);
-	        };
-            result = (*fn)(result, Op);
-            state->SP = result;
-            state->SP = state->SP & (BIT32 - 1);
-        } else {
-            if (state->Regs[Rd] & BIT31) {
-                result = state->Regs[Rd] | BIT6432;
-            } else {
-                result = state->Regs[Rd] & (BIT32 - 1);
-            };
-            result = (*fn)(result, Op);
+        result = (*fn)(state->Regs[Rn], Op);
+    }
+    if (!(Rd == BITrd)) {
+	if (instruction & BITsf) {
             state->Regs[Rd] = result;
-            state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
-        };
-    };
-
-};
-
-static void andd(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_AND);
+	} else {
+    	    state->Regs[Rd] = result & (BIT32 - 1);
+	}
+    }
+    return result;
 }
 
-static void orr(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_OR);
-}
-
-static void eor(struct CompState* state, int instruction, char Rn, int Op) {
-	    return bin_op1(state, instruction, Rn, Op, LOCAL_BAND);
-}
-
-static void ands(struct CompState* state, int instruction, char Rn, int Op) {
-    char Rd = BITrd & instruction;
-    
-    if (BITsf & instruction) {
-        long result;
-        if (Rn == REGISTER31) {
-            result = state->ZR & Op;
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
-        } else {
-            result = state->Regs[Rn] & Op;
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
-            state->Regs[Rd] = result;
-        };
-        state->PSTATE.N = result < 0;
-        state->PSTATE.Z = result == 0;
-        
+//ands function which uses the and function inside it and then sets the flags appropriatelly 
+static void ands(CompState* state, int32_t instruction, unsigned char Rn, int64_t Op) {
+    int64_t resultMain = bin_op(state, instruction, Rn, Op, LOCAL_AND);
+    if ((instruction & BITsf) == 0)  {
+         int32_t result = (int32_t) (resultMain);
+         state->PSTATE.N = result < 0;       
     } else {
-        int result;
-        if (Rn == REGISTER31) {
-	        if (state->ZR & BIT31) {
-	            result = state->ZR | BIT6432;
-	        } else {
-                result = state->ZR & (BIT32 - 1);
-	        };
-	        result = result & Op;
-            state->PSTATE.V = (state->ZR > 0 && Op > 0 && result < 0) || (state->ZR < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->ZR < 0 && Op < 0) || (state->ZR < 0 && Op > 0 && result >= 0) || (state->ZR > 0 && Op < 0 && result >= 0);
-        } else {
-	        if (state->Regs[Rd] & BIT31) {
-	            result = state->Regs[Rd] | BIT6432;
-	        } else {
-	            result = state->Regs[Rd] & (BIT32 - 1);
-	        };
-	        result = result & Op;
-            state->PSTATE.V = (state->Regs[Rd] > 0 && Op > 0 && result < 0) || (state->Regs[Rd] < 0 && Op < 0 && result > 0);
-            state->PSTATE.C = (state->Regs[Rd] < 0 && Op < 0) || (state->Regs[Rd] < 0 && Op > 0 && result >= 0) || (state->Regs[Rd] > 0 && Op < 0 && result >= 0);
-	        state->Regs[Rd] = result;
-	        state->Regs[Rd] = state->Regs[Rd] & (BIT32 - 1);
-        };
-        state->PSTATE.N = result < 0;
-        state->PSTATE.Z = result == 0;
-    };
-};
-
-static void and_flag(struct CompState* state, int instruction, char Rn, int Op) {
-    andd(state, instruction, Rn, (~Op));
-    char Rd = BITrd & instruction;
-    int result = state -> Regs[Rd]; 
-    state->PSTATE.N = result < 0;
-    state->PSTATE.Z = result == 0;
+         state->PSTATE.N = resultMain < 0;
+    }
+    state->PSTATE.Z = resultMain == 0;
     state->PSTATE.C = 0;
     state->PSTATE.V = 0;
 }
 
 
-// Multiply-Add: Rd := Ra + (Rn * Rm)
-static int madd(instruction) {
-    char Ra = BITra & instruction;
-    char Rn = BITrn & instruction;
-    char Rm = BITrm & instruction;
-    return Ra + (Rn * Rm);
-}
+// Logical instructions processing 
+static void logical(CompState* state, int32_t instruction, unsigned char Rm, unsigned char Rn, unsigned char shift, unsigned char shiftBy) {
+    int64_t Opnew;
+    bitwise_pointer bitwise_func;
+    bitwise_pointer2 bitwise_func2;
 
-// Multiply-Sub: Rd := Ra - (Rn * Rm)
-static int msub(instruction) {
-    char Ra = BITra & instruction;
-    char Rn = BITrn & instruction;
-    char Rm = BITrm & instruction;
-    return Ra - (Rn * Rm);
-}
-
-// Arithmetic-type commands - when the format is suitable to the one in specification and N = 0
-static void arithmetic(struct CompState* state, int instruction) {
-    char Opnew = BITrm;
-    if ((instruction >> 22) & 1) {
-        Opnew = lsl_64 ((instruction & BITrm), (instruction & BIToperand));
-    } else if ((instruction >> 22) & 2) {
-        Opnew = lsr_64 ((instruction & BITrm), (instruction & BIToperand));
+    //Using a function pointer defined at the top of the file to choose which shift to perform
+    if (!(instruction & BITsf)) {
+        Opnew = (int32_t) state->Regs[Rm];
+        if (shift == 0) {
+             bitwise_func2 = (&lsl_32);
+        } else if (shift == 1) {
+	     bitwise_func2 = (&lsr_32);
+        } else if (shift == 2) {
+             bitwise_func2 = (&asr_32);
+        } else {
+             bitwise_func2 = (&ror_32);
+        }
+	Opnew = bitwise_func2(Opnew, shiftBy);
     } else {
-        Opnew = asr_64 ((instruction & BITrm), (instruction & BIToperand));
+        Opnew = state->Regs[Rm];
+        if (shift == 0) {
+             bitwise_func = (&lsl_64);
+        } else if (shift == 1) {
+             bitwise_func = (&lsr_64);
+        } else if (shift == 2) {
+             bitwise_func = (&asr_64);
+        } else {
+             bitwise_func = (&ror_64);
+        }
+	Opnew = bitwise_func(Opnew, shiftBy);
     }
-    char Rn = (BITrn & instruction) >> 5;
-    char opc = (instruction >> 29) & 3;
-    switch (opc) {
+    //Determine which logical operation to perform 
+    /* To determine the type of logical instruction to perform we need opc and N which are in different places in the instruction
+     * To find opc shift the instruction by 28 and bitwise and with 6 to free up the last bit. 
+     * To find the N bit we shift the instruction by 21 bit to the right.
+     * Using bitwise or operation put them together  */
+    unsigned char opcN = ((instruction >> 28) & 6) | ((instruction >> 21) & 1);
+    switch (opcN) {
+        case 7:
+            ands(state, instruction, Rn, (~Opnew));
+            break;
+        case 6:
+            ands(state, instruction, Rn, (Opnew));
+            break;
+        case 5:
+	    bin_op(state, instruction, Rn, (~Opnew), LOCAL_EOR);
+            break;
+        case 4:
+            bin_op(state, instruction, Rn, (Opnew), LOCAL_EOR);
+            break;
         case 3:
-        ands(state, instruction, Rn, Opnew);
-        break;
+            bin_op(state, instruction, Rn, (~Opnew), LOCAL_IOR);
+            break;
         case 2:
-        eor(state, instruction, Rn, Opnew);
-        break;
+            bin_op(state, instruction, Rn, (Opnew), LOCAL_IOR);
+            break;
         case 1:
-        orr(state, instruction, Rn, Opnew);
-        break;
+            bin_op(state, instruction, Rn, (~Opnew), LOCAL_AND);
+            break;
         default:
-        andd(state, instruction, Rn, Opnew);
+            bin_op(state, instruction, Rn, (Opnew), LOCAL_AND);
     }
 }
 
-//Logical commands (Bit-logic commands) - when the format is as required in specification and N = 1
-static void logical(struct CompState* state, int instruction) {
-    char Opnew = ~(ror_64 ((instruction & BITrm), (instruction & BIToperand)));
-    char Rn = (BITrn & instruction) >> 5;
-    // Bit wise shift should be included and some things will be added / altered
-    char opc = (instruction >> 29) & 3;
+// Arithmatic instructions processing
+static void arithmetic(CompState* state, int32_t instruction, unsigned char Rm, unsigned char Rn, unsigned char shift, unsigned char shiftBy) {
+    int64_t Opnew;
+
+    //Using a function pointer defined at the top of the file to perform the required shift operation
+    bitwise_pointer bitwise_func;
+    bitwise_pointer2 bitwise_func2;
+    
+    if (!(instruction & BITsf)) {
+        if (shift == 0) {
+             bitwise_func2 = (&lsl_32);
+        } else if (shift == 1) {
+             bitwise_func2 = (&lsr_32);
+        } else if (shift == 2) {
+             bitwise_func2 = (&asr_32);
+        }
+    } else {
+        if (shift == 0) {
+             bitwise_func = (&lsl_64);
+        } else if (shift == 1) {
+             bitwise_func = (&lsr_64);
+        } else if (shift == 2) {
+             bitwise_func = (&asr_64);
+        }
+    };
+    if (shift == 3) {
+        Opnew = state->Regs[Rm];
+    } else {
+        if (!(instruction & BITsf)) {
+	    Opnew = (int64_t) bitwise_func2((state->Regs[Rm]), shiftBy);
+        } else {
+            Opnew = (int64_t) bitwise_func((state->Regs[Rm]), shiftBy);
+        }
+    };
+
+    // Choice for the arithmetic operation to perform
+    unsigned char opc = (instruction >> 29) & 3; // Opc if found by shifting the instruction by 29 bits and then biwise and it with 3 to see what instructon to perform
     switch (opc) {
         case 3:
-        and_flag(state, instruction, Rn, Opnew);
-        break;
+            adds(state, instruction, Rn, (-Opnew), 1);
+            break;
         case 2:
-        eor(state, instruction, Rn, Opnew);
-        break;
+            add(state, instruction, Rn, (-Opnew));
+            break;
         case 1:
-        orr(state, instruction, Rn, Opnew);
-        break;
+            adds(state, instruction, Rn, Opnew, 0);
+            break;
         default:
-        andd(state, instruction, Rn, Opnew);
+            add(state, instruction, Rn, Opnew);
     }
 };
 
-
-static void multiply(struct CompState* state, int instruction) {
-  char Rd = instruction & BITrd;
-  if (instruction & BITx) {
-      state->Regs[Rd] = msub(instruction);
+//Multiply instructions processing
+static void multiply(CompState* state, int32_t instruction, int32_t Rd, int32_t Ra, int64_t Rrm, int64_t Rrn, int64_t Rra, int64_t mask) {
+  if (!(instruction & BITsf)) {
+    mask = BIT32 - 1;
+    Rrm = Rrm & (BIT32 - 1);
+    Rrn = Rrn & (BIT32 - 1);
+    Rra = Rra & (BIT32 - 1);
+  }
+  if (1 & (instruction>>15)) { // shifting the instruction by 15 to get the first bit pf the operand and bitwise and it with 1
+    if (Ra == 31) {
+      state->Regs[Rd] = state->ZR - (mask & ( Rrn * Rrm));
+      } else {
+	state->Regs[Rd] = Rra -(mask & (Rrn * Rrm));
+      };
   } else {
-      state->Regs[Rd] = madd(instruction);
+      state->Regs[Rd] = Rra + (mask & (Rrn * Rrm));
+  };
+  if (!(instruction & BITsf)) {
+    state->Regs[Rd] = (state -> Regs[Rd]) & (BIT32 - 1); 
   }
 };
 
-// Determines type of immediate instruction, arithmetic or wideMove.
-void determineTypeRegister(struct CompState* state, int instruction) {
-    char m = instruction & BITm;
-    char r24 = instruction & BIT24;
-    if (instruction && (~m) && (~r24)) {
-        arithmetic(state, instruction);
-    } else if (instruction && (~m) && (~r24)) {
-        logical(state, instruction);
+// Determines type of Register instruction - arithmetic, logical or multiplication.
+void determineTypeRegister(CompState* state, int32_t instruction) {
+
+    unsigned char shift = (instruction >> 22) & 3; // Shifting the instruction by 22 to get the "shift" and determine which value to shift
+    unsigned char shiftBy = ((63) & (instruction >> 10)); // shiftBy is formed making a 64 (0-63)bit mask from the instruction shifted by 10
+    unsigned char m = 1 & (instruction >> 28); // Shifting the instruction by 28 to get the M bit
+    unsigned char r24 = 1 & (instruction >> 24); // Shifting the instruction by 24 to get the first bit of the opr value
+    int32_t Rd = (int32_t)((31) & instruction); // Rd is formed making a 32 (0-31)bit 
+    int32_t Ra = (int32_t)((31) & (instruction>>10)); // Ra is formed making a 32 (0-31) bit mask from the instruction shifted by 10
+    int32_t Rn = (int32_t)((31) & (instruction>>5)); // Rn is formed making a 32 (0-31) bit mask rom the instruction shifted by 5
+    int32_t Rm = (int32_t)((31) & (instruction>>16)); // Rm is formed making a 32 (0-31)bit mask from the instruction shifted by 16
+    int64_t Rrm  = state-> Regs[Rm];
+    int64_t Rrn  = state-> Regs[Rn];
+    int64_t Rra  = state-> Regs[Ra];
+    int64_t mask = -1; // creating a mask of -1 for further use
+    if ((m == 0) && (r24 == 1)) {
+        arithmetic(state, instruction, Rm, Rn, shift, shiftBy);
+    } else if ((m == 0) && (r24 == 0)) {
+        logical(state, instruction, Rm, Rn, shift, shiftBy);
+    } else if ((m == 1) && (r24 == 1)) {
+	multiply(state, instruction, Rd, Ra, Rrm, Rrn, Rra, mask);
     }
-        else if (instruction && (m) && (r24)) {
-            multiply(state, instruction);
-        }
 };
-
-static void main() {
-    
-}
-
-
-
 

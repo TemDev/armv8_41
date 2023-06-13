@@ -1,0 +1,3 @@
+BUILD = testassemble
+CFlAGS = -g -Wall
+LDLIBS = -lm
