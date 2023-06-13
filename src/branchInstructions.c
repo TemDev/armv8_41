@@ -1,80 +1,85 @@
+// File that determines the specific type of branch instruction and then executes the branch by changing PC value in CompState structure.
+
 #include <stdio.h>
 #include <math.h>
 #include "branchInstructions.h"
 
-#define BIT31302826252019181716 3592355840 // == 2 ^ 31 + 2 ^ 30 + 2 ^ 28 + 2 ^ 26 + 2 ^ 25 + 2 ^ 20 + 2 ^ 19 + 2 ^ 18 + 2 ^ 17 + 2 ^ 16
-#define NOTBIT98765 4294966303 // == bitwise_not(2 ^ 9 + 2 ^ 8 + 2 ^ 7 + 2 ^ 6 + 2 ^ 5)
-#define BIT98765 992 // == 2 ^ 9 + 2 ^ 8 + 2 ^ 7 + 2 ^ 6 + 2 ^ 5
-#define BIT31302928272625244 4278190096 // == 2 ^ 31 + 2 ^ 30 + 2 ^ 29 + 2 ^ 28 + 2 ^ 27 + 2 ^ 26 + 2 ^ 25 + 2 ^ 24 + 2 ^ 4
-#define BIT302826 1409286144 // == 2 ^ 30 + 2 ^ 28 + 2 ^ 26
 #define BIT26MASK 67108863 // == 2 ^ 26 - 1
 #define BIT19MASK 524287// == 2 ^ 19 - 1
 #define BIT4MASK 15 // == 2 ^ 4 - 1
+#define NUMREG 31 // Number of registers
 
-static void unconditional(struct CompState* state, long simm26) {
-    state->PC = simm26 * 4;
+// Function used for unconditional branches
+static void unconditional(CompState* state, int64_t simm26) {
+    state->PC += simm26 * 4;
 };
 
-static void registerBranch(struct CompState* state, char Rn) {
-    if (Rn != 31) {
+// Function used for register branching
+static void registerBranch(CompState* state, unsigned char Rn) {
+    if (Rn != NUMREG) {
         state->PC = state->Regs[Rn];
     };
 };
 
-static void conditional(struct CompState* state, long offset, char cond) {
+// Function used for conditional branching
+static void conditional(CompState* state, int64_t offset, char cond) {
+    bool condRes = false;
+    printf("Cond %d\n",cond);
     switch (cond) {
-        case 0:
-        if (state->PSTATE.Z == 1) {
-            state->PC = offset;
-        };
+    // Cases with values as defined by the spec
+    case 0:
+        condRes = (state->PSTATE.Z);
         break;
-        case 1:
-        if (state->PSTATE.Z == 0) {
-            state->PC = offset;
-        };
+    case 1:
+        condRes = !(state->PSTATE.Z);
         break;
-        case 6:
-        if (state->PSTATE.N == state->PSTATE.V) {
-            state->PC = offset;
-        };
+    case 10:
+        condRes = !(state->PSTATE.N ^ state->PSTATE.V);
         break;
-        case 7:
-        if (state->PSTATE.N != state->PSTATE.V) {
-            state->PC = offset;
-        };
+    case 11:
+        condRes = (state->PSTATE.N ^ state->PSTATE.V);
         break;
-        case 8:
-        if (state->PSTATE.Z == 0 && state->PSTATE.N == state->PSTATE.V) {
-            state->PC = offset;
-        };
+    case 12:
+        condRes = (!(state->PSTATE.Z) && !(state->PSTATE.N ^ state->PSTATE.V));
         break;
-        case 9:
-        if (!(state->PSTATE.Z == 0 && state->PSTATE.N == state->PSTATE.V)) {
-            state->PC = offset;
-        };
+    case 13:
+        condRes = (!(!(state->PSTATE.Z) && !(state->PSTATE.N ^ state->PSTATE.V)));
         break;
-        case 10:
-        if (state->PSTATE.N == 1 || state->PSTATE.Z == 1 || state->PSTATE.C == 1
-         || state-> PSTATE.V == 1) {
-            state->PC = offset;
-        };
+    case 14:
+        condRes =(state->PSTATE.N) || (state->PSTATE.Z) || (state->PSTATE.C) || (state-> PSTATE.V);
+    	break;
+    default:
+	condRes = false;
+	break;
+    };
+    if (condRes) {
+	state ->PC += offset;
+    } else {
+	state ->PC += 4; // 4 as each instruction takes 4 bytes
     }
 };
 
-void branch(struct CompState* state, int instruction) {
-    if ((instruction >> 26) == 5) {
-        long simm26 = instruction & BIT26MASK;
+// Function that determines what type of branch is being requested
+void branch(CompState* state, int32_t instruction) {
+    if ((instruction >> 26) == 5) { // Masking to determine if matches
+        printf("UNCONDITIONAL\n");
+        int64_t simm26 = instruction & BIT26MASK;
+	// Looks at the 25th bit of simm26 in order to determine whether sign extension is needed
+	if ((simm26 >> 25) == 1) { 
+	    simm26 = simm26 | (( (int64_t) -1) << (int64_t) 26);
+	}
         unconditional(state, simm26);
-    } else if ((instruction & NOTBIT98765) == BIT31302826252019181716) {
-        char Rn = (instruction & BIT98765) >> 5;
+    } else if (((instruction>>31) & 1) == 1) { // Masking to determine if matches
+        unsigned char Rn = (unsigned char) (instruction >> 5) & 31; // Determines the Rn register
         registerBranch(state, Rn);
-    } else if ((instruction & BIT31302928272625244) == BIT302826) {
-        long simm19 = (instruction >> 5) & BIT19MASK;
-        char cond = instruction & BIT4MASK;
+    } else if (((instruction >> 30) & 1) == 1) { // Masking to determine if matches
+        int64_t simm19 = (instruction >> 5) & BIT19MASK;
+	// Looks at the 18th bit of simm19 in order to determine whether sign extension is needed
+	if ((simm19 >> 18) == 1) {
+	    simm19 = simm19 | (((int64_t) -1) << 19);	
+	}
+
+        char cond = (char) instruction & BIT4MASK;
         conditional(state, simm19 * 4, cond);
     };
-};
-
-static void mainBranch() {
-    
 };

@@ -11,6 +11,8 @@ int char_in_str(char val, char *str, int str_len) {
     return 0;
 }
 
+
+
 // built in func exists strcmp
 // int compare_str(char *str1, char *str2) {
 //     for(int j = 0; j < strlen(str1); j++) {

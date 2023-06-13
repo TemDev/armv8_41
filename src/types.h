@@ -12,7 +12,7 @@ typedef union { special_register_type special_register; int number; } register_i
 
 typedef struct { register_type type; register_id id; register_size size; } register_info;
 
-typedef enum { LSL, LSR, ASL, ROR } shift_type;
+typedef enum { LSL = 0, LSR = 1, ASR = 2, ROR = 3} shift_type;
 
 typedef struct { shift_type shift; int shift_amount; } shift_info;
 
