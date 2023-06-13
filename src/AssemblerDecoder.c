@@ -2,8 +2,10 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "bitwise.c"
-#include "AssemblerInput.c"
+#include "AssemblerDecoder.h"
+#include "assemble.h"
 // return a string that is a binary representation of a number
 
 void toBinaryPrint(int number) {

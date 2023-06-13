@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
+#include "AssemblerInput.h"
+#include "assemble.h"
 
 operand RegisterN(char n) {
     operand op;
@@ -24,7 +25,6 @@ operand RegisterNsize(char n, char s) {
     op.value.register_operand = reg;
     return op;
 }
-
 operand RegisterZR(char c) {
     operand op;
     op.type = REGISTER;
@@ -36,7 +36,7 @@ operand RegisterZR(char c) {
     op.value.register_operand = reg;
     return op;
 }
-
+//
 //operand RegisterSpecial(special_register_type type, s) {
 //    operand op;
 //    op.type = REGISTER;
@@ -294,7 +294,7 @@ line_data process_line(char *file_line) {
     return data;
 }
 
-void process_input(char *input_file, char *output_file, line_data *line_tokens) {
+void process_input(char *input_file, line_data *line_tokens) {
     FILE *fp = fopen(input_file, "rb");
     if(fp != NULL) {
         char *line;
