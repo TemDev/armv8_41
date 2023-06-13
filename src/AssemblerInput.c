@@ -143,6 +143,34 @@ shift_type get_shift_type(char* shift) {
     }
 }
 
+void find_address_operand_vars(operand *addr_operand) {
+    char *register = strtok(operand_text, ",");
+    if( (char *var2 = strtok(NULL, ",")) != NULL ) {
+        addr_operand->value.address_operand.register = register + 1;
+        var2[strlen(var2) - 1] = '\0';
+        if( is_general_register(var2) ) {
+            addr_operand->value.address_operand.shift = REGISTER_OFFSET;
+        } // general register processing
+        else if( is_special_register ) {
+            addr_operand->value.address_operand.shift = REGISTER_OFFSET;
+        }// special register processing
+        else {
+            addr_operand->value.address_operand.shift = UNSIGNED_OFFSET;
+        } // immediate value processing
+        // addr_operand->value.address_operand.offset = ...
+    } else {
+        register = strtok(operand_text, "]");
+        addr_operand->value.address_operand.register = register + 1;
+        if( (char *var2 = strtok(NULL, "]")) != NULL ) {
+            // immediate value processing
+            // addr_operand->value.address_operand.offset = ...
+            addr_operand->value.address_operand.shift = POST_INDEXED;
+        } else {
+            addr_operand->value.address_operand.shift = SINGLE;  // single doesnt exist yet
+        }
+    }
+}
+
 operand process_operand(char* operand_text) {
     operand ret_operand;
     if(operand_text[0] == '#') {
@@ -164,17 +192,40 @@ operand process_operand(char* operand_text) {
             ret_operand.value.register_operand.id.special_register = PC;
             ret_operand.value.register_operand.size = BIT_64;
         }
-        return ret_operand;
-
     } else if(is_general_register(operand_text)) {
         return RegisterNsize(atoi(operand_text + 1), *operand_text);
     } else if(is_shift_operation(operand_text)) {
-        ret_operand.type = SHIFT;
+        ret_operand.type = SHIFT;  // set shift_operand.shift, shift_operand.amount type and amount
+        char shift_chars[4];
+        strncpy(shift_chars, operand_text, 3);
+        
+        if (strcmp(shift_chars, "lsl") == 0) ret_operand.value.shift_operand.shift = LSL;
+        else if (strcmp(shift_chars, "lsr") == 0) ret_operand.value.shift_operand.shift = LSR;
+        else if (strcmp(shift_chars, "asr") == 0) ret_operand.value.shift_operand.shift = ASR;
+        else ret_operand.value.shift_operand.shift = ROR;  // must be ROR
+        
+        ret_operand.val.shift_operand.amount = atoi(operand_text+5);
+    } else if(is_address(operand_text)) {
+        ret_operand.type = ADDRESS;
 
-        // todo finish this
+        switch (operand_text[strlen(operand_text) - 1]) 
+        {
+            case '!':
+                find_address_operand_vars(&ret_operand);
+                ret_operand.value.address_operand.shift = PRE_INDEXED;
+                break;
+            case: ']' // 3 subcases: [xn], [xn, xm], [xn, #imm]
+                if 
+                find_address_operand_vars(&ret_operand);
+                break;
+            default:
+                ret_operand.value.address_operand.shift = POST_INDEXED;
+            
+        }
     } else {  // todo add label/directive variable things
         fprintf(stderr ,"operand %s is not real", operand_text);
     }
+    return ret_operand;
 
 
 }
@@ -248,11 +299,8 @@ instruction_data process_instruction(char *file_line) {
         }
         data.operands[data.no_operands] = temp;
 
-
         data.no_operands++;
         current = strtok(NULL, ds);
-
-
 
     }
     return data;
