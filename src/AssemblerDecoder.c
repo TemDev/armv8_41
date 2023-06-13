@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "bitwise.c"
-#include "AssemblerInputCopy.c"
+#include "AssemblerInput.c"
 // return a string that is a binary representation of a number
 
 void toBinaryPrint(int number) {
@@ -71,7 +71,6 @@ int BR(instruction_data *inst, char opcode) {
 }
 
 int Transfer(instruction_data *inst, char opcode){
-
     return 0;
 }
 int DP(instruction_data *inst, char opcode){
@@ -86,6 +85,7 @@ int DP(instruction_data *inst, char opcode){
 	I =( opcode >> 2) & 1;
 	R = (opcode >> 3) & 3;
 	N = (opcode >> 5) & 1;
+	
 	// checks whether it is Bit Logic, Arithmetic or Multiply;
 	temp = (is64)? 4: 0;
 
@@ -99,6 +99,7 @@ int DP(instruction_data *inst, char opcode){
 		char rm = getRegisterNumber(2, inst); 
 		char rn = getRegisterNumber(1, inst); 
 		char rd = getRegisterNumber(0, inst);
+		
 
         if (R == 1) {
             char ra = getRegisterNumber(3, inst);
