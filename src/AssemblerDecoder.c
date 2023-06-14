@@ -125,7 +125,6 @@ int DP(instruction_data *inst, char opcode){
 	
 	// checks whether it is Bit Logic, Arithmetic or Multiply;
 	temp = (is64)? 4: 0;
-
     temp += opc;
 	//printf("R:%d opcode: %d \n", R, opcode);
 
@@ -168,29 +167,6 @@ int DP(instruction_data *inst, char opcode){
         } else {
             exit(1);
         }
-			/*
-		switch (R) {
-			case 0 :
-
-			
-			break;
-			case 2 :// arithmetic
-			shift = inst -> operands[3].value.shift_operand.shift;
-			operand =  inst -> operands[3].value.shift_operand.shift_amount & 63;
-			
-			temp = (temp << 4) + 8 + ((shift & 3) << 1);
-			//adding rm and operand
-		       	temp = (temp << 21) + (rm  << 16) +( operand << 10) + (rn << 5) +rd; 
-			printf("Performing an arithmetic instruction\n");
-			break;
-			case 1: //multiply
-
-			break;
-			default:
-			exit(1);
-		}
-*/
-
 	} else {
 
 		temp = (temp << 3) + 4;
@@ -257,7 +233,7 @@ int decode(instruction_data inst) {
 			return fun(&inst, instToFunctions[i].opcode);
 		}
 	}
-
+	// it means unknown instruction passed
 	// it should never reach this value	
 	assert(false);
 	return -1;
@@ -275,76 +251,4 @@ int decodeline(line_data line) {
             return 0;
     }
 }
-
-//operand RegisterN(char n) {
-//	operand op;
-//	op.type = REGISTER;
-//	register_info reg;
-//	reg.type = GENERAL;
-//	reg.size = BIT_64;
-//	reg.id.number = n;
-//	op.value.register_operand = reg;
-//	return op;
-//}
-//operand RegisterZR(char c) {
-//	operand op;
-//	op.type = REGISTER;
-//	register_info reg;
-//	reg.type = SPECIAL;
-//	reg.size = BIT_64;
-//	register_id id;
-//	id.special_register = ZR;
-//	op.value.register_operand = reg;
-//	return op;
-//}
-//operand shiftmake(shift_type type, int amount) {
-//	operand op;
-//	op.type = SHIFT;
-//	shift_info shiftop;
-//	shiftop.shift = type;
-//	shiftop.shift_amount = amount;
-//	op.value.shift_operand = shiftop;
-//
-//	return op;
-//}
-//
-//operand immediateMake(int n) {
-//    operand op;
-//    op.type = IMMEDIATE;
-//    op.value.immediate = n;
-//    return op;
-//}
-
-/*int main(void) {
-	int i = 30;
-	register_id reg_id;
-	reg_id.number = i;
-	register_info reginfo = {GENERAL,reg_id, BIT_64};
-	operand first;
-	first.value.register_operand = reginfo;
-	first.type = REGISTER;
-	
-	operand ands = first;
-	operand op[4] = {RegisterN(30), RegisterN(0), RegisterN(3), shiftmake(ASR, 60)};
-    operand ops[3] = {RegisterN(30), RegisterN(0), RegisterN(3)};
-    //{RegisterN(30), immediateMake(0xabcd), shiftmake(ASR, 16)};
-    //
-            //{RegisterN(30), RegisterN(0), RegisterN(3), shiftmake(ASR, 60)};
-            // {{IMMEDIATE,( 1 << 26) - 1}};
-	instruction_data a = {"add", op, 4};
-    instruction_data b = {"adds", op, 4};
-    instruction_data c = {"subs", op, 4};
-    instruction_data d = {"add", ops, 3};
-    instruction_data e = {"adds", ops, 3};
-    instruction_data f = {"subs", ops, 3};
-
-    instruction_data g = {"ands", op,4};
-    instruction_data h = {"bics", op,4};
-    instruction_data tests[6] = {a, b, c, d, e, f};
-	for (int i = 0; i < 6; i++) {
-        int result = decode(tests[i]);
-    }
-
-	//toBinaryPrint(result);
-	return 0;
-}*/
+// run ../../armv8_testsuite/test/test_cases/general/add01.s output.bin

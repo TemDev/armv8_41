@@ -275,6 +275,7 @@ directive_data process_directive(char *file_line) {
 line_data process_line(char *file_line) {
     int length = strlen(file_line);
     line_type type = get_line_type(file_line);
+    file_line = strdup(file_line);
     line_data data = {.type = type};
     line_contents contents;
     switch(type) {
@@ -295,12 +296,13 @@ line_data process_line(char *file_line) {
     return data;
 }
 
-void process_input(char *input_file, line_data *line_tokens) {
+ process_input(char *input_file, line_data *line_tokens) {
     FILE *fp = fopen(input_file, "rb");
+    int index = 0;
     if(fp != NULL) {
         char line[100];
-        int index = 0;
-        while(fgets(line, 100, fp) != NULL) {
+        while(fgets(line, 100, fp) != NULL && (strcmp(line, "\n") != 0)) {
+            strtok(line, "\n");
             line_data data = process_line(line);  // maybe this is a local var ????????????????????????
             line_tokens[index++] = data;
         }
@@ -309,6 +311,7 @@ void process_input(char *input_file, line_data *line_tokens) {
     }
     fclose(fp);
     printf("Succesfully assembled");
+    return index;
 }
 
 
