@@ -146,27 +146,37 @@ shift_type get_shift_type(char* shift) {
 void find_address_operand_vars(operand *addr_operand) {
     char *register = strtok(operand_text, ",");
     if( (char *var2 = strtok(NULL, ",")) != NULL ) {
-        addr_operand->value.address_operand.register = register + 1;
-        var2[strlen(var2) - 1] = '\0';
-        if( is_general_register(var2) ) {
-            addr_operand->value.address_operand.shift = REGISTER_OFFSET;
-        } // general register processing
-        else if( is_special_register ) {
-            addr_operand->value.address_operand.shift = REGISTER_OFFSET;
-        }// special register processing
-        else {
-            addr_operand->value.address_operand.shift = UNSIGNED_OFFSET;
-        } // immediate value processing
-        // addr_operand->value.address_operand.offset = ...
+        addr_operand->value.address1.operand1 = register + 1;
+        if( (char *var3 = strtok(NULL, ",")) != NULL ) {
+            addr_operand->value.address1.address_type = REG_SHIFT;
+            if( is_general_register(var2) ) {
+
+            } // general register processing
+            else {  // must be special register
+
+            }
+        } else {
+            var2[strlen(var2) - 1] = '\0';
+            if( is_general_register(var2) ) {
+                addr_operand->value.address1.address_type = REG;
+            } // general register processing
+            else if( is_special_register ) {
+                addr_operand->value.address1.address_type = REG;
+            }// special register processing
+            else {
+                addr_operand->value.address1.address_type = UNSIGNED;
+            } // immediate value processing
+            // addr_operand->value.address1.offset = ...
+        }
     } else {
         register = strtok(operand_text, "]");
-        addr_operand->value.address_operand.register = register + 1;
+        addr_operand->value.address1.operand1 = register + 1;
         if( (char *var2 = strtok(NULL, "]")) != NULL ) {
             // immediate value processing
-            // addr_operand->value.address_operand.offset = ...
-            addr_operand->value.address_operand.shift = POST_INDEXED;
+            // addr_operand->value.address1.offset = ...
+            addr_operand->value.address1.address_type = POST;
         } else {
-            addr_operand->value.address_operand.shift = SINGLE;  // single doesnt exist yet
+            addr_operand->value.address1.address_type = SINGLETON;  // single doesnt exist yet
         }
     }
 }
@@ -212,14 +222,14 @@ operand process_operand(char* operand_text) {
         {
             case '!':
                 find_address_operand_vars(&ret_operand);
-                ret_operand.value.address_operand.shift = PRE_INDEXED;
+                ret_operand.value.address1.address_type = PRE_INDEXED;
                 break;
             case: ']' // 3 subcases: [xn], [xn, xm], [xn, #imm]
                 if 
                 find_address_operand_vars(&ret_operand);
                 break;
             default:
-                ret_operand.value.address_operand.shift = POST_INDEXED;
+                ret_operand.value.address1.address_type = POST_INDEXED;
             
         }
     } else {  // todo add label/directive variable things
