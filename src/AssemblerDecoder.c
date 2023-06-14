@@ -6,6 +6,7 @@
 #include "bitwise.c"
 #include "AssemblerDecoder.h"
 #include "assemble.h"
+#include "Aliases.h"
 // return a string that is a binary representation of a number
 
 void toBinaryPrint(int number) {
@@ -245,7 +246,7 @@ int decodeline(line_data line) {
             return 0;
             break;
         case INSTRUCTION:
-            return decode(line.contents.instruction);
+            return decode(convertInstruction(&line.contents.instruction));
             break;
         default:
             return 0;

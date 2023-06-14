@@ -35,20 +35,26 @@ int main(int argc, char **argv) {
       }
     }
 
+    count = 0;
     for (int i = 0; i < n_lines; i++) {
         if (line_tokens[i].type == INSTRUCTION) {
             for (int j = 0; j < line_tokens[i].contents.instruction.no_operands; j++) {
-                if ((line_tokens[i].contents.instruction.operands[j].type == LITERAL) && line_tokens[i].contents.instruction.operands[j].value.label_name) {
+                if ((line_tokens[i].contents.instruction.operands[j].type == LITERAL) &&
+                    line_tokens[i].contents.instruction.operands[j].value.label_name) {
                     int label_value;
                     int k = 0;
-                    while(label_list_actual[k].label != line_tokens[i].contents.instruction.operands[j].value.label_name) {k++;}
+                    while (label_list_actual[k].label !=
+                           line_tokens[i].contents.instruction.operands[j].value.label_name) { k++; }
                     label_value = label_list_actual[k].address;
                     line_tokens[i].contents.instruction.operands[j].value.immediate = label_value;
                     line_tokens[i].contents.instruction.operands[j].type = IMMEDIATE;
                 }
             }
         }
-        output[i] = decodeline(line_tokens[i]);
+        if (line_tokens[i].type == DIRECTIVE || line_tokens[i].type == INSTRUCTION) {
+            output[count] = decodeline(line_tokens[i]);
+            count++;
+        }
     }
     writeFile(output, argv[2], count_address / 4);
   } else {

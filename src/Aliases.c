@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "assemble.h"
+#include "Aliases.h"
 
 operand* insertReg(instruction_data *ins, operand elem, int pos){
     operand *ops = calloc(ins -> no_operands, sizeof(operand));
@@ -30,7 +31,7 @@ static operand RegisterZR(register_size size) {
     return op;
 }
 
-instruction_data convertInstruction(instruction_data *inst, char opcode) {
+instruction_data convertInstruction(instruction_data *inst) {
 
 //function for inserting the rzr register into correct position
 
@@ -41,7 +42,7 @@ instruction_data convertInstruction(instruction_data *inst, char opcode) {
     if (inst -> operands[0].value.register_operand.size == BIT_64) {
         mode = RegisterZR(BIT_64); // 64-bit mode -- xzr
     } else {
-        mode = RegisterZR(BIT_64); // 32-bit mode -- wzr
+        mode = RegisterZR(BIT_32); // 32-bit mode -- wzr
     }
 
     // Check if the instruction is "cmp" and has two operands
