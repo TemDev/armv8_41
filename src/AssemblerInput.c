@@ -86,8 +86,9 @@ int str_in_str_arr(char *str, char **str_arr, int str_arr_len) {
     return 0;
 }
 
-static void remove_space_from_operand(char *operand_text) {
+static char* remove_space_from_operand(char *operand_text) {
     while(operand_text[0] == ' ') operand_text++;
+    return operand_text;
 }
 
 
@@ -171,7 +172,7 @@ shift_info process_shift_operand(char *operand_text) {
     else if (strcmp(shift_chars, "asr") == 0) ret_shift.shift = ASR;
     else ret_shift.shift = ROR;  // must be ROR
     
-    ret_shift.shift_amount = atoi(operand_text+5);
+    ret_shift.shift_amount = immediateMake(operand_text+5).value.immediate;
     return ret_shift;
 }
 
@@ -293,7 +294,7 @@ instruction_data process_instruction(char *file_line) {
     operand* operands_ptr = (operand*) malloc(MAX_NO_OPS * sizeof(operand));
     data.operands = operands_ptr;
     while((current = strtok(NULL, ",")) != NULL) {
-        remove_space_from_operand(current);
+        current = remove_space_from_operand(current);
         data.operands[data.no_operands] = process_operand(current);
         data.no_operands++;
         // operand temp;

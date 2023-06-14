@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < n_lines; i++) {
         if (line_tokens[i].type == INSTRUCTION) {
             for (int j = 0; j < line_tokens[i].contents.instruction.no_operands; j++) {
-                if ((line_tokens[i].contents.instruction.operands[j].type == LITERAL) &&
+                if ((line_tokens[i].contents.instruction.operands[j].type == LABEL_NAME) &&
                     line_tokens[i].contents.instruction.operands[j].value.label_name) {
                     int label_value;
                     int k = 0;
