@@ -73,7 +73,41 @@ int BR(instruction_data *inst, char opcode) {
 }
 
 int Transfer(instruction_data *inst, char opcode){
-    return 0;
+	offset_type type = inst -> operands[1].value.address1.address_type;
+	int temp = 0;
+	char sf = (inst -> operands[0].value.register_operand.size == BIT_64)? 1:0;
+	char U = (type == UNSIGNED)? 1:0;
+	char I = (type == PRE)? 1:0;
+	char L = opcode & 1;
+	
+	if (type == LOAD) { 
+		temp = ((1 & sf) << 3) + 3;
+		int simm19 = ((inst -> operands[1].value.immediate) & ((1 << 19)-1));
+		temp = (temp <<27) + ((simm19  & ((1 << 19) - 1)) << 5);
+	} else {
+		temp = ((1 & sf) << 3) + 23;
+		int offset = 0;
+		if (type == UNSIGNED) {
+			 offset = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 12) - 1);
+		} else if (type == REG) {
+			// proccess special registers
+			char xm = (inst -> operands[1].value.address1.operand1.type == SPECIAL)? 
+			31 :inst -> operands[1].value.address1.operand2.register_value.id.number;
+			offset = (1 << 11) + (xm << 6) + 26;
+		} else {
+			int simm9 = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 9) - 1);
+			offset = (simm9 << 2 )+ ((I & 1) << 1) + 1;
+		}
+// process special registers
+		char xn = (inst -> operands[1].value.address1.operand1.type == SPECIAL)? 
+			31 : inst -> operands[1].value.address1.operand1.id.number;
+		temp = (temp << 27) +  ((1 & U) << 24)  + ((1 & L) << 22) + (offset << 10) + (xn << 5);
+	
+	}
+	char rt = getRegisterNumber(0, inst);
+	temp += rt;
+	
+    return temp;
 }
 int DP(instruction_data *inst, char opcode){
 	//is it register or immediate
@@ -210,7 +244,7 @@ instToFunction instToFunctions[30] = {
 	{"b", &BR, 3}, {"br", &BR, 4}, {"b.eq", &BR, 0}, {"b.ne", &BR, 1},
 	{"b.ge", &BR, 10}, {"b.lt", &BR, 11}, {"b.gt", &BR, 12}, {"b.le", &BR, 13}, 
 	{"b.al", &BR, 14}, 
-	{"ldr", &Transfer, 7}, {"str", &Transfer, 7},{"nop", &Transfer, 7}}; 
+	{"ldr", &Transfer, 1}, {"str", &Transfer, 0},{"nop", &Transfer, 7}}; 
 	
 
 int decode(instruction_data inst) {
