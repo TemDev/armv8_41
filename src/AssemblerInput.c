@@ -298,7 +298,7 @@ line_data process_line(char *file_line) {
 void process_input(char *input_file, line_data *line_tokens) {
     FILE *fp = fopen(input_file, "rb");
     if(fp != NULL) {
-        char *line;
+        char line[100];
         int index = 0;
         while(fgets(line, 100, fp) != NULL) {
             line_data data = process_line(line);  // maybe this is a local var ????????????????????????
@@ -315,4 +315,4 @@ void process_input(char *input_file, line_data *line_tokens) {
 // int main( void ) {
 //     printf("yay it compiles");
 //     return 0;
-// }
+// } run ../../armv8_testsuite/test/test_cases/general/add01.s output.bin

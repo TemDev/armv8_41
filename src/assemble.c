@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
   if (argc == 3) {
     line_data line_tokens[MAX_INSTRUCTIONS];
     int output[MAX_INSTRUCTIONS];
-    process_input(argv[1], *line_tokens);
+    process_input(argv[1], line_tokens);
 
     label_list label_list_actual[MAX_INSTRUCTIONS];
     int count = 0;
