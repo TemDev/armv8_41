@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
                     while (strcmp(label_list_actual[k].label,
                     line_tokens[i].contents.instruction.operands[j].value.label_name) != 0) { k++; }
                     label_value = label_list_actual[k].address;
-                    line_tokens[i].contents.instruction.operands[j].value.immediate = label_value - count * 4;
+                    line_tokens[i].contents.instruction.operands[j].value.immediate = (label_value / 4) - count;
                     line_tokens[i].contents.instruction.operands[j].type = IMMEDIATE;
                 }
             }
@@ -61,3 +61,5 @@ int main(int argc, char **argv) {
     printf("Please enter exactly 2 command line arguments in the format <file_in> <file_out>\n");
   }
 }
+
+//run ../../armv8_testsuite/test/test_cases/general/ldr05.s output.bin

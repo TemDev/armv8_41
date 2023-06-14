@@ -93,6 +93,7 @@ static char* remove_space_from_operand(char *operand_text) {
 
 
 line_type get_line_type(char *file_line) {
+    file_line = remove_space_from_operand(file_line);
     int length = strlen(file_line);
     if(file_line[0] == '.') return DIRECTIVE;
     if(file_line[length-1] == ':') return LABEL;
@@ -186,9 +187,14 @@ void find_address_operand_vars(operand *addr_operand, char* operand_text, char* 
     addr_operand -> value.address1.operand1 = RegisterNsize(atoi(reg + 2), *(reg + 1)).value.register_operand;
     reg = strtok(NULL, " ");
     char* op2;
+    char *ref;
     char* reference = (reg != NULL)? reg : next;
-    char* ref = strdup(reference);
-    op2 = strtok(ref, ", ]");
+    if (reference != NULL) {
+        ref = strdup(reference);
+        op2 = strtok(ref, ", ]");
+    } else {
+        op2 = NULL;
+    }
     if (op2 != NULL){
     if (is_general_register(op2)) {
         sndReg = true;
@@ -205,7 +211,9 @@ void find_address_operand_vars(operand *addr_operand, char* operand_text, char* 
     } else {
         addr_operand -> value.address1.operand2.immediate_value = 0;
     }
-    if (reference[strlen(reference) - 1] == '!') {
+    if (!reference) {
+        type = UNSIGNED;
+    } else if (reference[strlen(reference) - 1] == '!') {
         type = PRE;
     } else if (reference[strlen(reference) - 1] == ']'){
         if (sndReg) {
@@ -387,9 +395,10 @@ instruction_data process_instruction(char *file_line) {
 
 directive_data process_directive(char *file_line) {
     directive_data directive;
-    directive.name = strtok(file_line, " ") + 1;
-    char *arg_as_char = strtok(NULL, " ");
-    directive.arg = (arg_as_char[1] == 'x') ? strtol(arg_as_char, NULL, 16) : atoi(arg_as_char);  // checks if hex and converts
+    char * temp =strtok(file_line, " ");
+    directive.name = strdup(temp);
+    temp = strtok(NULL, " ");
+    directive.arg = (temp[1] == 'x') ? strtol(temp, NULL, 16) : atoi(temp);  // checks if hex and converts
     return directive;
 }
 

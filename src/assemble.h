@@ -47,7 +47,7 @@ typedef struct {
 // typdef struct { int64_t number } directive_arguments;
 // typdef struct { char *name; directive_arguments *args; int args_length } directive_data;
 
-typedef struct { char *name; int64_t arg; } directive_data;  // as .int takes exactly one integer as an argument
+typedef struct { char *name; int32_t arg; } directive_data;  // as .int takes exactly one integer as an argument
 
 typedef union {
   instruction_data instruction;

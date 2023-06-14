@@ -248,7 +248,7 @@ int decode(instruction_data inst) {
 int decodeline(line_data line) {
     switch (line.type) {
         case DIRECTIVE:
-            return (int) line.contents.directive.arg;
+            return line.contents.directive.arg;
             break;
         case INSTRUCTION:
             return decode(convert(&line.contents.instruction));
