@@ -1,69 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include "AssemblerInput.h"
-// #include "assemble.h"
-
-
-#ifndef ASSEMBLE_H
-#define ASSEMBLE_H
-
-typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
-
-typedef enum { REGISTER, IMMEDIATE, ADDRESS, LABEL_NAME, SHIFT } operand_type;  // process address and literal types
-
-typedef enum { GENERAL, SPECIAL } register_type;
-
-typedef enum { SINGLETON, UNSIGNED, PRE, POST, REG, LOAD, REG_SHIFT } offset_type;
-
-typedef enum { SP, ZR, PC } special_register_type;
-
-typedef enum { BIT_64, BIT_32 } register_size;
-
-typedef union { special_register_type special_register; int number; } register_id;
-
-typedef struct { register_type type; register_id id; register_size size; } register_info;
-
-typedef enum { LSL = 0, LSR = 1, ASR = 2, ROR = 3} shift_type;
-
-typedef struct { shift_type shift; int shift_amount; } shift_info;
-
-typedef struct 
-{ 
-  offset_type address_type;
-  register_info operand1;
-  union {register_info register_value; int32_t immediate_value;} operand2;
-  shift_info shift_operand;
-} address_info;
-
-
-typedef union { register_info register_operand; int32_t immediate; char* label_name; address_info address1; shift_info shift_operand;} operand_value;
-
-typedef struct { operand_type type; operand_value value; } operand; // add label vars
-
-typedef struct {
-  char *instruction_name;
-  operand *operands;
-  int no_operands;
-} instruction_data;
-
-// simplified directives as .int is the only one - below code could be used if there were more
-// typdef struct { int64_t number } directive_arguments;
-// typdef struct { char *name; directive_arguments *args; int args_length } directive_data;
-
-typedef struct { char *name; int64_t arg; } directive_data;  // as .int takes exactly one integer as an argument
-
-typedef union {
-  instruction_data instruction;
-  directive_data directive;
-  char *label_name;
-} line_contents;
-
-typedef struct { line_type type; line_contents contents; } line_data;
-
-#endif
-
-
+#include <stdint.h>
+#include "AssemblerInput.h"
+#include "assemble.h"
 
 operand RegisterN(char n) {
     operand op;
@@ -109,22 +49,23 @@ operand RegisterZR(char c) {
 //    op.value.register_operand = reg;
 //    return op;
 //}
-// operand shiftmake(shift_type type, int amount) {
-//     operand op;
-//     op.type = SHIFT;
-//     shift_info shiftop;
-//     shiftop.shift = type;
-//     shiftop.shift_amount = amount;
-//     op.value.shift_operand = shiftop;
+operand shiftmake(shift_type type, int amount) {
+    operand op;
+    op.type = SHIFT;
+    shift_info shiftop;
+    shiftop.shift = type;
+    shiftop.shift_amount = amount;
+    op.value.shift_operand = shiftop;
 
-//     return op;
-// }
+    return op;
+}
 
 operand immediateMake(char* imm_str) {
+     
     operand op;
     op.type = IMMEDIATE;
-    // checks if hex and converts
     op.value.immediate = (imm_str[1] == 'x') ? strtol(imm_str, NULL, 16) : atoi(imm_str);
+      // checks if hex and converts
     return op;
 }
 // built in func exists strchr BUT don't think it works as can't check if '\0' ?
@@ -178,7 +119,7 @@ int is_general_register(char* operand_text) {
 
 int is_shift_operation(char* operand_text) {
 #define SN_LEN 4
-    char *SHIFT_NAMES[] = {"lsl", "lsr", "asl", "ror"};
+    char *SHIFT_NAMES[] = {"lsl", "lsr", "asr", "ror"};
     char shift_chars[4];
     strncpy(shift_chars, operand_text, 3);
     if(str_in_str_arr(shift_chars, SHIFT_NAMES, SN_LEN) && operand_text[4] == '#') return 1;
@@ -305,7 +246,7 @@ void find_address_operand_vars(operand *addr_operand, char *operand_text) {
 operand process_operand(char* operand_text) {
     operand ret_operand;
     if(operand_text[0] == '#') {
-        ret_operand = immediateMake(operand_text + 1);
+        return immediateMake(operand_text + 1);
         // assumes immediate value is valid, else is set to 0
     } else if(is_special_register(operand_text)) {
         ret_operand = process_special_register_operand(operand_text);
@@ -411,6 +352,7 @@ directive_data process_directive(char *file_line) {
 line_data process_line(char *file_line) {
     int length = strlen(file_line);
     line_type type = get_line_type(file_line);
+    file_line = strdup(file_line);
     line_data data = {.type = type};
     line_contents contents;
     switch(type) {
@@ -431,12 +373,13 @@ line_data process_line(char *file_line) {
     return data;
 }
 
-void process_input(char *input_file, line_data *line_tokens) {
+ process_input(char *input_file, line_data *line_tokens) {
     FILE *fp = fopen(input_file, "rb");
+    int index = 0;
     if(fp != NULL) {
-        char *line;
-        int index = 0;
-        while(fgets(line, 100, fp) != NULL) {
+        char line[100];
+        while(fgets(line, 100, fp) != NULL && (strcmp(line, "\n") != 0)) {
+            strtok(line, "\n");
             line_data data = process_line(line);  // maybe this is a local var ????????????????????????
             line_tokens[index++] = data;
         }
@@ -445,10 +388,11 @@ void process_input(char *input_file, line_data *line_tokens) {
     }
     fclose(fp);
     printf("Succesfully assembled");
+    return index;
 }
 
 
 // int main( void ) {
 //     printf("yay it compiles");
 //     return 0;
-// }
+// } run ../../armv8_testsuite/test/test_cases/general/add01.s output.bin

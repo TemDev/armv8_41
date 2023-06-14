@@ -6,6 +6,7 @@
 #include "bitwise.c"
 #include "AssemblerDecoder.h"
 #include "assemble.h"
+#include "Aliases.h"
 // return a string that is a binary representation of a number
 
 void toBinaryPrint(int number) {
@@ -73,7 +74,42 @@ int BR(instruction_data *inst, char opcode) {
 }
 
 int Transfer(instruction_data *inst, char opcode){
-    return 0;
+	offset_type type = inst -> operands[1].value.address1.address_type;
+	bool load  = (inst -> operands[1].type != ADDRESS);
+	int temp = 0;
+	char sf = (inst -> operands[0].value.register_operand.size == BIT_64)? 1:0;
+	char U = (type == UNSIGNED)? 1:0;
+	char I = (type == PRE)? 1:0;
+	char L = opcode & 1;
+	
+	if (load) { 
+		temp = ((1 & sf) << 3) + 3;
+		int simm19 = ((inst -> operands[1].value.immediate) & ((1 << 19)-1));
+		temp = (temp <<27) + (simm19 << 5);
+	} else {
+		temp = ((1 & sf) << 3) + 23;
+		int offset = 0;
+		if (type == UNSIGNED) {
+			 offset = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 12) - 1);
+		} else if (type == REG) {
+			// proccess special registers
+			char xm = (inst -> operands[1].value.address1.operand1.type == SPECIAL)? 
+			31 :inst -> operands[1].value.address1.operand2.register_value.id.number;
+			offset = (1 << 11) + (xm << 6) + 26;
+		} else {
+			int simm9 = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 9) - 1);
+			offset = (simm9 << 2 )+ ((I & 1) << 1) + 1;
+		}
+// process special registers
+		char xn = (inst -> operands[1].value.address1.operand1.type == SPECIAL)? 
+			31 : inst -> operands[1].value.address1.operand1.id.number;
+		temp = (temp << 27) +  ((1 & U) << 24)  + ((1 & L) << 22) + (offset << 10) + (xn << 5);
+	
+	}
+	char rt = getRegisterNumber(0, inst);
+	temp += rt;
+	
+    return temp;
 }
 int DP(instruction_data *inst, char opcode){
 	//is it register or immediate
@@ -90,7 +126,6 @@ int DP(instruction_data *inst, char opcode){
 	
 	// checks whether it is Bit Logic, Arithmetic or Multiply;
 	temp = (is64)? 4: 0;
-
     temp += opc;
 	//printf("R:%d opcode: %d \n", R, opcode);
 
@@ -133,29 +168,6 @@ int DP(instruction_data *inst, char opcode){
         } else {
             exit(1);
         }
-			/*
-		switch (R) {
-			case 0 :
-
-			
-			break;
-			case 2 :// arithmetic
-			shift = inst -> operands[3].value.shift_operand.shift;
-			operand =  inst -> operands[3].value.shift_operand.shift_amount & 63;
-			
-			temp = (temp << 4) + 8 + ((shift & 3) << 1);
-			//adding rm and operand
-		       	temp = (temp << 21) + (rm  << 16) +( operand << 10) + (rn << 5) +rd; 
-			printf("Performing an arithmetic instruction\n");
-			break;
-			case 1: //multiply
-
-			break;
-			default:
-			exit(1);
-		}
-*/
-
 	} else {
 
 		temp = (temp << 3) + 4;
@@ -169,7 +181,7 @@ int DP(instruction_data *inst, char opcode){
 
             char rn = getRegisterNumber(1, inst);
             int imm12 = ((inst -> operands[2].value.immediate) & ((1 << 12)-1));
-            char sh = (inst -> no_operands > 3)? 1 : 0;
+            char sh = (inst -> no_operands > 3 && inst -> operands[3].value.shift_operand.shift_amount != 0)? 1 : 0;
 
 
 			// the flag whether it should be shifted
@@ -201,6 +213,9 @@ int DP(instruction_data *inst, char opcode){
 	toBinaryPrint(temp);
 	return temp;
 }
+int NOP(instruction_data *inst, char opcode) {
+	return 3573751839;
+}
 instToFunction instToFunctions[30] = {
 	{"add", &DP, 16}, {"adds", &DP, 17}, {"sub", &DP, 18}, {"subs", &DP, 19}, 
        	{"and", &DP, 0}, {"ands", &DP, 3}, {"bic", &DP, 32}, {"bics", &DP, 35},
@@ -210,7 +225,7 @@ instToFunction instToFunctions[30] = {
 	{"b", &BR, 3}, {"br", &BR, 4}, {"b.eq", &BR, 0}, {"b.ne", &BR, 1},
 	{"b.ge", &BR, 10}, {"b.lt", &BR, 11}, {"b.gt", &BR, 12}, {"b.le", &BR, 13}, 
 	{"b.al", &BR, 14}, 
-	{"ldr", &Transfer, 7}, {"str", &Transfer, 7},{"nop", &Transfer, 7}}; 
+	{"ldr", &Transfer, 1}, {"str", &Transfer, 0},{"nop", &NOP, 0}}; 
 	
 
 int decode(instruction_data inst) {
@@ -222,7 +237,7 @@ int decode(instruction_data inst) {
 			return fun(&inst, instToFunctions[i].opcode);
 		}
 	}
-
+	// it means unknown instruction passed
 	// it should never reach this value	
 	assert(false);
 	return -1;
@@ -231,85 +246,14 @@ int decode(instruction_data inst) {
 int decodeline(line_data line) {
     switch (line.type) {
         case DIRECTIVE:
-            return 0;
+            return (int) line.contents.directive.arg;
             break;
         case INSTRUCTION:
-            return decode(line.contents.instruction);
+            return decode(convert(&line.contents.instruction));
             break;
         default:
             return 0;
     }
 }
-
-//operand RegisterN(char n) {
-//	operand op;
-//	op.type = REGISTER;
-//	register_info reg;
-//	reg.type = GENERAL;
-//	reg.size = BIT_64;
-//	reg.id.number = n;
-//	op.value.register_operand = reg;
-//	return op;
-//}
-//operand RegisterZR(char c) {
-//	operand op;
-//	op.type = REGISTER;
-//	register_info reg;
-//	reg.type = SPECIAL;
-//	reg.size = BIT_64;
-//	register_id id;
-//	id.special_register = ZR;
-//	op.value.register_operand = reg;
-//	return op;
-//}
-//operand shiftmake(shift_type type, int amount) {
-//	operand op;
-//	op.type = SHIFT;
-//	shift_info shiftop;
-//	shiftop.shift = type;
-//	shiftop.shift_amount = amount;
-//	op.value.shift_operand = shiftop;
-//
-//	return op;
-//}
-//
-//operand immediateMake(int n) {
-//    operand op;
-//    op.type = IMMEDIATE;
-//    op.value.immediate = n;
-//    return op;
-//}
-
-/*int main(void) {
-	int i = 30;
-	register_id reg_id;
-	reg_id.number = i;
-	register_info reginfo = {GENERAL,reg_id, BIT_64};
-	operand first;
-	first.value.register_operand = reginfo;
-	first.type = REGISTER;
-	
-	operand ands = first;
-	operand op[4] = {RegisterN(30), RegisterN(0), RegisterN(3), shiftmake(ASR, 60)};
-    operand ops[3] = {RegisterN(30), RegisterN(0), RegisterN(3)};
-    //{RegisterN(30), immediateMake(0xabcd), shiftmake(ASR, 16)};
-    //
-            //{RegisterN(30), RegisterN(0), RegisterN(3), shiftmake(ASR, 60)};
-            // {{IMMEDIATE,( 1 << 26) - 1}};
-	instruction_data a = {"add", op, 4};
-    instruction_data b = {"adds", op, 4};
-    instruction_data c = {"subs", op, 4};
-    instruction_data d = {"add", ops, 3};
-    instruction_data e = {"adds", ops, 3};
-    instruction_data f = {"subs", ops, 3};
-
-    instruction_data g = {"ands", op,4};
-    instruction_data h = {"bics", op,4};
-    instruction_data tests[6] = {a, b, c, d, e, f};
-	for (int i = 0; i < 6; i++) {
-        int result = decode(tests[i]);
-    }
-
-	//toBinaryPrint(result);
-	return 0;
-}*/
+// run ../../armv8_testsuite/test/test_cases/generated/eon/eon0.s output.bin
+// p data.contents.instruction -> operands[1]

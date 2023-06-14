@@ -2,6 +2,8 @@
 #ifndef ASSEMBLE_H
 #define ASSEMBLE_H
 
+#include<stdint.h>
+
 typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
 typedef enum { REGISTER, IMMEDIATE, ADDRESS, LABEL_NAME, SHIFT } operand_type;  // process address and literal types
