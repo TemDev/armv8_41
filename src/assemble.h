@@ -4,7 +4,7 @@
 
 typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
-typedef enum { REGISTER, IMMEDIATE, ADDRESS, LITERAL, SHIFT } operand_type;  // process address and literal types
+typedef enum { REGISTER, IMMEDIATE, ADDRESS, LABEL_NAME, SHIFT } operand_type;  // process address and literal types
 
 typedef enum { GENERAL, SPECIAL } register_type;
 
@@ -23,7 +23,8 @@ typedef enum { LSL = 0, LSR = 1, ASR = 2, ROR = 3} shift_type;
 typedef struct { shift_type shift; int shift_amount; } shift_info;
 
 typedef struct 
-{ offset_type address_type;
+{ 
+  offset_type address_type;
   register_info operand1;
   union {register_info register_value; int32_t immediate_value;} operand2;
   shift_info shift_operand;
@@ -35,9 +36,9 @@ typedef union { register_info register_operand; int32_t immediate; char* label_n
 typedef struct { operand_type type; operand_value value; } operand; // add label vars
 
 typedef struct {
-    char *instruction_name;
-    operand *operands;
-    int no_operands;
+  char *instruction_name;
+  operand *operands;
+  int no_operands;
 } instruction_data;
 
 // simplified directives as .int is the only one - below code could be used if there were more
@@ -47,9 +48,9 @@ typedef struct {
 typedef struct { char *name; int64_t arg; } directive_data;  // as .int takes exactly one integer as an argument
 
 typedef union {
-    instruction_data instruction;
-    directive_data directive;
-    char *label_name;
+  instruction_data instruction;
+  directive_data directive;
+  char *label_name;
 } line_contents;
 
 typedef struct { line_type type; line_contents contents; } line_data;
