@@ -1,83 +1,88 @@
-
 #include <stdio.h>
 #include <string.h>
+#include "assemble.h"
 
-void convertInstruction(char* instruction) {
-    char temp[50];
-    char* token;
-    char* operands[3];
-
-    // Copy the instruction string to a temporary buffer
-    strcpy(temp, instruction);
-
-    // Tokenize the instruction using space as the delimiter
-    token = strtok(temp, " ");
-    int i = 0;
-
-    // Store the tokens (instruction name and operands) in the operands array
-    while (token != NULL) {
-        operands[i] = token;
-        token = strtok(NULL, " ");
-        i++;
+operand* insertReg(instruction_data *ins, operand elem, int pos){
+    operand *ops = calloc(ins -> no_operands, sizeof(operand));
+    memcpy(ops, ins -> operands, ins -> no_operands * sizeof(operand));
+    for (int i = 0 ; i < strlen(ops); i++)
+    {
+        if ( i > pos) {
+        ops[i] = ops[i - 1] ;
+        }
+        else {
+            if ( i == pos)
+            ops[i] = elem;
+        }
     }
+    return ops;
+}
 
-    if ((instruction << 31) == 1) {
-        mode = xzr; // 64-bit mode
+static operand RegisterZR(register_size size) {
+    operand op;
+    op.type = REGISTER;
+    register_info reg;
+    reg.type = SPECIAL;
+    reg.size = size;
+    register_id id;
+    id.special_register = ZR;
+    op.value.register_operand = reg;
+    return op;
+}
+
+instruction_data convertInstruction(instruction_data *inst, char opcode) {
+
+//function for inserting the rzr register into correct position
+
+    instruction_data refined;
+    operand mode;
+
+
+    if (inst -> operands[0].value.register_operand.size == BIT_64) {
+        mode = RegisterZR(BIT_64); // 64-bit mode -- xzr
     } else {
-        mode = wzr; // 32-bit mode
+        mode = RegisterZR(BIT_64); // 32-bit mode -- wzr
     }
 
     // Check if the instruction is "cmp" and has two operands
-    if (strcmp(operands[0], "cmp") == 0) {
+    if (strcmp(inst->instruction_name, "cmp") == 0) {
         // Construct the "subs" instruction using the operands
-        sprintf("subs, %s, %s, %s", mode, operands[1], operands[2]);
+        refined = (instruction_data){"subs", insertReg(inst->operands, mode, 0), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "cmn") == 0) {
+    } else if (strcmp(inst->instruction_name, "cmn") == 0) {
         // Construct the "adds" instruction using the operands
-        sprintf("adds, %s, %s, %s", mode, operands[1], operands[2]);
+        refined = (instruction_data){"adds", insertReg(inst->operands, mode, 0), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "neg") == 0) {
+    } else if (strcmp(inst->instruction_name, "neg") == 0) {
         // Construct the "sub" instruction using the operands
-        sprintf("sub, %s, %s, %s", operands[1], mode, operands[2]);
+        refined = (instruction_data){"sub", insertReg(inst->operands, mode, 1), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "negs") == 0) {
+    } else if (strcmp(inst->instruction_name, "negs") == 0) {
         // Construct the "subs" instruction using the operands
-        sprintf("subs, %s, %s, %s", operands[1], mode, operands[2]);
+        refined = (instruction_data){"subs", insertReg(inst->operands, mode, 1), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "tst") == 0) {
+    } else if (strcmp(inst->instruction_name, "tst") == 0) {
         // Construct the "ands" instruction using the operands
-        sprintf("ands, %s, %s, %s", mode, operands[1], operands[2]);
+        refined = (instruction_data){"ands", insertReg(inst->operands, mode, 0), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "mvn") == 0) {
+    } else if (strcmp(inst->instruction_name, "mvn") == 0) {
         // Construct the "orn" instruction using the operands
-        sprintf("orn, %s, %s, %s", operands[1], mode, operands[2]);
+        refined = (instruction_data){"orn", insertReg(inst->operands, mode, 1), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "mov") == 0) {
+    } else if (strcmp(inst->instruction_name, "mov") == 0) {
         // Construct the "orr" instruction using the operands
-        sprintf("orr %s, %s, %s", operands[1], mode, operands[2]);
+        refined = (instruction_data){"orr", insertReg(inst->operands, mode, 1), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "mul") == 0) {
+    } else if (strcmp(inst->instruction_name, "mul") == 0) {
         // Construct the "madd" instruction using the operands
-        sprintf("madd, %s, %s, %s", operands[1], operands[2], mode);
+        refined = (instruction_data){"madd", insertReg(inst->operands, mode, 3), inst->no_operands + 1};
 
-    } else if (strcmp(operands[0], "mneg") == 0) {
+    } else if (strcmp(inst->instruction_name, "mneg") == 0) {
         // Construct the "msub" instruction using the operands
-        sprintf("msub, %s, %s, %s", operands[1], operands[2], mode);
+        refined = (instruction_data){"msub", insertReg(inst->operands, mode, 3), inst->no_operands + 1};
 
     } else {
-        printf("Invalid instruction format or unsupported instruction.\n");
+        refined = *inst; // in case the instruction is invalid or not a aliase
     }
-}
-
-int main() {
-    char instruction[100];
-
-    fgets(instruction, sizeof(instruction), stdin);
-    instruction[strcspn(instruction, "\n")] = '\0';  // Remove the newline character
-
-    convertInstruction(instruction);
-
-    printf("Converted instruction: %s\n", instruction);
-
-    return 0;
+    return refined;
 }
