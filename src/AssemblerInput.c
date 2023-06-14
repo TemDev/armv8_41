@@ -1,8 +1,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "AssemblerInput.h"
-#include "assemble.h"
+// #include "AssemblerInput.h"
+// #include "assemble.h"
+
+
+#ifndef ASSEMBLE_H
+#define ASSEMBLE_H
+
+typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
+
+typedef enum { REGISTER, IMMEDIATE, ADDRESS, LABEL_NAME, SHIFT } operand_type;  // process address and literal types
+
+typedef enum { GENERAL, SPECIAL } register_type;
+
+typedef enum { SINGLETON, UNSIGNED, PRE, POST, REG, LOAD, REG_SHIFT } offset_type;
+
+typedef enum { SP, ZR, PC } special_register_type;
+
+typedef enum { BIT_64, BIT_32 } register_size;
+
+typedef union { special_register_type special_register; int number; } register_id;
+
+typedef struct { register_type type; register_id id; register_size size; } register_info;
+
+typedef enum { LSL = 0, LSR = 1, ASR = 2, ROR = 3} shift_type;
+
+typedef struct { shift_type shift; int shift_amount; } shift_info;
+
+typedef struct 
+{ 
+  offset_type address_type;
+  register_info operand1;
+  union {register_info register_value; int32_t immediate_value;} operand2;
+  shift_info shift_operand;
+} address_info;
+
+
+typedef union { register_info register_operand; int32_t immediate; char* label_name; address_info address1; shift_info shift_operand;} operand_value;
+
+typedef struct { operand_type type; operand_value value; } operand; // add label vars
+
+typedef struct {
+  char *instruction_name;
+  operand *operands;
+  int no_operands;
+} instruction_data;
+
+// simplified directives as .int is the only one - below code could be used if there were more
+// typdef struct { int64_t number } directive_arguments;
+// typdef struct { char *name; directive_arguments *args; int args_length } directive_data;
+
+typedef struct { char *name; int64_t arg; } directive_data;  // as .int takes exactly one integer as an argument
+
+typedef union {
+  instruction_data instruction;
+  directive_data directive;
+  char *label_name;
+} line_contents;
+
+typedef struct { line_type type; line_contents contents; } line_data;
+
+#endif
+
+
 
 operand RegisterN(char n) {
     operand op;
@@ -48,22 +109,22 @@ operand RegisterZR(char c) {
 //    op.value.register_operand = reg;
 //    return op;
 //}
-operand shiftmake(shift_type type, int amount) {
-    operand op;
-    op.type = SHIFT;
-    shift_info shiftop;
-    shiftop.shift = type;
-    shiftop.shift_amount = amount;
-    op.value.shift_operand = shiftop;
+// operand shiftmake(shift_type type, int amount) {
+//     operand op;
+//     op.type = SHIFT;
+//     shift_info shiftop;
+//     shiftop.shift = type;
+//     shiftop.shift_amount = amount;
+//     op.value.shift_operand = shiftop;
 
-    return op;
-}
+//     return op;
+// }
 
 operand immediateMake(char* imm_str) {
     operand op;
     op.type = IMMEDIATE;
+    // checks if hex and converts
     op.value.immediate = (imm_str[1] == 'x') ? strtol(imm_str, NULL, 16) : atoi(imm_str);
-      // checks if hex and converts
     return op;
 }
 // built in func exists strchr BUT don't think it works as can't check if '\0' ?
@@ -84,20 +145,10 @@ int str_in_str_arr(char *str, char **str_arr, int str_arr_len) {
     return 0;
 }
 
-// void get_next_word(char start, int *end, char* string, char* word) {
-//     #define END_CHARS_LENGTH 3
-//     #define END_CHARS ", \n\0"
-//     int length = strlen(string);
-//
-//     for (int i = start; i < length ; i++) {
-//         if(~char_in_str(string[i], END_CHARS, END_CHARS_LENGTH)) word[i] = string[i];
-//         else {
-//             word[i] = '\0';
-//             *end = i;  // technically the index of the end char after the word
-//             break;
-//         }
-//     }
-// }call regtostring(line.contents.instruction.operands[2])
+static void remove_space_from_operand(char *operand_text) {
+    while(operand_text[0] == ' ') operand_text++;
+}
+
 
 line_type get_line_type(char *file_line) {
     int length = strlen(file_line);
@@ -134,6 +185,10 @@ int is_shift_operation(char* operand_text) {
     return 0;
 }
 
+int is_address(char *operand_text) {
+    return (operand_text[0] == '[') ? 1 : 0;
+}
+
 shift_type get_shift_type(char* shift) {
     if (strcmp("lsl", shift) == 0) return LSL;
     else if (strcmp("lsr", shift) == 0) return LSR;
@@ -144,15 +199,59 @@ shift_type get_shift_type(char* shift) {
     }
 }
 
-void find_address_operand_vars(operand *addr_operand) {
-    char *register = strtok(operand_text, ",");
-    if( (char *var2 = strtok(NULL, ",")) != NULL ) {
-        addr_operand->value.address1.operand1 = register + 1;
+operand process_special_register_operand(char* operand_text) {
+    operand ret_op;
+    ret_op.type = REGISTER;
+    ret_op.value.register_operand.type = SPECIAL;
+    if (strcmp(operand_text + 1,"p") == 0) {
+        ret_op.value.register_operand.id.special_register = SP;
+        ret_op.value.register_operand.size = BIT_64;
+    } else if (strcmp(operand_text + 1,"sp") == 0) {
+        ret_op.value.register_operand.id.special_register = SP;
+        ret_op.value.register_operand.size = BIT_32;
+    } else if (strcmp(operand_text + 1,"zr") == 0) {
+        ret_op.value.register_operand.id.special_register = ZR;
+        ret_op.value.register_operand.size = (operand_text[0] == 'x') ? BIT_64 : BIT_32;
+    } else { // PC registers
+        ret_op.value.register_operand.id.special_register = PC;
+        ret_op.value.register_operand.size = BIT_64;
+    }
+    return ret_op;
+}
+
+shift_info process_shift_operand(char *operand_text) {
+    shift_info ret_shift;
+    // ret_op.type = SHIFT;  // set shift_operand.shift, shift_operand.amount type and amount
+    char shift_chars[4];
+    strncpy(shift_chars, operand_text, 3);
+    
+    if (strcmp(shift_chars, "lsl") == 0) ret_shift.shift = LSL;
+    else if (strcmp(shift_chars, "lsr") == 0) ret_shift.shift = LSR;
+    else if (strcmp(shift_chars, "asr") == 0) ret_shift.shift = ASR;
+    else ret_shift.shift = ROR;  // must be ROR
+    
+    ret_shift.shift_amount = atoi(operand_text+5);
+    return ret_shift;
+}
+
+void find_address_operand_vars(operand *addr_operand, char *operand_text) {
+    char *reg = strtok(operand_text, ",");
+    char *var2 = strtok(NULL, ",");
+    if( var2 != NULL ) {
         remove_space_from_operand(var2);
-        if( (char *var3 = strtok(NULL, ",")) != NULL ) {
-            remove_space_from_operand(var3)
+        if( is_general_register(reg + 1) ) {
+            addr_operand->value.address1.operand1 
+              = RegisterNsize(atoi(reg + 2), reg[1]).value.register_operand;
+        }
+        else {
+            addr_operand->value.address1.operand1
+              = process_special_register_operand(reg + 1).value.register_operand;
+        }
+        char *var3 = strtok(NULL, ",");
+        if( var3 != NULL ) {
+            remove_space_from_operand(var3);
             var3[strlen(var3) - 1] = '\0';
-              = process_shift_operand(var3);
+            addr_operand->value.address1.shift_operand = process_shift_operand(var3);
             addr_operand->value.address1.address_type = REG_SHIFT;
             if( is_general_register(var2) ) {
                 addr_operand->value.address1.operand2.register_value 
@@ -182,51 +281,26 @@ void find_address_operand_vars(operand *addr_operand) {
             } 
         }
     } else {
-        addr_operand->value.address1.operand1 = strtok(operand_text, "]") + 1;
-        if( (char *var2 = strtok(NULL, "]")) != NULL ) {
+        reg = strtok(operand_text, "]") + 1;
+        if( is_general_register(reg) ) {
+            addr_operand->value.address1.operand1 
+              = RegisterNsize(atoi(reg + 1), reg[0]).value.register_operand;
+        } else {  // is special register
+            addr_operand->value.address1.operand1
+              = process_special_register_operand(reg + 1).value.register_operand;
+        }
+        char *var2 = strtok(NULL, "]");
+        if( var2 != NULL ) {
             char *imm_val = strtok(operand_text, "#");
-            ret_operand.value.address1.operand2.immediate_value = atoi(imm_val);
+            addr_operand->value.address1.operand2.immediate_value = atoi(imm_val);
             addr_operand->value.address1.address_type = POST;
         } else {
             addr_operand->value.address1.address_type = SINGLETON;
         }
     }
+    if( operand_text[strlen(operand_text) - 1] == '!' ) addr_operand->value.address1.address_type = PRE;
 }
 
-operand process_special_register_operand(char* operand_text) {
-    operand ret_op;
-    ret_op.type = REGISTER;
-    ret_op.value.register_operand.type = SPECIAL;
-    if (strcmp(operand_text + 1,"p") == 0) {
-        ret_op.value.register_operand.id.special_register = SP;
-        ret_op.value.register_operand.size = BIT_64;
-    } else if (strcmp(operand_text + 1,"sp") == 0) {
-        ret_op.value.register_operand.id.special_register = SP;
-        ret_op.value.register_operand.size = BIT_32;
-    } else if (strcmp(operand_text + 1,"zr") == 0) {
-        ret_op.value.register_operand.id.special_register = ZR;
-        ret_op.value.register_operand.size = (operand_text[0] == 'x') ? BIT_64 : BIT_32;
-    } else { // PC registers
-        ret_op.value.register_operand.id.special_register = PC;
-        ret_op.value.register_operand.size = BIT_64;
-    }
-    return ret_op;
-}
-
-operand process_shift_operand(char *operand_text) {
-    operand ret_op;
-    ret_op.type = SHIFT;  // set shift_operand.shift, shift_operand.amount type and amount
-    char shift_chars[4];
-    strncpy(shift_chars, operand_text, 3);
-    
-    if (strcmp(shift_chars, "lsl") == 0) ret_op.value.shift_operand.shift = LSL;
-    else if (strcmp(shift_chars, "lsr") == 0) ret_op.value.shift_operand.shift = LSR;
-    else if (strcmp(shift_chars, "asr") == 0) ret_op.value.shift_operand.shift = ASR;
-    else ret_op.value.shift_operand.shift = ROR;  // must be ROR
-    
-    ret_op.val.shift_operand.amount = atoi(operand_text+5);
-    return ret_op;
-}
 
 operand process_operand(char* operand_text) {
     operand ret_operand;
@@ -238,35 +312,16 @@ operand process_operand(char* operand_text) {
     } else if(is_general_register(operand_text)) {
         ret_operand = RegisterNsize(atoi(operand_text + 1), *operand_text);
     } else if(is_shift_operation(operand_text)) {
-        
+        ret_operand.type = SHIFT;
+        ret_operand.value.shift_operand = process_shift_operand(operand_text);
     } else if(is_address(operand_text)) {
         ret_operand.type = ADDRESS;
-
-        switch (operand_text[strlen(operand_text) - 1]) 
-        {
-            case '!':
-                find_address_operand_vars(&ret_operand);
-                ret_operand.value.address1.address_type = PRE_INDEXED;
-                break;
-            case: ']':
-                find_address_operand_vars(&ret_operand);
-                break;
-            default:
-                ret_operand.value.address1.address_type = POST_INDEXED;
-                ret_operand.value.address1.operand1 = strtok(operand_text, "]") + 1;
-                char *imm_val = strtok(operand_text, "#");
-                ret_operand.value.address1.operand2.immediate_value = atoi(imm_val);
-                // done
-        }
+        find_address_operand_vars(&ret_operand, operand_text);
     } else {  // must be label
         ret_operand.type = LABEL_NAME;
         ret_operand.value.label_name = operand_text;
     }
     return ret_operand;
-}
-
-static void remove_space_from_operand(char *operand_text) {
-    while(operand_text[0] == ' ') operand_text++;
 }
 
 
@@ -296,7 +351,7 @@ instruction_data process_instruction(char *file_line) {
     data.instruction_name = current;
     operand* operands_ptr = (operand*) malloc(MAX_NO_OPS * sizeof(operand));
     data.operands = operands_ptr;
-    while((current = strtok(NULL, ds)) != NULL) {
+    while((current = strtok(NULL, ",")) != NULL) {
         remove_space_from_operand(current);
         data.operands[data.no_operands] = process_operand(current);
         data.no_operands++;
@@ -345,10 +400,8 @@ instruction_data process_instruction(char *file_line) {
 
 directive_data process_directive(char *file_line) {
     directive_data directive;
-    int arg_index; char *name;
-    get_next_word(0, &arg_index, file_line, name); directive.name = name;
-    char *arg_as_char;
-    get_next_word(arg_index + 1, &arg_index, file_line, arg_as_char);
+    directive.name = strtok(file_line, " ") + 1;
+    char *arg_as_char = strtok(NULL, " ");
     directive.arg = (arg_as_char[1] == 'x') ? strtol(arg_as_char, NULL, 16) : atoi(arg_as_char);  // checks if hex and converts
     return directive;
 }
