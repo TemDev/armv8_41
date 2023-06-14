@@ -213,6 +213,9 @@ int DP(instruction_data *inst, char opcode){
 	toBinaryPrint(temp);
 	return temp;
 }
+int NOP(instruction_data *inst, char opcode) {
+	return 3573751839;
+}
 instToFunction instToFunctions[30] = {
 	{"add", &DP, 16}, {"adds", &DP, 17}, {"sub", &DP, 18}, {"subs", &DP, 19}, 
        	{"and", &DP, 0}, {"ands", &DP, 3}, {"bic", &DP, 32}, {"bics", &DP, 35},
@@ -222,7 +225,7 @@ instToFunction instToFunctions[30] = {
 	{"b", &BR, 3}, {"br", &BR, 4}, {"b.eq", &BR, 0}, {"b.ne", &BR, 1},
 	{"b.ge", &BR, 10}, {"b.lt", &BR, 11}, {"b.gt", &BR, 12}, {"b.le", &BR, 13}, 
 	{"b.al", &BR, 14}, 
-	{"ldr", &Transfer, 1}, {"str", &Transfer, 0},{"nop", &Transfer, 7}}; 
+	{"ldr", &Transfer, 1}, {"str", &Transfer, 0},{"nop", &NOP, 0}}; 
 	
 
 int decode(instruction_data inst) {
@@ -243,7 +246,7 @@ int decode(instruction_data inst) {
 int decodeline(line_data line) {
     switch (line.type) {
         case DIRECTIVE:
-            return 0;
+            return (int) line.contents.directive.arg;
             break;
         case INSTRUCTION:
             return decode(convert(&line.contents.instruction));
@@ -252,5 +255,5 @@ int decodeline(line_data line) {
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/generated/tst/tst6.s output.bin
+// run ../../armv8_testsuite/test/test_cases/generated/eon/eon0.s output.bin
 // p data.contents.instruction -> operands[1]

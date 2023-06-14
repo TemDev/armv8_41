@@ -129,7 +129,7 @@ int is_general_register(char* operand_text) {
 
 int is_shift_operation(char* operand_text) {
 #define SN_LEN 4
-    char *SHIFT_NAMES[] = {"lsl", "lsr", "asl", "ror"};
+    char *SHIFT_NAMES[] = {"lsl", "lsr", "asr", "ror"};
     char shift_chars[4];
     strncpy(shift_chars, operand_text, 3);
     if(str_in_str_arr(shift_chars, SHIFT_NAMES, SN_LEN) && operand_text[4] == '#') return 1;
@@ -240,7 +240,7 @@ instruction_data process_instruction(char *file_line) {
 
             current = strtok(NULL, ds);
             if (*current == '#') {//operand is immediate value
-                shiftInfo.shift_amount = atoi(current + 1);
+                shiftInfo.shift_amount = immediateMake(current + 1).value.immediate;
                 // assumes immediate value is valid, else is set to 0
             }
             temp.value.shift_operand = shiftInfo;
