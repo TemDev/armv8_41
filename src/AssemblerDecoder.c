@@ -181,7 +181,7 @@ int DP(instruction_data *inst, char opcode){
 
             char rn = getRegisterNumber(1, inst);
             int imm12 = ((inst -> operands[2].value.immediate) & ((1 << 12)-1));
-            char sh = (inst -> no_operands > 3)? 1 : 0;
+            char sh = (inst -> no_operands > 3 && inst -> operands[3].value.shift_operand.shift_amount != 0)? 1 : 0;
 
 
 			// the flag whether it should be shifted
@@ -246,10 +246,11 @@ int decodeline(line_data line) {
             return 0;
             break;
         case INSTRUCTION:
-            return decode(convertInstruction(&line.contents.instruction));
+            return decode(convert(&line.contents.instruction));
             break;
         default:
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/general/add01.s output.bin
+// run ../../armv8_testsuite/test/test_cases/generated/tst/tst6.s output.bin
+// p data.contents.instruction -> operands[1]

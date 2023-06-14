@@ -31,7 +31,7 @@ static operand RegisterZR(register_size size) {
     return op;
 }
 
-instruction_data convertInstruction(instruction_data *inst) {
+instruction_data convert(instruction_data *inst) {
 
 //function for inserting the rzr register into correct position
 
