@@ -176,71 +176,103 @@ shift_info process_shift_operand(char *operand_text) {
     return ret_shift;
 }
 
-void find_address_operand_vars(operand *addr_operand, char *operand_text) {
+void find_address_operand_vars(operand *addr_operand, char* operand_text, char* next) {
+    offset_type type;
+    bool sndReg = false;
     char *reg = strtok(operand_text, ",");
-    char *var2 = strtok(NULL, ",");
-    if( var2 != NULL ) {
-        remove_space_from_operand(var2);
-        if( is_general_register(reg + 1) ) {
-            addr_operand->value.address1.operand1 
-              = RegisterNsize(atoi(reg + 2), reg[1]).value.register_operand;
-        }
-        else {
-            addr_operand->value.address1.operand1
-              = process_special_register_operand(reg + 1).value.register_operand;
-        }
-        char *var3 = strtok(NULL, ",");
-        if( var3 != NULL ) {
-            remove_space_from_operand(var3);
-            var3[strlen(var3) - 1] = '\0';
-            addr_operand->value.address1.shift_operand = process_shift_operand(var3);
-            addr_operand->value.address1.address_type = REG_SHIFT;
-            if( is_general_register(var2) ) {
-                addr_operand->value.address1.operand2.register_value 
-                  = RegisterNsize(atoi(var2 + 1), *var2).value.register_operand;
-            }
-            else {  // must be special register
-                operand sp_reg_operand;
-                addr_operand->value.address1.operand2.register_value
-                  = process_special_register_operand(var2).value.register_operand;
-            }
-        } else {
-            if(var2[strlen(var2) - 1] == '!') var2[strlen(var2) - 2] = '\0';
-            var2[strlen(var2) - 1] = '\0';
-            if( is_general_register(var2) ) {
-                addr_operand->value.address1.address_type = REG;
-                addr_operand->value.address1.operand2.register_value 
-                  = RegisterNsize(atoi(var2 + 1), *var2).value.register_operand;
-            }
-            else if( is_special_register(var2) ) {
-                addr_operand->value.address1.address_type = REG;
-                addr_operand->value.address1.operand2.register_value
-                  = process_special_register_operand(var2).value.register_operand;
-            }
-            else {
-                addr_operand->value.address1.address_type = UNSIGNED;
-                addr_operand->value.address1.operand2.immediate_value = atoi(var2 + 1);
-            } 
-        }
-    } else {
-        reg = strtok(operand_text, "]") + 1;
-        if( is_general_register(reg) ) {
-            addr_operand->value.address1.operand1 
-              = RegisterNsize(atoi(reg + 1), reg[0]).value.register_operand;
-        } else {  // is special register
-            addr_operand->value.address1.operand1
-              = process_special_register_operand(reg + 1).value.register_operand;
-        }
-        char *var2 = strtok(NULL, "]");
-        if( var2 != NULL ) {
-            char *imm_val = strtok(operand_text, "#");
-            addr_operand->value.address1.operand2.immediate_value = atoi(imm_val);
-            addr_operand->value.address1.address_type = POST;
-        } else {
-            addr_operand->value.address1.address_type = SINGLETON;
-        }
+    if (reg[strlen(reg) -1 ] ==   ']') {
+        reg[strlen(reg) -1 ] = '\0';
     }
-    if( operand_text[strlen(operand_text) - 1] == '!' ) addr_operand->value.address1.address_type = PRE;
+    addr_operand -> value.address1.operand1 = RegisterNsize(atoi(reg + 2), *(reg + 1)).value.register_operand;
+    reg = strtok(NULL, " ");
+    char* op2;
+    char* reference = (reg != NULL)? reg : next;
+    op2 = strtok(reference, ", ]");
+    if (op2 != NULL){
+    if (is_general_register(op2)) {
+        sndReg = true;
+        addr_operand -> value.address1.operand2.register_value 
+        = RegisterNsize(atoi(op2 + 1), *(op2)).value.register_operand;
+        
+    } else if (is_special_register(op2)) {
+        sndReg = true;
+        addr_operand -> value.address1.operand2.register_value = process_special_register_operand(op2).value.register_operand;
+    } else if (*op2 == '#') {
+        
+        addr_operand -> value.address1.operand2.immediate_value = immediateMake(op2 + 1).value.immediate;
+    }
+    } else {
+        addr_operand -> value.address1.operand2.immediate_value = 0;
+    }
+    if (reference[strlen(reference) - 1] == '!') {
+        type = PRE;
+    } else if (reference[strlen(reference) - 1] == ']'){
+        if (sndReg) {
+            type = REG;
+        } else {
+            type = UNSIGNED;
+        }
+
+    } else {
+        type = POST;
+    }
+
+    addr_operand -> value.address1.address_type = type;
+    
+    
+    // char *reg = strtok(operand_text, ",");
+    // char *var2 = strtok(operand_text, ",");
+    // var2 = strtok(NULL, ",");
+    // if( var2 != NULL ) {
+    //     remove_space_from_operand(var2);
+    //     if( is_general_register(reg + 1) ) {
+    //         addr_operand->value.address1.operand1 
+    //           = RegisterNsize(atoi(reg + 2), reg[1]).value.register_operand;
+    //     }
+    //     else {
+    //         addr_operand->value.address1.operand1
+    //           = process_special_register_operand(reg + 1).value.register_operand;
+    //     }
+        
+    
+    //         if(var2[strlen(var2) - 1] == '!') addr_operand->value.address1.address_type =;
+    //         var2[strlen(var2) - 2] = '\0';
+    //         var2[strlen(var2) - 1] = '\0';
+    //         if( is_general_register(var2) ) {
+    //             addr_operand->value.address1.address_type = REG;
+    //             addr_operand->value.address1.operand2.register_value 
+    //               = RegisterNsize(atoi(var2 + 1), *var2).value.register_operand;
+    //         }
+    //         else if( is_special_register(var2) ) {
+    //             addr_operand->value.address1.address_type = REG;
+    //             addr_operand->value.address1.operand2.register_value
+    //               = process_special_register_operand(var2).value.register_operand;
+    //         }
+    //         else {
+    //             addr_operand->value.address1.address_type = UNSIGNED;
+    //             addr_operand->value.address1.operand2.immediate_value = atoi(var2 + 1);
+    //         } 
+        
+    // } else {
+    //     reg = strtok(operand_text, " ") + 1;
+    //     if( is_general_register(reg) ) {
+    //         addr_operand->value.address1.operand1 
+    //           = RegisterNsize(atoi(reg + 1), reg[0]).value.register_operand;
+    //     } else {  // is special register
+    //         addr_operand->value.address1.operand1
+    //           = process_special_register_operand(reg + 1).value.register_operand;
+    //     }
+    //     char *var2 = strtok(NULL, "]");
+    //     var2 = strtok(NULL,"]");
+    //     if( var2 != NULL ) {
+    //         char *imm_val = strtok(operand_text, "#");
+    //         addr_operand->value.address1.operand2.immediate_value = atoi(imm_val);
+    //         addr_operand->value.address1.address_type = POST;
+    //     } else {
+    //         addr_operand->value.address1.address_type = SINGLETON;
+    //     }
+    // }
+    // if( operand_text[strlen(operand_text) - 1] == '!' ) addr_operand->value.address1.address_type = PRE;
 }
 
 
@@ -258,7 +290,7 @@ operand process_operand(char* operand_text) {
         ret_operand.value.shift_operand = process_shift_operand(operand_text);
     } else if(is_address(operand_text)) {
         ret_operand.type = ADDRESS;
-        find_address_operand_vars(&ret_operand, operand_text);
+        find_address_operand_vars(&ret_operand, operand_text, "");
     } else {  // must be label
         ret_operand.type = LABEL_NAME;
         ret_operand.value.label_name = operand_text;
@@ -295,7 +327,13 @@ instruction_data process_instruction(char *file_line) {
     data.operands = operands_ptr;
     while((current = strtok(NULL, ",")) != NULL) {
         current = remove_space_from_operand(current);
-        data.operands[data.no_operands] = process_operand(current);
+        if (*current == '[') {
+            char * nextcurr = strtok(NULL, ", ");
+            find_address_operand_vars(&data.operands[data.no_operands],current, nextcurr);
+        } else {
+            data.operands[data.no_operands] = process_operand(current);
+        }
+        
         data.no_operands++;
         // operand temp;
         // if(*current == '#') {//operand is immediate value

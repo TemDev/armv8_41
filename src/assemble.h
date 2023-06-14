@@ -3,6 +3,7 @@
 #define ASSEMBLE_H
 
 #include<stdint.h>
+#include<stdbool.h>
 
 typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
 
@@ -29,7 +30,6 @@ typedef struct
   offset_type address_type;
   register_info operand1;
   union {register_info register_value; int32_t immediate_value;} operand2;
-  shift_info shift_operand;
 } address_info;
 
 

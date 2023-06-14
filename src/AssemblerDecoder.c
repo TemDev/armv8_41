@@ -255,5 +255,5 @@ int decodeline(line_data line) {
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/generated/eon/eon0.s output.bin
+// run ../../armv8_testsuite/test/test_cases/generated/str/str19.s output.bin
 // p data.contents.instruction -> operands[1]
