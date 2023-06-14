@@ -86,20 +86,10 @@ int str_in_str_arr(char *str, char **str_arr, int str_arr_len) {
     return 0;
 }
 
-// void get_next_word(char start, int *end, char* string, char* word) {
-//     #define END_CHARS_LENGTH 3
-//     #define END_CHARS ", \n\0"
-//     int length = strlen(string);
-//
-//     for (int i = start; i < length ; i++) {
-//         if(~char_in_str(string[i], END_CHARS, END_CHARS_LENGTH)) word[i] = string[i];
-//         else {
-//             word[i] = '\0';
-//             *end = i;  // technically the index of the end char after the word
-//             break;
-//         }
-//     }
-// }call regtostring(line.contents.instruction.operands[2])
+static void remove_space_from_operand(char *operand_text) {
+    while(operand_text[0] == ' ') operand_text++;
+}
+
 
 line_type get_line_type(char *file_line) {
     int length = strlen(file_line);
@@ -136,6 +126,10 @@ int is_shift_operation(char* operand_text) {
     return 0;
 }
 
+int is_address(char *operand_text) {
+    return (operand_text[0] == '[') ? 1 : 0;
+}
+
 shift_type get_shift_type(char* shift) {
     if (strcmp("lsl", shift) == 0) return LSL;
     else if (strcmp("lsr", shift) == 0) return LSR;
@@ -146,41 +140,131 @@ shift_type get_shift_type(char* shift) {
     }
 }
 
+operand process_special_register_operand(char* operand_text) {
+    operand ret_op;
+    ret_op.type = REGISTER;
+    ret_op.value.register_operand.type = SPECIAL;
+    if (strcmp(operand_text + 1,"p") == 0) {
+        ret_op.value.register_operand.id.special_register = SP;
+        ret_op.value.register_operand.size = BIT_64;
+    } else if (strcmp(operand_text + 1,"sp") == 0) {
+        ret_op.value.register_operand.id.special_register = SP;
+        ret_op.value.register_operand.size = BIT_32;
+    } else if (strcmp(operand_text + 1,"zr") == 0) {
+        ret_op.value.register_operand.id.special_register = ZR;
+        ret_op.value.register_operand.size = (operand_text[0] == 'x') ? BIT_64 : BIT_32;
+    } else { // PC registers
+        ret_op.value.register_operand.id.special_register = PC;
+        ret_op.value.register_operand.size = BIT_64;
+    }
+    return ret_op;
+}
+
+shift_info process_shift_operand(char *operand_text) {
+    shift_info ret_shift;
+    // ret_op.type = SHIFT;  // set shift_operand.shift, shift_operand.amount type and amount
+    char shift_chars[4];
+    strncpy(shift_chars, operand_text, 3);
+    
+    if (strcmp(shift_chars, "lsl") == 0) ret_shift.shift = LSL;
+    else if (strcmp(shift_chars, "lsr") == 0) ret_shift.shift = LSR;
+    else if (strcmp(shift_chars, "asr") == 0) ret_shift.shift = ASR;
+    else ret_shift.shift = ROR;  // must be ROR
+    
+    ret_shift.shift_amount = atoi(operand_text+5);
+    return ret_shift;
+}
+
+void find_address_operand_vars(operand *addr_operand, char *operand_text) {
+    char *reg = strtok(operand_text, ",");
+    char *var2 = strtok(NULL, ",");
+    if( var2 != NULL ) {
+        remove_space_from_operand(var2);
+        if( is_general_register(reg + 1) ) {
+            addr_operand->value.address1.operand1 
+              = RegisterNsize(atoi(reg + 2), reg[1]).value.register_operand;
+        }
+        else {
+            addr_operand->value.address1.operand1
+              = process_special_register_operand(reg + 1).value.register_operand;
+        }
+        char *var3 = strtok(NULL, ",");
+        if( var3 != NULL ) {
+            remove_space_from_operand(var3);
+            var3[strlen(var3) - 1] = '\0';
+            addr_operand->value.address1.shift_operand = process_shift_operand(var3);
+            addr_operand->value.address1.address_type = REG_SHIFT;
+            if( is_general_register(var2) ) {
+                addr_operand->value.address1.operand2.register_value 
+                  = RegisterNsize(atoi(var2 + 1), *var2).value.register_operand;
+            }
+            else {  // must be special register
+                operand sp_reg_operand;
+                addr_operand->value.address1.operand2.register_value
+                  = process_special_register_operand(var2).value.register_operand;
+            }
+        } else {
+            if(var2[strlen(var2) - 1] == '!') var2[strlen(var2) - 2] = '\0';
+            var2[strlen(var2) - 1] = '\0';
+            if( is_general_register(var2) ) {
+                addr_operand->value.address1.address_type = REG;
+                addr_operand->value.address1.operand2.register_value 
+                  = RegisterNsize(atoi(var2 + 1), *var2).value.register_operand;
+            }
+            else if( is_special_register(var2) ) {
+                addr_operand->value.address1.address_type = REG;
+                addr_operand->value.address1.operand2.register_value
+                  = process_special_register_operand(var2).value.register_operand;
+            }
+            else {
+                addr_operand->value.address1.address_type = UNSIGNED;
+                addr_operand->value.address1.operand2.immediate_value = atoi(var2 + 1);
+            } 
+        }
+    } else {
+        reg = strtok(operand_text, "]") + 1;
+        if( is_general_register(reg) ) {
+            addr_operand->value.address1.operand1 
+              = RegisterNsize(atoi(reg + 1), reg[0]).value.register_operand;
+        } else {  // is special register
+            addr_operand->value.address1.operand1
+              = process_special_register_operand(reg + 1).value.register_operand;
+        }
+        char *var2 = strtok(NULL, "]");
+        if( var2 != NULL ) {
+            char *imm_val = strtok(operand_text, "#");
+            addr_operand->value.address1.operand2.immediate_value = atoi(imm_val);
+            addr_operand->value.address1.address_type = POST;
+        } else {
+            addr_operand->value.address1.address_type = SINGLETON;
+        }
+    }
+    if( operand_text[strlen(operand_text) - 1] == '!' ) addr_operand->value.address1.address_type = PRE;
+}
+
+
 operand process_operand(char* operand_text) {
     operand ret_operand;
     if(operand_text[0] == '#') {
         return immediateMake(operand_text + 1);
         // assumes immediate value is valid, else is set to 0
     } else if(is_special_register(operand_text)) {
-        ret_operand.type = REGISTER;
-        ret_operand.value.register_operand.type = SPECIAL;
-        if (strcmp(operand_text + 1,"p") == 0) {
-            ret_operand.value.register_operand.id.special_register = SP;
-            ret_operand.value.register_operand.size = BIT_64;
-        } else if (strcmp(operand_text + 1,"sp") == 0) {
-            ret_operand.value.register_operand.id.special_register = SP;
-            ret_operand.value.register_operand.size = BIT_32;
-        } else if (strcmp(operand_text + 1,"zr") == 0) {
-            ret_operand.value.register_operand.id.special_register = ZR;
-            ret_operand.value.register_operand.size = (operand_text[0] == 'x') ? BIT_64 : BIT_32;
-        } else { // PC registers
-            ret_operand.value.register_operand.id.special_register = PC;
-            ret_operand.value.register_operand.size = BIT_64;
-        }
-        return ret_operand;
-
+        ret_operand = process_special_register_operand(operand_text);
     } else if(is_general_register(operand_text)) {
-        return RegisterNsize(atoi(operand_text + 1), *operand_text);
+        ret_operand = RegisterNsize(atoi(operand_text + 1), *operand_text);
     } else if(is_shift_operation(operand_text)) {
         ret_operand.type = SHIFT;
-
-        // todo finish this
-    } else {  // todo add label/directive variable things
-        fprintf(stderr ,"operand %s is not real", operand_text);
+        ret_operand.value.shift_operand = process_shift_operand(operand_text);
+    } else if(is_address(operand_text)) {
+        ret_operand.type = ADDRESS;
+        find_address_operand_vars(&ret_operand, operand_text);
+    } else {  // must be label
+        ret_operand.type = LABEL_NAME;
+        ret_operand.value.label_name = operand_text;
     }
-
-
+    return ret_operand;
 }
+
 
 instruction_data process_instruction(char *file_line) {
 #define MAX_NO_OPS 4
@@ -201,74 +285,65 @@ instruction_data process_instruction(char *file_line) {
     // data.operands = instr_operands;
     // return data;
 
+
+
     instruction_data data = {.no_operands = 0};
-    const char ds[3]= ", ";
-    char *current = strtok(file_line, ds);
+    char *current = strtok(file_line, " ");
     data.instruction_name = current;
     operand* operands_ptr = (operand*) malloc(MAX_NO_OPS * sizeof(operand));
     data.operands = operands_ptr;
-    current = strtok(NULL, ds);
-    while(current != NULL) {
-        operand temp;
-
-        if(*current == '#') {//operand is immediate value
-            temp = immediateMake(current + 1);
-            // assumes immediate value is valid, else is set to 0
-        } else if(is_special_register(current)) {
-            temp.type = REGISTER;
-            temp.value.register_operand.type = SPECIAL;
-            if (strcmp(current + 1,"p") == 0) {
-                temp.value.register_operand.id.special_register = SP;
-                temp.value.register_operand.size = BIT_64;
-            } else if (strcmp(current + 1,"sp") == 0) {
-                temp.value.register_operand.id.special_register = SP;
-                temp.value.register_operand.size = BIT_32;
-            } else if (strcmp(current + 1,"zr") == 0) {
-                temp.value.register_operand.id.special_register = ZR;
-                temp.value.register_operand.size = (current[0] == 'x') ? BIT_64 : BIT_32;
-            } else { // PC registers
-                temp.value.register_operand.id.special_register = PC;
-                temp.value.register_operand.size = BIT_64;
-            }
-
-        } else if(is_general_register(current)) {
-            temp = RegisterNsize(atoi(current + 1), *current);
-        } else if(is_shift_operation(current)) {
-            temp.type = SHIFT;
-            shift_info shiftInfo;
-            shiftInfo.shift = get_shift_type(current);
-
-            current = strtok(NULL, ds);
-            if (*current == '#') {//operand is immediate value
-                shiftInfo.shift_amount = immediateMake(current + 1).value.immediate;
-                // assumes immediate value is valid, else is set to 0
-            }
-            temp.value.shift_operand = shiftInfo;
-        } else if(*current == '[') {//address this is th
-
-        } else {  // todo add label/directive variable things
-            fprintf(stderr ,"operand %s is not real", current);
-        }
-        data.operands[data.no_operands] = temp;
-
-
+    while((current = strtok(NULL, ",")) != NULL) {
+        remove_space_from_operand(current);
+        data.operands[data.no_operands] = process_operand(current);
         data.no_operands++;
-        current = strtok(NULL, ds);
+        // operand temp;
+        // if(*current == '#') {//operand is immediate value
+        //     temp = immediateMake(atoi(current + 1));
+        //     // assumes immediate value is valid, else is set to 0
+        // } else if(is_special_register(current)) {
+        //     temp.type = REGISTER;
+        //     temp.value.register_operand.type = SPECIAL;
+        //     if (strcmp(current + 1,"p") == 0) {
+        //         temp.value.register_operand.id.special_register = SP;
+        //         temp.value.register_operand.size = BIT_64;
+        //     } else if (strcmp(current + 1,"sp") == 0) {
+        //         temp.value.register_operand.id.special_register = SP;
+        //         temp.value.register_operand.size = BIT_32;
+        //     } else if (strcmp(current + 1,"zr") == 0) {
+        //         temp.value.register_operand.id.special_register = ZR;
+        //         temp.value.register_operand.size = (current[0] == 'x') ? BIT_64 : BIT_32;
+        //     } else { // PC registers
+        //         temp.value.register_operand.id.special_register = PC;
+        //         temp.value.register_operand.size = BIT_64;
+        //     }
 
+        // } else if(is_general_register(current)) {
+        //     temp = RegisterNsize(atoi(current + 1), *current);
+        // } else if(is_shift_operation(current)) {
+        //     temp.type = SHIFT;
+        //     shift_info shiftInfo;
+        //     shiftInfo.shift = get_shift_type(current);
 
+        //     current = strtok(NULL, ds);
+        //     if (*current == '#') {//operand is immediate value
+        //         shiftInfo.shift_amount = atoi(current + 1);
+        //         // assumes immediate value is valid, else is set to 0
+        //     }
+        //     temp.value.shift_operand = shiftInfo;
+        // } else if(*current == '[') {//address this is th
 
+        // } else {  // todo add label/directive variable things
+        //     fprintf(stderr ,"operand %s is not real", current);
+        // }
     }
     return data;
 }
 
 directive_data process_directive(char *file_line) {
     directive_data directive;
-    int arg_index; char *name;
-//    get_next_word(0, &arg_index, file_line, name);
-//    directive.name = name;
-//    char *arg_as_char;
-//    get_next_word(arg_index + 1, &arg_index, file_line, arg_as_char);
-//    directive.arg = (arg_as_char[1] == 'x') ? strtol(arg_as_char, NULL, 16) : atoi(arg_as_char);  // checks if hex and converts
+    directive.name = strtok(file_line, " ") + 1;
+    char *arg_as_char = strtok(NULL, " ");
+    directive.arg = (arg_as_char[1] == 'x') ? strtol(arg_as_char, NULL, 16) : atoi(arg_as_char);  // checks if hex and converts
     return directive;
 }
 
