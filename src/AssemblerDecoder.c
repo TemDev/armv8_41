@@ -57,18 +57,18 @@ int BR(instruction_data *inst, char opcode) {
 	assert(inst-> no_operands > 0);
 	if (opcode == 3) {
 		int simm26 = inst -> operands[0].value.immediate;
-	       temp = (5 << 26) + ((simm26 & (1 << 26)-1));	
+	       temp = (5 << 26) + ((simm26 & ((1 << 26)-1)));	
 	} else if (opcode == 4) {
 		// don't forget to check which register specific 
 		char xn = inst -> operands[0].value.register_operand.id.number & 31;
 		 temp = (107 << 25) + (31 << 16) +  (xn << 5);
- 		 printf("Branch Reister %x\n",xn);
+ 		 printf("Branch Register %x\n",xn);
 
 	}
 	else {
 		int simm19 = inst -> operands[0].value.immediate;
-		printf("%x \n", simm19 & (( 1 << 20 ) - 1)); 
-		temp = (21 << 26) + (((( 1 << 20 ) - 1) & simm19) << 5) + (31 & opcode);
+		printf("%x \n", simm19 & (( 1 << 18 ) - 1)); 
+		temp = (21 << 26) + (((( 1 << 19 ) - 1) & simm19) << 5) + (15 & opcode);
 	}	
 	return temp;
 }
@@ -108,6 +108,8 @@ int Transfer(instruction_data *inst, char opcode){
 	}
 	char rt = getRegisterNumber(0, inst);
 	temp += rt;
+
+	toBinaryPrint(temp);
 	
     return temp;
 }
@@ -255,5 +257,5 @@ int decodeline(line_data line) {
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/generated/str/str19.s output.bin
+// run ../../armv8_testsuite/test/test_cases/generated/bcond/bcond0.s output.bin
 // p data.contents.instruction -> operands[1]

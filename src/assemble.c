@@ -40,13 +40,13 @@ int main(int argc, char **argv) {
         if (line_tokens[i].type == INSTRUCTION) {
             for (int j = 0; j < line_tokens[i].contents.instruction.no_operands; j++) {
                 if ((line_tokens[i].contents.instruction.operands[j].type == LABEL_NAME) &&
-                    line_tokens[i].contents.instruction.operands[j].value.label_name) {
+                    line_tokens[i].contents.instruction.operands[j].value.label_name != NULL) {
                     int label_value;
                     int k = 0;
-                    while (label_list_actual[k].label !=
-                           line_tokens[i].contents.instruction.operands[j].value.label_name) { k++; }
+                    while (strcmp(label_list_actual[k].label,
+                    line_tokens[i].contents.instruction.operands[j].value.label_name) != 0) { k++; }
                     label_value = label_list_actual[k].address;
-                    line_tokens[i].contents.instruction.operands[j].value.immediate = label_value;
+                    line_tokens[i].contents.instruction.operands[j].value.immediate = label_value - count * 4;
                     line_tokens[i].contents.instruction.operands[j].type = IMMEDIATE;
                 }
             }

@@ -187,7 +187,8 @@ void find_address_operand_vars(operand *addr_operand, char* operand_text, char* 
     reg = strtok(NULL, " ");
     char* op2;
     char* reference = (reg != NULL)? reg : next;
-    op2 = strtok(reference, ", ]");
+    char* ref = strdup(reference);
+    op2 = strtok(ref, ", ]");
     if (op2 != NULL){
     if (is_general_register(op2)) {
         sndReg = true;
@@ -216,6 +217,7 @@ void find_address_operand_vars(operand *addr_operand, char* operand_text, char* 
     } else {
         type = POST;
     }
+    addr_operand -> type = ADDRESS;
 
     addr_operand -> value.address1.address_type = type;
     
@@ -325,16 +327,21 @@ instruction_data process_instruction(char *file_line) {
     data.instruction_name = current;
     operand* operands_ptr = (operand*) malloc(MAX_NO_OPS * sizeof(operand));
     data.operands = operands_ptr;
-    while((current = strtok(NULL, ",")) != NULL) {
+    while(((current = strtok(NULL, ",")) != NULL) && (strcmp(current, "!") != 0)) {
         current = remove_space_from_operand(current);
         if (*current == '[') {
-            char * nextcurr = strtok(NULL, ", ");
-            find_address_operand_vars(&data.operands[data.no_operands],current, nextcurr);
+            char *oldcurr = malloc(strlen(current) + 1);
+            strcpy(oldcurr, current);
+            current = strtok(NULL, ", ");
+            find_address_operand_vars(&data.operands[data.no_operands],oldcurr, current);
+            current = strtok(NULL, ", ");
         } else {
-            data.operands[data.no_operands] = process_operand(current);
+            operand temp = process_operand(current);
+            data.operands[data.no_operands] = temp;
+
         }
-        
         data.no_operands++;
+        
         // operand temp;
         // if(*current == '#') {//operand is immediate value
         //     temp = immediateMake(atoi(current + 1));
@@ -413,11 +420,14 @@ line_data process_line(char *file_line) {
 }
 
  process_input(char *input_file, line_data *line_tokens) {
-    FILE *fp = fopen(input_file, "rb");
+    FILE *fp = fopen(input_file, "r");
     int index = 0;
     if(fp != NULL) {
         char line[100];
-        while(fgets(line, 100, fp) != NULL && (strcmp(line, "\n") != 0)) {
+        while(fgets(line, 100, fp) != NULL) {
+            if (strcmp(line, "\n") == 0) {
+                continue;
+            }
             strtok(line, "\n");
             line_data data = process_line(line);  // maybe this is a local var ????????????????????????
             line_tokens[index++] = data;
