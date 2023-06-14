@@ -42,18 +42,18 @@ int main(void) {
 
     register_info a =RegisterZR(0).value.register_operand;// RegisterNsize(25, 'x').value.register_operand;
     register_info b = RegisterZR(0).value.register_operand;//RegisterNsize(4, 'x').value.register_operand;
-    int c = 2730;
+    int c = 2075311;
     operand address;
     address.type = ADDRESS;
     address_info info;
-    info.address_type = REG;
+    info.address_type = LOAD;
     info.operand1 = a;
     info.operand2.register_value = b;
     //info.shift_operand = NULL;
 
     address.value.address1 = info;
 
-    operand ops[2]  = {RegisterZR(0), address};
+    operand ops[2]  = {RegisterZR(0), immediateMake(c)};
     instruction_data inst = {"str", ops, 2};
     int smth = decode(inst);
     toBinaryPrint(smth);

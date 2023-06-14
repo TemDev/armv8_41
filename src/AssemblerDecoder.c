@@ -74,16 +74,17 @@ int BR(instruction_data *inst, char opcode) {
 
 int Transfer(instruction_data *inst, char opcode){
 	offset_type type = inst -> operands[1].value.address1.address_type;
+	bool load  = (inst -> operands[1].type != ADDRESS);
 	int temp = 0;
 	char sf = (inst -> operands[0].value.register_operand.size == BIT_64)? 1:0;
 	char U = (type == UNSIGNED)? 1:0;
 	char I = (type == PRE)? 1:0;
 	char L = opcode & 1;
 	
-	if (type == LOAD) { 
+	if (load) { 
 		temp = ((1 & sf) << 3) + 3;
 		int simm19 = ((inst -> operands[1].value.immediate) & ((1 << 19)-1));
-		temp = (temp <<27) + ((simm19  & ((1 << 19) - 1)) << 5);
+		temp = (temp <<27) + (simm19 << 5);
 	} else {
 		temp = ((1 & sf) << 3) + 23;
 		int offset = 0;
