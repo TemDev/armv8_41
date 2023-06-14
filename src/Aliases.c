@@ -30,39 +30,39 @@ void convertInstruction(char* instruction) {
     // Check if the instruction is "cmp" and has two operands
     if (strcmp(operands[0], "cmp") == 0) {
         // Construct the "subs" instruction using the operands
-        sprintf(instruction, "subs, %s, %s, %s", mode, operands[1], operands[2]);
+        sprintf("subs, %s, %s, %s", mode, operands[1], operands[2]);
 
     } else if (strcmp(operands[0], "cmn") == 0) {
         // Construct the "adds" instruction using the operands
-        sprintf(instruction, "adds, %s, %s, %s", mode, operands[1], operands[2]);
+        sprintf("adds, %s, %s, %s", mode, operands[1], operands[2]);
 
     } else if (strcmp(operands[0], "neg") == 0) {
         // Construct the "sub" instruction using the operands
-        sprintf(instruction, "sub, %s, %s, %s", operands[1], mode, operands[2]);
+        sprintf("sub, %s, %s, %s", operands[1], mode, operands[2]);
 
     } else if (strcmp(operands[0], "negs") == 0) {
         // Construct the "subs" instruction using the operands
-        sprintf(instruction, "subs, %s, %s, %s", operands[1], mode, operands[2]);
+        sprintf("subs, %s, %s, %s", operands[1], mode, operands[2]);
 
     } else if (strcmp(operands[0], "tst") == 0) {
         // Construct the "ands" instruction using the operands
-        sprintf(instruction, "ands, %s, %s, %s", mode, operands[1], operands[2]);
+        sprintf("ands, %s, %s, %s", mode, operands[1], operands[2]);
 
     } else if (strcmp(operands[0], "mvn") == 0) {
         // Construct the "orn" instruction using the operands
-        sprintf(instruction, "orn, %s, %s, %s", operands[1], mode, operands[2]);
+        sprintf("orn, %s, %s, %s", operands[1], mode, operands[2]);
 
     } else if (strcmp(operands[0], "mov") == 0) {
         // Construct the "orr" instruction using the operands
-        sprintf(instruction, "orr %s, %s, %s", operands[1], mode, operands[2]);
+        sprintf("orr %s, %s, %s", operands[1], mode, operands[2]);
 
     } else if (strcmp(operands[0], "mul") == 0) {
         // Construct the "madd" instruction using the operands
-        sprintf(instruction, "madd, %s, %s, %s", operands[1], operands[2], mode);
+        sprintf("madd, %s, %s, %s", operands[1], operands[2], mode);
 
     } else if (strcmp(operands[0], "mneg") == 0) {
         // Construct the "msub" instruction using the operands
-        sprintf(instruction, "msub, %s, %s, %s", operands[1], operands[2], mode);
+        sprintf("msub, %s, %s, %s", operands[1], operands[2], mode);
 
     } else {
         printf("Invalid instruction format or unsupported instruction.\n");
