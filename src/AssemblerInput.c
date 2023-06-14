@@ -60,10 +60,12 @@ operand shiftmake(shift_type type, int amount) {
     return op;
 }
 
-operand immediateMake(int n) {
+operand immediateMake(char* imm_str) {
+     
     operand op;
     op.type = IMMEDIATE;
-    op.value.immediate = n;
+    op.value.immediate = (imm_str[1] == 'x') ? strtol(imm_str, NULL, 16) : atoi(imm_str);
+      // checks if hex and converts
     return op;
 }
 // built in func exists strchr BUT don't think it works as can't check if '\0' ?
@@ -147,7 +149,7 @@ shift_type get_shift_type(char* shift) {
 operand process_operand(char* operand_text) {
     operand ret_operand;
     if(operand_text[0] == '#') {
-        return immediateMake(atoi(operand_text + 1));
+        return immediateMake(operand_text + 1);
         // assumes immediate value is valid, else is set to 0
     } else if(is_special_register(operand_text)) {
         ret_operand.type = REGISTER;
@@ -210,7 +212,7 @@ instruction_data process_instruction(char *file_line) {
         operand temp;
 
         if(*current == '#') {//operand is immediate value
-            temp = immediateMake(atoi(current + 1));
+            temp = immediateMake(current + 1);
             // assumes immediate value is valid, else is set to 0
         } else if(is_special_register(current)) {
             temp.type = REGISTER;
