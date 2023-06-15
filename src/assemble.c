@@ -5,17 +5,20 @@
 #include "AssemblerDecoder.h"
 #define MAX_INSTRUCTIONS 100
 
+//Structure for the list of labels
 typedef struct label_list{
   char* label;
   int address;
 } label_list;
 
+//Writing the processed binary output into a file
 void writeFile(int32_t *arr, char *file, int size) {
   FILE *file_out = fopen(file, "wb");
   fwrite(arr, sizeof(int32_t), size, file_out);
   fclose(file_out);
 }
 
+//In this function we do the initial processing of the instructions received
 int main(int argc, char **argv) {
   if (argc == 3) {
     line_data *line_tokens = (line_data*) calloc(MAX_INSTRUCTIONS,sizeof(line_data));
@@ -62,5 +65,3 @@ int main(int argc, char **argv) {
     printf("Please enter exactly 2 command line arguments in the format <file_in> <file_out>\n");
   }
 }
-
-//run ../../armv8_testsuite/test/test_cases/general/ldr05.s output.bin

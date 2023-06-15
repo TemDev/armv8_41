@@ -7,24 +7,25 @@
 #include "AssemblerDecoder.h"
 #include "assemble.h"
 #include "Aliases.h"
+
 // return a string that is a binary representation of a number
 
-void toBinaryPrint(int number) {
-	int temp = 1;
-	char string[33];
-	// a problem if less than 32 character string is making that
-	//assert(strlen(string) >= 32);
-	for (int i = 0; i < 32; i++) {
-		if (((number >> i) & 1 ) == 1) {
-	       		string[31 - i] = '1';
-	       	}
-			else string[31 -i] = '0';
-		temp = temp << 1;
-	}
-	string[32] = '\0';
-	printf("%.8x in binary is %32s \n", number, string);
+// void toBinaryPrint(int number) {
+// 	int temp = 1;
+// 	char string[33];
+// 	// a problem if less than 32 character string is making that
+// 	//assert(strlen(string) >= 32);
+// 	for (int i = 0; i < 32; i++) {
+// 		if (((number >> i) & 1 ) == 1) {
+// 	       		string[31 - i] = '1';
+// 	       	}
+// 			else string[31 -i] = '0';
+// 		temp = temp << 1;
+// 	}
+// 	string[32] = '\0';
+// 	printf("%.8x in binary is %32s \n", number, string);
 	
-}
+// }
 
 
 typedef int (*instructionMaker) (instruction_data*,char);
@@ -53,7 +54,6 @@ char getRegisterNumber(char index, instruction_data* inst) {
 // so they are used to identify register and uncoditional branches
 int BR(instruction_data *inst, char opcode) {
 	int temp = 0;
-	printf("BR is called\n");
 	assert(inst-> no_operands > 0);
 	if (opcode == 3) {
 		int simm26 = inst -> operands[0].value.immediate;
@@ -110,7 +110,7 @@ int Transfer(instruction_data *inst, char opcode){
 	char rt = getRegisterNumber(0, inst);
 	temp += rt;
 
-	toBinaryPrint(temp);
+	// toBinaryPrint(temp);
 	
     return temp;
 }
@@ -213,7 +213,7 @@ int DP(instruction_data *inst, char opcode){
 			printf("Performing a wide move\n");
 		}
 	}
-	toBinaryPrint(temp);
+	// toBinaryPrint(temp);
 	return temp;
 }
 int NOP(instruction_data *inst, char opcode) {
@@ -258,5 +258,3 @@ int decodeline(line_data line) {
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/general/ldr11.s output.bin
-// p data.contents.instruction -> operands[1]
