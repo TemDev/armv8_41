@@ -258,5 +258,5 @@ int decodeline(line_data line) {
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/general/ldr10.s output.bin
+// run ../../armv8_testsuite/test/test_cases/general/ldr11.s output.bin
 // p data.contents.instruction -> operands[1]

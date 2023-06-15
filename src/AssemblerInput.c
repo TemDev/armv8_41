@@ -422,7 +422,7 @@ line_data process_line(char *file_line) {
             contents.directive = process_directive(file_line);  // remove first char (.)
             break;
         case LABEL:
-            file_line[length - 1] = '\0';  // removes : by setting last char to NUL
+            file_line = strtok(file_line, " :");  // removes : by setting last char to NUL
             contents.label_name = file_line;
             break;
         default:
@@ -438,7 +438,8 @@ line_data process_line(char *file_line) {
     if(fp != NULL) {
         char line[100];
         while(fgets(line, 100, fp) != NULL) {
-            if (strcmp(line, "\n") == 0) {
+            char* isnewline = remove_space_from_operand(line);
+            if (strcmp(isnewline,"\n") == 0) {
                 continue;
             }
             strtok(line, "\n");
