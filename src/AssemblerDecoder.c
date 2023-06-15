@@ -91,6 +91,7 @@ int Transfer(instruction_data *inst, char opcode){
 		int offset = 0;
 		if (type == UNSIGNED) {
 			 offset = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 12) - 1);
+			offset = (offset >> 3);
 		} else if (type == REG) {
 			// proccess special registers
 			char xm = (inst -> operands[1].value.address1.operand1.type == SPECIAL)? 
@@ -257,5 +258,5 @@ int decodeline(line_data line) {
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/generated/bcond/bcond0.s output.bin
+// run ../../armv8_testsuite/test/test_cases/general/ldr10.s output.bin
 // p data.contents.instruction -> operands[1]

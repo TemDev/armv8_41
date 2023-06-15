@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
     int count_address = 0;
     for(int i = 0; i < n_lines; i++) {
       if (line_tokens[i].type == LABEL) {
+        printf("token takes {%s}\n",line_tokens[i].contents.label_name);
         label_list_actual[count].label = line_tokens[i].contents.label_name;
         label_list_actual[count].address = count_address;
         count++;

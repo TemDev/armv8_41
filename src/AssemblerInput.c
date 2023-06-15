@@ -94,9 +94,11 @@ static char* remove_space_from_operand(char *operand_text) {
 
 line_type get_line_type(char *file_line) {
     file_line = remove_space_from_operand(file_line);
-    int length = strlen(file_line);
+    
+    while (file_line[strlen(file_line) - 1] == ' ') file_line[strlen(file_line) - 1] = '\0';
     if(file_line[0] == '.') return DIRECTIVE;
-    if(file_line[length-1] == ':') return LABEL;
+    if(file_line[strlen(file_line)-1] == ':') return LABEL;
+    
     return INSTRUCTION;
 }
 
@@ -406,8 +408,10 @@ directive_data process_directive(char *file_line) {
 // creates and returns the line_data structure so the line can be processed
 line_data process_line(char *file_line) {
     int length = strlen(file_line);
-    line_type type = get_line_type(file_line);
+
     file_line = strdup(file_line);
+    line_type type = get_line_type(file_line);
+
     line_data data = {.type = type};
     line_contents contents;
     switch(type) {
