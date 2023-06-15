@@ -40,7 +40,7 @@ typedef struct { operand_type type; operand_value value; } operand; // add label
 typedef struct {
   char *instruction_name;
   operand *operands;
-  int no_operands;
+  int32_t no_operands;
 } instruction_data;
 
 // simplified directives as .int is the only one - below code could be used if there were more

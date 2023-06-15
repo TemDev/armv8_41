@@ -1,12 +1,13 @@
-#include <stdio.h>
 #include <string.h>
-#include "assemble.h"
+#include <stdint.h>
+#include <stdlib.h>
 #include "Aliases.h"
 
-operand* insertReg(instruction_data *ins, operand elem, int pos){
+
+operand* insertReg(instruction_data *ins, operand elem, int32_t pos){
     operand *ops = calloc(ins -> no_operands + 1, sizeof(operand));
     memcpy(ops, ins -> operands, ins -> no_operands * sizeof(operand));
-    for (int i = ins -> no_operands - 1 ; i > pos - 1 ; i--)
+    for (int32_t i = ins -> no_operands - 1 ; i > pos - 1 ; i--)
     {
         if ( i >= pos) {
         ops[i + 1] = ops[i] ;
@@ -22,19 +23,14 @@ static operand RegisterZR(register_size size) {
     register_info reg;
     reg.type = SPECIAL;
     reg.size = size;
-    register_id id;
-    id.special_register = ZR;
     op.value.register_operand = reg;
     return op;
 }
 
 instruction_data convert(instruction_data *inst) {
 
-//function for inserting the rzr register into correct position
-
     instruction_data refined;
     operand mode;
-
 
     if (inst -> operands[0].value.register_operand.size == BIT_64) {
         mode = RegisterZR(BIT_64); // 64-bit mode -- xzr
