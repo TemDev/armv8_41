@@ -2,5 +2,5 @@
 
 #include "assemble.h"
 
-//Main function for conversion of an aliase  to another instruction already implemented in emulator
+// Converts instruction alias to regular instruction
 instruction_data convert(instruction_data *inst);

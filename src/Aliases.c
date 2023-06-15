@@ -31,6 +31,8 @@ static operand RegisterZR(register_size size) {
     return op;
 }
 
+// Converts instruction alias to regular instruction
+
 instruction_data convert(instruction_data *inst) {
 
     instruction_data refined;

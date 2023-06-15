@@ -337,6 +337,7 @@ line_data process_line(char *file_line) {
     return data;
 }
 
+// Function that processes the input file
 int32_t process_input(char *input_file, line_data *line_tokens) {
     FILE *fp = fopen(input_file, "r");
     int32_t index = 0;

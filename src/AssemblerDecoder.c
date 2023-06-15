@@ -8,7 +8,6 @@
 
 // return a string that is a binary representation of a number
 
-<<<<<<< src/AssemblerDecoder.c
 // void toBinaryPrint(int number) {
 // 	int temp = 1;
 // 	char string[33];
@@ -23,32 +22,9 @@
 // 	}
 // 	string[32] = '\0';
 // 	printf("%.8x in binary is %32s \n", number, string);
-=======
-void toBinaryPrint(int32_t number) {
-	int32_t temp = 1;
-	char string[33];
-	// a problem if less than 32 character string is making that
-	//assert(strlen(string) >= 32);
-	for (int32_t i = 0; i < 32; i++) {
-		if (((number >> i) & 1 ) == 1) {
-	       		string[31 - i] = '1';
-	       	}
-			else string[31 -i] = '0';
-		temp = temp << 1;
-	}
-	string[32] = '\0';
-	printf("%.8x in binary is %32s \n", number, string);
->>>>>>> src/AssemblerDecoder.c
-	
 // }
 
-typedef int32_t (*instructionMaker) (instruction_data*,char);
-typedef struct {
-    char* key;
-    instructionMaker function;
-    char opcode;
-} instToFunction;
-
+// Function that gets register number from a character index.
 char getRegisterNumber(unsigned char index, instruction_data* inst) {
 	assert(inst -> no_operands > index);
 	register_info reg = inst -> operands[index].value.register_operand;
@@ -87,6 +63,7 @@ int32_t BR(instruction_data *inst, char opcode) {
 	return temp;
 }
 
+// Function that determines what type of address is presented
 int32_t Transfer(instruction_data *inst, char opcode){
 	offset_type type = inst -> operands[1].value.address1.address_type;
 	bool load  = (inst -> operands[1].type != ADDRESS);
@@ -128,6 +105,8 @@ int32_t Transfer(instruction_data *inst, char opcode){
 	
     return temp;
 }
+
+// Function that does data processing
 int32_t DP(instruction_data *inst, char opcode){
 	//is it register or immediate
     bool isReg = (REGISTER == (inst -> operands[2].type)) &&
@@ -230,9 +209,13 @@ int32_t DP(instruction_data *inst, char opcode){
 	// toBinaryPrint(temp);
 	return temp;
 }
+
+// Function that handles a no operation instruction
 int32_t NOP(instruction_data *inst, char opcode) {
 	return 3573751839;
 }
+
+// A map from all the instructions to all the possible opcodes
 instToFunction instToFunctions[30] = {
 	{"add", &DP, 16}, {"adds", &DP, 17}, {"sub", &DP, 18}, {"subs", &DP, 19}, 
        	{"and", &DP, 0}, {"ands", &DP, 3}, {"bic", &DP, 32}, {"bics", &DP, 35},
@@ -244,7 +227,7 @@ instToFunction instToFunctions[30] = {
 	{"b.al", &BR, 14}, 
 	{"ldr", &Transfer, 1}, {"str", &Transfer, 0},{"nop", &NOP, 0}}; 
 	
-
+// Function that decodes what type of instruction is presented
 int32_t decode(instruction_data inst) {
 	
 	for (int32_t i = 0; i < 30; i++) {
@@ -260,6 +243,7 @@ int32_t decode(instruction_data inst) {
 	return -1;
 }
 
+// Function that determines a DIRECTIVE, INSTRUCTION or LABEL is presented
 int32_t decodeline(line_data line) {
     switch (line.type) {
         case DIRECTIVE:

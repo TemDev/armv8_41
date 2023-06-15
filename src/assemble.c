@@ -61,6 +61,7 @@ int main(int argc, char **argv) {
             }
         }
         writeFile(output, argv[2], count_address / 4);
+        free(line_tokens);
     } else {
         printf("Please enter exactly 2 command line arguments in the format <file_in> <file_out>\n");
     }
