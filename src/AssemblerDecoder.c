@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include "bitwise.c"
 #include "AssemblerDecoder.h"
-#include "assemble.h"
 #include "Aliases.h"
 
 // return a string that is a binary representation of a number
 
+<<<<<<< src/AssemblerDecoder.c
 // void toBinaryPrint(int number) {
 // 	int temp = 1;
 // 	char string[33];
@@ -24,18 +23,33 @@
 // 	}
 // 	string[32] = '\0';
 // 	printf("%.8x in binary is %32s \n", number, string);
+=======
+void toBinaryPrint(int32_t number) {
+	int32_t temp = 1;
+	char string[33];
+	// a problem if less than 32 character string is making that
+	//assert(strlen(string) >= 32);
+	for (int32_t i = 0; i < 32; i++) {
+		if (((number >> i) & 1 ) == 1) {
+	       		string[31 - i] = '1';
+	       	}
+			else string[31 -i] = '0';
+		temp = temp << 1;
+	}
+	string[32] = '\0';
+	printf("%.8x in binary is %32s \n", number, string);
+>>>>>>> src/AssemblerDecoder.c
 	
 // }
 
-
-typedef int (*instructionMaker) (instruction_data*,char);
+typedef int32_t (*instructionMaker) (instruction_data*,char);
 typedef struct {
     char* key;
     instructionMaker function;
     char opcode;
 } instToFunction;
 
-char getRegisterNumber(char index, instruction_data* inst) {
+char getRegisterNumber(unsigned char index, instruction_data* inst) {
 	assert(inst -> no_operands > index);
 	register_info reg = inst -> operands[index].value.register_operand;
 	if (reg.type == GENERAL) {
@@ -52,11 +66,11 @@ char getRegisterNumber(char index, instruction_data* inst) {
 // opcodes refers to a type of a branch
 // opcode values 3 and 4 are not used by conditional branches
 // so they are used to identify register and uncoditional branches
-int BR(instruction_data *inst, char opcode) {
-	int temp = 0;
+int32_t BR(instruction_data *inst, char opcode) {
+	int32_t temp = 0;
 	assert(inst-> no_operands > 0);
 	if (opcode == 3) {
-		int simm26 = inst -> operands[0].value.immediate;
+		int32_t simm26 = inst -> operands[0].value.immediate;
 	       temp = (5 << 26) + ((simm26 & ((1 << 26)-1)));	
 	} else if (opcode == 4) {
 		// don't forget to check which register specific 
@@ -66,14 +80,14 @@ int BR(instruction_data *inst, char opcode) {
 
 	}
 	else {
-		int simm19 = inst -> operands[0].value.immediate;
+		int32_t simm19 = inst -> operands[0].value.immediate;
 		printf("%x \n", simm19 & (( 1 << 18 ) - 1)); 
 		temp = (21 << 26) + (((( 1 << 19 ) - 1) & simm19) << 5) + (15 & opcode);
 	}	
 	return temp;
 }
 
-int Transfer(instruction_data *inst, char opcode){
+int32_t Transfer(instruction_data *inst, char opcode){
 	offset_type type = inst -> operands[1].value.address1.address_type;
 	bool load  = (inst -> operands[1].type != ADDRESS);
 	int temp = 0;
@@ -84,11 +98,11 @@ int Transfer(instruction_data *inst, char opcode){
 	
 	if (load) { 
 		temp = ((1 & sf) << 3) + 3;
-		int simm19 = ((inst -> operands[1].value.immediate) & ((1 << 19)-1));
+		int32_t simm19 = ((inst -> operands[1].value.immediate) & ((1 << 19)-1));
 		temp = (temp <<27) + (simm19 << 5);
 	} else {
 		temp = ((1 & sf) << 3) + 23;
-		int offset = 0;
+		int32_t offset = 0;
 		if (type == UNSIGNED) {
 			 offset = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 12) - 1);
 			offset = (offset >> 3);
@@ -98,7 +112,7 @@ int Transfer(instruction_data *inst, char opcode){
 			31 :inst -> operands[1].value.address1.operand2.register_value.id.number;
 			offset = (1 << 11) + (xm << 6) + 26;
 		} else {
-			int simm9 = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 9) - 1);
+			int32_t simm9 = inst -> operands[1].value.address1.operand2.immediate_value & ((1 << 9) - 1);
 			offset = (simm9 << 2 )+ ((I & 1) << 1) + 1;
 		}
 // process special registers
@@ -114,14 +128,14 @@ int Transfer(instruction_data *inst, char opcode){
 	
     return temp;
 }
-int DP(instruction_data *inst, char opcode){
+int32_t DP(instruction_data *inst, char opcode){
 	//is it register or immediate
     bool isReg = (REGISTER == (inst -> operands[2].type)) &&
             (REGISTER == (inst -> operands[1].type));
 	// add assertions that it has enough operand
 	bool is64 = BIT_64 == (inst -> operands[0].value.register_operand.size);
-	int temp = 0;
-	char opi, opc, opr, I, R, N, shift, operand;
+	int32_t temp;
+	char opc, I, R, N, shift, operand;
 	opc = 3 & opcode;// get last 2 bits;
 	I =( opcode >> 2) & 1;
 	R = (opcode >> 3) & 3;
@@ -183,7 +197,7 @@ int DP(instruction_data *inst, char opcode){
 			temp = (temp << 3) + 2;
 
             char rn = getRegisterNumber(1, inst);
-            int imm12 = ((inst -> operands[2].value.immediate) & ((1 << 12)-1));
+            int32_t imm12 = ((inst -> operands[2].value.immediate) & ((1 << 12)-1));
             char sh = (inst -> no_operands > 3 && inst -> operands[3].value.shift_operand.shift_amount != 0)? 1 : 0;
 
 
@@ -206,7 +220,7 @@ int DP(instruction_data *inst, char opcode){
                 hw = 0;
             }
 			// immediate value 
-			int imm16 = ((inst -> operands[1].value.immediate) & ((1 << 16)-1));
+			int32_t imm16 = ((inst -> operands[1].value.immediate) & ((1 << 16)-1));
 		       	
 			temp = (temp  << 23) + (hw << 21) + (imm16 << 5) + rd;
 		       	// i need to get register number;			
@@ -216,7 +230,7 @@ int DP(instruction_data *inst, char opcode){
 	// toBinaryPrint(temp);
 	return temp;
 }
-int NOP(instruction_data *inst, char opcode) {
+int32_t NOP(instruction_data *inst, char opcode) {
 	return 3573751839;
 }
 instToFunction instToFunctions[30] = {
@@ -231,9 +245,9 @@ instToFunction instToFunctions[30] = {
 	{"ldr", &Transfer, 1}, {"str", &Transfer, 0},{"nop", &NOP, 0}}; 
 	
 
-int decode(instruction_data inst) {
+int32_t decode(instruction_data inst) {
 	
-	for (int i = 0; i < 30; i++) {
+	for (int32_t i = 0; i < 30; i++) {
 		if (strcmp(instToFunctions[i].key,inst.instruction_name) == 0) {
 			instructionMaker fun = (instToFunctions[i].function);
 
@@ -246,7 +260,7 @@ int decode(instruction_data inst) {
 	return -1;
 }
 
-int decodeline(line_data line) {
+int32_t decodeline(line_data line) {
     switch (line.type) {
         case DIRECTIVE:
             return line.contents.directive.arg;

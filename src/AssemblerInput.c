@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "AssemblerInput.h"
 #include "assemble.h"
+#define MAX_NO_OPS 4
 
 operand RegisterN(char n) {
     operand op;
@@ -26,7 +27,7 @@ operand RegisterNsize(char n, char s) {
     op.value.register_operand = reg;
     return op;
 }
-operand RegisterZR(char c) {
+/*operand RegisterZR(char c) {
     operand op;
     op.type = REGISTER;
     register_info reg;
@@ -36,9 +37,20 @@ operand RegisterZR(char c) {
     id.special_register = ZR;
     op.value.register_operand = reg;
     return op;
-}
-
-operand shiftmake(shift_type type, int amount) {
+}*/
+//
+//operand RegisterSpecial(special_register_type type, s) {
+//    operand op;
+//    op.type = REGISTER;
+//    register_info reg;
+//    reg.type = SPECIAL;
+//    reg.size = BIT_64;
+//    register_id id;
+//    id.special_register = ZR;
+//    op.value.register_operand = reg;
+//    return op;
+//}
+operand shiftmake(shift_type type, int32_t amount) {
     operand op;
     op.type = SHIFT;
     shift_info shiftop;
@@ -57,8 +69,8 @@ operand immediateMake(char* imm_str) {
       // checks if hex and converts
     return op;
 }
-// built in func exists strchr BUT don't think it works as can't check if '\0' 
-int char_in_str(char val, char *str, int str_len) {
+// built in func exists strchr BUT don't think it works as can't check if '\0' ?
+int32_t char_in_str(char val, char *str, int32_t str_len) {
     for(int i = 0; i < str_len; i++) {
         if(val == str[i]) return 1;  // if char is in str
     }
@@ -66,8 +78,8 @@ int char_in_str(char val, char *str, int str_len) {
 }
 
 
-int str_in_str_arr(char *str, char **str_arr, int str_arr_len) {
-    for(int i = 0; i < str_arr_len; i++) {
+int32_t str_in_str_arr(char *str, char **str_arr, int32_t str_arr_len) {
+    for(int32_t i = 0; i < str_arr_len; i++) {
         if(strlen(str) == strlen(str_arr[i])) {
             if (strcmp(str, str_arr[i]) == 0) return 1;  // if str is in str_arr
         }
@@ -91,14 +103,14 @@ line_type get_line_type(char *file_line) {
     return INSTRUCTION;
 }
 
-int is_special_register(char* operand_text) {
+int32_t is_special_register(char* operand_text) {
 #define SRN_LEN 5
     char *SPECIAL_REGISTER_NAMES[] = {"sp", "wsp", "xzr", "wzr", "PC"};
     if(str_in_str_arr(operand_text, SPECIAL_REGISTER_NAMES, SRN_LEN)) return 1;
     return 0;
 }
 
-int is_general_register(char* operand_text) {
+int32_t is_general_register(char* operand_text) {
     if(operand_text[0] == 'x' || operand_text[0] == 'w') {
         char *str;
         long num = strtol(operand_text + 1, &str, 10);
@@ -110,7 +122,7 @@ int is_general_register(char* operand_text) {
     return 0;
 }
 
-int is_shift_operation(char* operand_text) {
+int32_t is_shift_operation(char* operand_text) {
 #define SN_LEN 4
     char *SHIFT_NAMES[] = {"lsl", "lsr", "asr", "ror"};
     char shift_chars[4];
@@ -119,7 +131,7 @@ int is_shift_operation(char* operand_text) {
     return 0;
 }
 
-int is_address(char *operand_text) {
+int32_t is_address(char *operand_text) {
     return (operand_text[0] == '[') ? 1 : 0;
 }
 
@@ -130,6 +142,7 @@ shift_type get_shift_type(char* shift) {
     else if (strcmp("ror", shift) == 0) return ROR;
     else {
         perror("Unknown type of shift");
+        return ROR;
     }
 }
 
@@ -247,7 +260,24 @@ operand process_operand(char* operand_text) {
 
 
 instruction_data process_instruction(char *file_line) {
-#define MAX_NO_OPS 4
+    // instruction_data data = {.no_operands = 0};
+    // int32_t length = strlen(file_line);
+    // char name[5];
+    // int32_t start_index = 0;
+    // get_next_word(start_index, &start_index, file_line, name);  // replace with strtok, then check if there are commas at the end and remove them
+    // data.instruction_name = name;
+    // operand instr_operands[5];  // todo: check max operands
+    // while(start_index < length) {
+    //     char new_operand_text[64];  // not sure how big this should be
+    //     get_next_word(start_index + 1, &start_index, file_line, new_operand_text);
+    //     operand new_operand = process_operand(new_operand_text);
+    //     instr_operands[data.no_operands] = new_operand;
+    //     data.no_operands++;
+    // }
+    // data.operands = instr_operands;
+    // return data;
+
+
 
     instruction_data data = {.no_operands = 0};
     char *current = strtok(file_line, " ");
@@ -284,8 +314,6 @@ directive_data process_directive(char *file_line) {
 
 // creates and returns the line_data structure so the line can be processed
 line_data process_line(char *file_line) {
-    int length = strlen(file_line);
-
     file_line = strdup(file_line);
     line_type type = get_line_type(file_line);
 
@@ -309,9 +337,9 @@ line_data process_line(char *file_line) {
     return data;
 }
 
- process_input(char *input_file, line_data *line_tokens) {
+int32_t process_input(char *input_file, line_data *line_tokens) {
     FILE *fp = fopen(input_file, "r");
-    int index = 0;
+    int32_t index = 0;
     if(fp != NULL) {
         char line[100];
         while(fgets(line, 100, fp) != NULL) {
