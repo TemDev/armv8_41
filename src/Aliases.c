@@ -3,8 +3,10 @@
 #include <stdlib.h>
 #include "Aliases.h"
 
+//Function to correctly place the zero-register into the instruction created 
+// after dealing with aliases
 
-operand* insertReg(instruction_data *ins, operand elem, int32_t pos){
+operand* insertReg(instruction_data *ins, operand elem, int pos){
     operand *ops = calloc(ins -> no_operands + 1, sizeof(operand));
     memcpy(ops, ins -> operands, ins -> no_operands * sizeof(operand));
     for (int32_t i = ins -> no_operands - 1 ; i > pos - 1 ; i--)
@@ -16,6 +18,8 @@ operand* insertReg(instruction_data *ins, operand elem, int32_t pos){
     ops[pos] = elem;
     return ops;
 }
+
+// Function to correctly create the zero-register of required size
 
 static operand RegisterZR(register_size size) {
     operand op;

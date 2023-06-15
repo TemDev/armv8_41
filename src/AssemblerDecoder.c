@@ -5,8 +5,25 @@
 #include "bitwise.c"
 #include "AssemblerDecoder.h"
 #include "Aliases.h"
+
 // return a string that is a binary representation of a number
 
+<<<<<<< src/AssemblerDecoder.c
+// void toBinaryPrint(int number) {
+// 	int temp = 1;
+// 	char string[33];
+// 	// a problem if less than 32 character string is making that
+// 	//assert(strlen(string) >= 32);
+// 	for (int i = 0; i < 32; i++) {
+// 		if (((number >> i) & 1 ) == 1) {
+// 	       		string[31 - i] = '1';
+// 	       	}
+// 			else string[31 -i] = '0';
+// 		temp = temp << 1;
+// 	}
+// 	string[32] = '\0';
+// 	printf("%.8x in binary is %32s \n", number, string);
+=======
 void toBinaryPrint(int32_t number) {
 	int32_t temp = 1;
 	char string[33];
@@ -21,8 +38,9 @@ void toBinaryPrint(int32_t number) {
 	}
 	string[32] = '\0';
 	printf("%.8x in binary is %32s \n", number, string);
+>>>>>>> src/AssemblerDecoder.c
 	
-}
+// }
 
 typedef int32_t (*instructionMaker) (instruction_data*,char);
 typedef struct {
@@ -50,7 +68,6 @@ char getRegisterNumber(unsigned char index, instruction_data* inst) {
 // so they are used to identify register and uncoditional branches
 int32_t BR(instruction_data *inst, char opcode) {
 	int32_t temp = 0;
-	printf("BR is called\n");
 	assert(inst-> no_operands > 0);
 	if (opcode == 3) {
 		int32_t simm26 = inst -> operands[0].value.immediate;
@@ -107,7 +124,7 @@ int32_t Transfer(instruction_data *inst, char opcode){
 	char rt = getRegisterNumber(0, inst);
 	temp += rt;
 
-	toBinaryPrint(temp);
+	// toBinaryPrint(temp);
 	
     return temp;
 }
@@ -210,7 +227,7 @@ int32_t DP(instruction_data *inst, char opcode){
 			printf("Performing a wide move\n");
 		}
 	}
-	toBinaryPrint(temp);
+	// toBinaryPrint(temp);
 	return temp;
 }
 int32_t NOP(instruction_data *inst, char opcode) {
@@ -255,5 +272,3 @@ int32_t decodeline(line_data line) {
             return 0;
     }
 }
-// run ../../armv8_testsuite/test/test_cases/general/ldr11.s output.bin
-// p data.contents.instruction -> operands[1]

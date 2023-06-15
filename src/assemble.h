@@ -5,56 +5,79 @@
 #include<stdint.h>
 #include<stdbool.h>
 
-typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type;
+// In this file we create all the datatypes we use afterwarde to process the different
+// components of instruction we have received
 
-typedef enum { REGISTER, IMMEDIATE, ADDRESS, LABEL_NAME, SHIFT } operand_type;  // process address and literal types
+typedef enum { INSTRUCTION, DIRECTIVE, LABEL } line_type; // types pf instuction in a line of input that we can encounter
 
-typedef enum { GENERAL, SPECIAL } register_type;
+typedef enum { REGISTER, IMMEDIATE, ADDRESS, LABEL_NAME, SHIFT } operand_type;  // types of operands
 
-typedef enum { SINGLETON, UNSIGNED, PRE, POST, REG, LOAD, REG_SHIFT } offset_type;
+typedef enum { GENERAL, SPECIAL } register_type; // types of registers
 
-typedef enum { SP, ZR, PC } special_register_type;
+typedef enum { SINGLETON, UNSIGNED, PRE, POST, REG, LOAD, REG_SHIFT } offset_type; // types of offsets
 
-typedef enum { BIT_64, BIT_32 } register_size;
+typedef enum { SP, ZR, PC } special_register_type; // types of special registers
 
-typedef union { special_register_type special_register; int number; } register_id;
+typedef enum { BIT_64, BIT_32 } register_size; // register sizes
 
-typedef struct { register_type type; register_id id; register_size size; } register_info;
+typedef enum { LSL = 0, LSR = 1, ASR = 2, ROR = 3} shift_type; // types of shifts
+ 
+typedef union { special_register_type special_register; int number; } register_id; // registers id that could be encountered
 
-typedef enum { LSL = 0, LSR = 1, ASR = 2, ROR = 3} shift_type;
+typedef struct 
+{ 
+  register_type type;
+  register_id id;
+  register_size size; 
+} register_info; // information about the register
 
-typedef struct { shift_type shift; int shift_amount; } shift_info;
+
+typedef struct 
+{ 
+  shift_type shift;
+  int shift_amount; 
+} shift_info; // information that shifts hold
 
 typedef struct 
 { 
   offset_type address_type;
   register_info operand1;
   union {register_info register_value; int32_t immediate_value;} operand2;
-} address_info;
+} address_info; // information that an address holds
 
 
-typedef union { register_info register_operand; int32_t immediate; char* label_name; address_info address1; shift_info shift_operand;} operand_value;
+typedef union { register_info register_operand; int32_t immediate;
+ char* label_name; address_info address1; shift_info shift_operand;} operand_value; // types of operand values
 
-typedef struct { operand_type type; operand_value value; } operand; // add label vars
+typedef struct 
+{ 
+  operand_type type;
+  operand_value value;
+} operand; // operand information
 
 typedef struct {
   char *instruction_name;
   operand *operands;
-  int32_t no_operands;
-} instruction_data;
+  int no_operands;
+} instruction_data; // instruction data information
 
-// simplified directives as .int is the only one - below code could be used if there were more
-// typdef struct { int64_t number } directive_arguments;
-// typdef struct { char *name; directive_arguments *args; int args_length } directive_data;
 
-typedef struct { char *name; int32_t arg; } directive_data;  // as .int takes exactly one integer as an argument
+typedef struct 
+{ 
+  char *name;
+  int32_t arg;
+} directive_data;  // directives information
 
 typedef union {
   instruction_data instruction;
   directive_data directive;
   char *label_name;
-} line_contents;
+} line_contents; // lines of contents information
 
-typedef struct { line_type type; line_contents contents; } line_data;
+typedef struct 
+{ 
+  line_type type;
+  line_contents contents;
+} line_data; // information given in a line
 
 #endif

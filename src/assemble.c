@@ -6,22 +6,25 @@
 #include "AssemblerDecoder.h"
 #define MAX_INSTRUCTIONS 100
 
+//Structure for the list of labels
 typedef struct label_list{
     char* label;
     int32_t address;
 }label_list;
 
-void writeFile(int32_t *arr, char *file, int32_t size) {
-    FILE *file_out = fopen(file, "wb");
-    fwrite(arr, sizeof(int32_t), size, file_out);
-    fclose(file_out);
+//Writing the processed binary output into a file
+void writeFile(int32_t *arr, char *file, int size) {
+  FILE *file_out = fopen(file, "wb");
+  fwrite(arr, sizeof(int32_t), size, file_out);
+  fclose(file_out);
 }
 
-int32_t main(int32_t argc, char **argv) {
-    if (argc == 3) {
-        line_data *line_tokens = (line_data*) calloc(MAX_INSTRUCTIONS,sizeof(line_data));
-        int32_t output[MAX_INSTRUCTIONS];
-        int32_t n_lines = process_input(argv[1], line_tokens);
+//In this function we do the initial processing of the instructions received
+int main(int argc, char **argv) {
+  if (argc == 3) {
+    line_data *line_tokens = (line_data*) calloc(MAX_INSTRUCTIONS,sizeof(line_data));
+    int output[MAX_INSTRUCTIONS];
+    int n_lines = process_input(argv[1], line_tokens);
 
         label_list label_list_actual[MAX_INSTRUCTIONS];
         int32_t count = 0;
@@ -62,5 +65,3 @@ int32_t main(int32_t argc, char **argv) {
         printf("Please enter exactly 2 command line arguments in the format <file_in> <file_out>\n");
     }
 }
-
-//run ../../armv8_testsuite/test/test_cases/general/ldr05.s output.bin
