@@ -16,14 +16,14 @@ int main(int argc, char **argv) {
     } else {
         printf("Device present \n");
     }
-    fflush(stdout);
+    //fflush(stdout);
     float t;
-    for (;;) {
-        do {
-            t = getTemperature(RPI_BPLUS_GPIO_J8_07);
-        } while (t<-999);
+    for (int i = 0;i<1; i++) {
+       printf("smth\n");
+	 t = getTemperature(RPI_BPLUS_GPIO_J8_07);
+        
         printf("%f\r\n",t);
-        fflush(stdout);
+        //fflush(stdout);
     };
     bcm2835_close();
     return 0;

@@ -60,6 +60,7 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
 
 
 def main_readadc():
+         init()
          return readadc(photo_ch, SPICLK, SPIMOSI, SPIMISO, SPICS)
 
 def main():
