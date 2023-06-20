@@ -21,9 +21,9 @@
 
 #define VERSION         "0.94.2"
 #define DEFAULT_GPIO    4
-#define DHT11           0
-#define DHT22           1
-#define DEFAULT_DEVICE  DHT22
+#define DHT11           1
+#define DHT22           0
+#define DEFAULT_DEVICE  DHT11
 #define LOOP            1
 #define NO_LOOP         0
 
@@ -112,11 +112,14 @@ int main(int argc, char* argv[]) {
         gpioDelay(50000);
 
         // if we received 40 data bits and the checksum is valid
+	float tempC;
+        float humidity;
+	tempC = data[2] + data[3] / 10.0f;
+	humidity = data[0] + data[1] / 10.0f;
+	 printf("Temperature: %.1fC  Humidity: %.1f%%\n",
+             tempC,humidity);
         if (bitCount == 40 &&
          data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xff)) {
-            float tempC;
-            float humidity;
-
             if (device == DHT11) {
                 humidity = data[0] + data[1] / 10.0f;
                 tempC = data[2] + data[3] / 10.0f;
