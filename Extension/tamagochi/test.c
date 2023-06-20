@@ -31,7 +31,13 @@
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-
+Texture2D getTexture(char *path) {
+    // path is for the image
+    Image temp = LoadImage(path);
+    Texture2D texture = LoadTextureFromImage(temp);
+    UnloadImage(temp);
+    return ;
+}
 int main(void)
 {
     // Initialization
@@ -48,17 +54,16 @@ int main(void)
                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
-
-    Image character = LoadImage("images/maincharacter/smile.png");     // Load image in CPU memory (RAM)
+   // Load image in CPU memory (RAM)
 
     // Draw one image over the other with a scaling of 1.5f
     //ImageCrop(&character, (Rectangle){ 0, 0, 100, 100}); // Crop resulting image
 
     // Draw on the image with a few image draw methods
-    ImageDrawPixel(&character, 10, 10, RAYWHITE);
-    ImageDrawCircleLines(&character, 10, 10, 5, RAYWHITE);
-    ImageDrawRectangle(&character, 5, 20, 10, 10, RAYWHITE);
-    Texture2D texture = LoadTextureFromImage(character);
+    // ImageDrawPixel(&character, 10, 10, RAYWHITE);
+    // ImageDrawCircleLines(&character, 10, 10, 5, RAYWHITE);
+    // ImageDrawRectangle(&character, 5, 20, 10, 10, RAYWHITE);
+    Texture2D texture = getTexture("images/maincharacter/smile.png");
     //UnloadImage(character); 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
