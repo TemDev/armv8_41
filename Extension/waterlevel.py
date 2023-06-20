@@ -58,6 +58,10 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
         adcout >>= 1       # first bit is 'null' so drop it
         return adcout
 
+
+def main_readadc():
+         return readadc(photo_ch, SPICLK, SPIMOSI, SPIMISO, SPICS)
+
 def main():
          init()
          time.sleep(2)

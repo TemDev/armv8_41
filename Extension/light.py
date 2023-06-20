@@ -5,6 +5,9 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(PIN_NUMBER, GPIO.IN)
 
 
+def light_reading():
+    return GPIO.input(PIN_NUMBER);
+
 def main():
     while True:
         print("Light setting is: ", GPIO.input(PIN_NUMBER))
