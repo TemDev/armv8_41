@@ -1,4 +1,4 @@
-import RPI.GPIO as GPIO
+import RPi.GPIO as GPIO
 import time
 PIN_NUMBER = 27
 GPIO.setmode(GPIO.BCM)
