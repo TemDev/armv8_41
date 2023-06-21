@@ -4,6 +4,7 @@
 
 #include<stdint.h>
 #include<stdbool.h>
+#include <assert.h>
 
 // In this file we create all the datatypes we use afterwarde to process the different
 // components of instruction we have received
@@ -14,7 +15,7 @@ typedef enum { REGISTER, IMMEDIATE, ADDRESS, LABEL_NAME, SHIFT } operand_type;  
 
 typedef enum { GENERAL, SPECIAL } register_type; // types of registers
 
-typedef enum { SINGLETON, UNSIGNED, PRE, POST, REG, LOAD, REG_SHIFT } offset_type; // types of offsets
+typedef enum {UNSIGNED, PRE, POST, LOAD, REG_SHIFT } offset_type; // types of offsets
 
 typedef enum { SP, ZR, PC } special_register_type; // types of special registers
 

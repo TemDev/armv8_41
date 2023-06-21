@@ -13,6 +13,8 @@
 
 #include <raylib.h>
 #include "player.h"
+#include "sensorsData.h"
+#define COLOUR_STEPS 150
 
 /*#if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            120 // Change this back to 330 if compiling for a platform that supports GLSL3.3
@@ -41,9 +43,9 @@ void DrawAttributes(Player* p) {
     DrawRectangle(0,0, p -> health, 10, GREEN);
 }
 
-void DrawBackGround(Player* p) {
-    ClearBackground(RAYWHITE);
-
+void DrawBackGround(Player* p, int *actual_colour) {
+    ClearBackground((Color) {actual_colour[0], actual_colour[1], actual_colour[2], actual_colour[3]});
+    
     DrawText("move the ball with arrow keys", 10, 10, 20, DARKGRAY);
 
 }
@@ -53,8 +55,8 @@ void DrawPlayer(Player* p){
 
 }
 
-void DrawEverything(Player* p) {
-    DrawBackGround(p);
+void DrawEverything(Player* p, int *actual_colour) {
+    DrawBackGround(p, actual_colour);
     DrawAttributes(p);
     DrawPlayer(p);
 }
@@ -89,6 +91,12 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = SCREEN_WIDTH;
     const int screenHeight = SCREEN_HEIGHT;
+    int colour1[] = {102, 191, 255, 255};
+    int colour2[] = {80, 80, 80, 255};
+    int actual_colour[] = {102, 191, 255, 255};
+    bool light_off = true;
+    int count = 0;
+    data *dataSensors;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - keyboard input");
     Player character;
@@ -118,7 +126,20 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        
+        // Receive new information from sensors
+        dataSensors = fetchData();
+        light_off = dataSensors->lightOff;
+        // Background Colour updates
+        if (light_off && (count < COLOUR_STEPS)) {
+	    count++;
+        } else if (count > 0) {
+	    count--;
+        }
+        actual_colour[0] =  colour1[0] + (colour2[0] - colour1[0]) * count / COLOUR_STEPS;
+	actual_colour[1] =  colour1[1] + (colour2[1] - colour1[1]) * count / COLOUR_STEPS;
+	actual_colour[2] =  colour1[2] + (colour2[2] - colour1[2]) * count / COLOUR_STEPS;
+	actual_colour[3] =  colour1[3] + (colour2[3] - colour1[3]) * count / COLOUR_STEPS;
+	// 
         bool moved = true;
         updateConditions(&character, &moved);
         
@@ -136,7 +157,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
         
-            DrawEverything(&character);
+	DrawEverything(&character, &actual_colour[0]);
 
             
             //DrawCircleV(character.position, RADIUS, MAROON);
