@@ -47,7 +47,6 @@ static operand RegisterZR(register_size size) {
 
 instruction_data convert(instruction_data *inst) {
 
-    instruction_data refined;
     operand mode;
 
     if (inst -> operands[0].value.register_operand.size == BIT_64) {

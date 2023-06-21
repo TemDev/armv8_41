@@ -109,6 +109,7 @@ shift_type get_shift_type(char* shift_text) {
     else if (strncmp(shift_text, "ror", 3) == 0) return ROR;
     //any other value is invalid
     else fprintf(stderr, "ERROR in process shift unknown type of shift\n");
+    return 0;
 }
 
 //Processing of a special register operand
