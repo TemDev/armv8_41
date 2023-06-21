@@ -31,6 +31,13 @@
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
+
+
+bool precipitation
+bool heavyPrecipitation;
+bool tooHot;
+bool tooCold;
+
 Texture2D getTexture(char *path) {
     // path is for the image
     Image temp = LoadImage(path);
@@ -84,7 +91,15 @@ void updateConditions(Player* p,bool *moved) {
     updateEnvironment(p);
     updateKeys(p, moved);
     p -> health -= -0.05f;
-}    
+}   
+
+void resetEnvironment(void) {
+    precipitation = false;
+    heavyPrecipitation = false;
+    tooHot = false;
+    tooCold = false;
+}
+
 int main(void)
 {
     // Initialization
@@ -122,6 +137,7 @@ int main(void)
     makePlayer(&character, 500, 100, 100, texture);
     //UnloadImage(character); 
     // Main game loop
+    float frameTime = 0;
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
@@ -129,6 +145,35 @@ int main(void)
         // Receive new information from sensors
         dataSensors = fetchData();
         light_off = dataSensors->lightOff;
+
+
+        // gets time from last frame to count 10 seconds so that weather doesn't change every frame
+        frameTime += GetFrameTime();  // raylib function
+        if (frameTime > 10) {
+            resetEnvironment();
+            if (data->tempC > 20) {
+                tooHot = true;
+            } else if (data->tempC < 0) {
+                tooCold = true;
+            }
+            if (data->waterlevel > 1) {
+                precipitation = true;
+            } else if (data->waterlevel > 3) {
+                heavyPrecipitation = true;
+            }
+            frameTime = 0;
+            // waits 10 seconds
+        }
+
+
+        /* WEATHER CHECKS:
+        sunny = tooHot ^ ¬(prec ^ heavyPrec)
+        rain = prec ^ ¬tooCold
+        thunder = heavyPrec ^ ¬tooCold
+        snow = (prec | heavyPrec) ^ tooCold
+        */
+
+
         // Background Colour updates
         if (light_off && (count < COLOUR_STEPS)) {
 	    count++;

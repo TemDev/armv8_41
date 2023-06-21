@@ -1,5 +1,4 @@
 // get data
-// #define isCloudy !isSunny;
 
 int temp;  // assume data recieved (degrees C)
 int waterlevel;  // assume data recieved [0,1]
@@ -39,5 +38,4 @@ sunny = tooHot ^ ¬(prec ^ heavyPrec)
 rain = prec ^ ¬tooCold
 thunder = heavyPrec ^ ¬tooCold
 snow = (prec | heavyPrec) ^ tooCold
-
 */
