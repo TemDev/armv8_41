@@ -36,6 +36,7 @@ data *fetchData(void) {
 
   printf("sensorsData.c\n");
   printf("%f\n%d\n%i", dataSensors->tempC, dataSensors->waterLevel, dataSensors->lightOff);
+  fclose(sensorFile);
 
   return dataSensors;
 }
