@@ -92,7 +92,10 @@ off:
     str w10, [w4], #4
     str w11, [w4], #4
     str w10, [w4], #4
-    str w10, [w4], #4  
+    str w10, [w4], #4
+
+
+    
 
 movz w18, #0x4f, lsl #16
 

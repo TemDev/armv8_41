@@ -1,3 +1,4 @@
+// Handles the processing of the input to the assembler
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,16 +7,18 @@
 #include "assemble.h"
 #define MAX_NO_OPS 4
 
-operand RegisterN(char n) {
-    operand op;
-    op.type = REGISTER;
-    register_info reg;
-    reg.type = GENERAL;
-    reg.size = BIT_64;
-    reg.id.number = n;
-    op.value.register_operand = reg;
-    return op;
-}
+
+// creates an N register
+// operand RegisterN(char n) {
+//     operand op;
+//     op.type = REGISTER;
+//     register_info reg;
+//     reg.type = GENERAL;
+//     reg.size = BIT_64;
+//     reg.id.number = n;
+//     op.value.register_operand = reg;
+//     return op;
+// }
 
 operand RegisterNsize(char n, char s) {
     operand op;
@@ -50,6 +53,8 @@ operand RegisterNsize(char n, char s) {
 //    op.value.register_operand = reg;
 //    return op;
 //}
+
+// function that shifts by a certain amount
 operand shiftmake(shift_type type, int32_t amount) {
     operand op;
     op.type = SHIFT;
@@ -61,6 +66,7 @@ operand shiftmake(shift_type type, int32_t amount) {
     return op;
 }
 
+// construction of the immediate instructions
 operand immediateMake(char* imm_str) {
      
     operand op;
@@ -69,6 +75,7 @@ operand immediateMake(char* imm_str) {
       // checks if hex and converts
     return op;
 }
+
 // built in func exists strchr BUT don't think it works as can't check if '\0' ?
 int32_t char_in_str(char val, char *str, int32_t str_len) {
     for(int i = 0; i < str_len; i++) {
@@ -77,7 +84,7 @@ int32_t char_in_str(char val, char *str, int32_t str_len) {
     return 0;
 }
 
-
+//
 int32_t str_in_str_arr(char *str, char **str_arr, int32_t str_arr_len) {
     for(int32_t i = 0; i < str_arr_len; i++) {
         if(strlen(str) == strlen(str_arr[i])) {
@@ -87,12 +94,13 @@ int32_t str_in_str_arr(char *str, char **str_arr, int32_t str_arr_len) {
     return 0;
 }
 
+//Function that get rid of the unwanted spaces in the operand
 static char* remove_space_from_operand(char *operand_text) {
     while(operand_text[0] == ' ') operand_text++;
     return operand_text;
 }
 
-
+//Function that figures out the type of the instruction to be performed in a certain line
 line_type get_line_type(char *file_line) {
     file_line = remove_space_from_operand(file_line);
     
@@ -103,6 +111,7 @@ line_type get_line_type(char *file_line) {
     return INSTRUCTION;
 }
 
+//Figures out if an operand is a special register
 int32_t is_special_register(char* operand_text) {
 #define SRN_LEN 5
     char *SPECIAL_REGISTER_NAMES[] = {"sp", "wsp", "xzr", "wzr", "PC"};
@@ -110,6 +119,7 @@ int32_t is_special_register(char* operand_text) {
     return 0;
 }
 
+//Figures out if an operand is a general register
 int32_t is_general_register(char* operand_text) {
     if(operand_text[0] == 'x' || operand_text[0] == 'w') {
         char *str;
@@ -122,6 +132,7 @@ int32_t is_general_register(char* operand_text) {
     return 0;
 }
 
+//Figures out if an operand is a shift operation
 int32_t is_shift_operation(char* operand_text) {
 #define SN_LEN 4
     char *SHIFT_NAMES[] = {"lsl", "lsr", "asr", "ror"};
@@ -131,10 +142,12 @@ int32_t is_shift_operation(char* operand_text) {
     return 0;
 }
 
+//Figures out if an operand is an address
 int32_t is_address(char *operand_text) {
     return (operand_text[0] == '[') ? 1 : 0;
 }
 
+//Figures out what type of shift is to be performed
 shift_type get_shift_type(char* shift) {
     if (strcmp("lsl", shift) == 0) return LSL;
     else if (strcmp("lsr", shift) == 0) return LSR;
@@ -146,6 +159,7 @@ shift_type get_shift_type(char* shift) {
     }
 }
 
+//Processing of a special register operand
 operand process_special_register_operand(char* operand_text) {
     operand ret_op;
     ret_op.type = REGISTER;
@@ -166,9 +180,9 @@ operand process_special_register_operand(char* operand_text) {
     return ret_op;
 }
 
+//Processing of a shift
 shift_info process_shift_operand(char *operand_text) {
     shift_info ret_shift;
-    // ret_op.type = SHIFT;  // set shift_operand.shift, shift_operand.amount type and amount
     char shift_chars[4];
     strncpy(shift_chars, operand_text, 3);
     
@@ -181,6 +195,7 @@ shift_info process_shift_operand(char *operand_text) {
     return ret_shift;
 }
 
+//Finding the addresses for the operand variables
 void find_address_operand_vars(operand *addr_operand, char* operand_text, char* next) {
     offset_type type;
     bool sndReg = false;
@@ -235,7 +250,7 @@ void find_address_operand_vars(operand *addr_operand, char* operand_text, char* 
     
 }
 
-
+//Processing of any operand
 operand process_operand(char* operand_text) {
     operand ret_operand;
     if(operand_text[0] == '#') {
@@ -258,7 +273,7 @@ operand process_operand(char* operand_text) {
     return ret_operand;
 }
 
-
+//Processing of any type of instruction
 instruction_data process_instruction(char *file_line) {
     // instruction_data data = {.no_operands = 0};
     // int32_t length = strlen(file_line);
@@ -302,6 +317,7 @@ instruction_data process_instruction(char *file_line) {
     return data;
 }
 
+//Processing of a directive
 directive_data process_directive(char *file_line) {
     directive_data directive;
     char * temp =strtok(file_line, " ");
@@ -339,7 +355,8 @@ line_data process_line(char *file_line) {
 
 // Function that processes the input file
 int32_t process_input(char *input_file, line_data *line_tokens) {
-    FILE *fp = fopen(input_file, "r");
+    FILE *fp = malloc(sizeof(FILE));
+    fp = fopen(input_file, "r");
     int32_t index = 0;
     if(fp != NULL) {
         char line[100];
