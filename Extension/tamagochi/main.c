@@ -96,8 +96,7 @@ int main(void)
     int actual_colour[] = {102, 191, 255, 255};
     bool light_off = true;
     int count = 0;
-    data *dataSensors = fetchData();
-    //light_off = dataSensors->lightOff;
+    data *dataSensors;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - keyboard input");
     Player character;
@@ -127,7 +126,9 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-      
+        // Receive new information from sensors
+        dataSensors = fetchData();
+        light_off = dataSensors->lightOff;
         // Background Colour updates
         if (light_off && (count < COLOUR_STEPS)) {
 	    count++;
