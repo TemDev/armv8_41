@@ -1,3 +1,5 @@
+// Main file that combines everything in each file to assemble the binary instruction
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

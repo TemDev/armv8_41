@@ -1,3 +1,5 @@
+// Handles the decoding of the instructions
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -216,6 +218,7 @@ int32_t NOP(instruction_data *inst, char opcode) {
 }
 
 // A map from all the instructions to all the possible opcodes
+// Values are calculated as... 
 instToFunction instToFunctions[30] = {
 	{"add", &DP, 16}, {"adds", &DP, 17}, {"sub", &DP, 18}, {"subs", &DP, 19}, 
        	{"and", &DP, 0}, {"ands", &DP, 3}, {"bic", &DP, 32}, {"bics", &DP, 35},

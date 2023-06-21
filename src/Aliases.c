@@ -1,3 +1,5 @@
+// Handles the aliases functions and converts them to functions that are already encoded
+
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
