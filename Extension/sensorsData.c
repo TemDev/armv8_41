@@ -17,7 +17,7 @@ data *fetchData(void) {
   char filename[] =  "file_output.py";
   Py_Initialize();
   FILE *file;
-  file = _Py_fopen(filename, "r");
+  file = fopen(filename, "r");
   PyRun_SimpleFile(file, filename );
   Py_Finalize();
   
