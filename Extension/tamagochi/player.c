@@ -1,13 +1,14 @@
 
 #include "player.h"
 
-typedef struct {
-    bool set;
+#define NUM_MOVES 10
 
-};
+#define DURATION 20
 
-// static char moves[11];
-// static int turns = 0;
+
+
+static move_type moves[10];
+static int turns = 10;
 
 void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
     p -> health = health;
@@ -16,30 +17,87 @@ void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
     p->position.x = SCREEN_WIDTH/2;
     p -> position.y = SCREEN_HEIGHT/2;
     p->right = true;
-    p->jump = false;
     p-> size.x = sizex;
     p -> size.y = sizey;
     p -> texture = tex;
+    p -> m.set = false;
+    p -> m.duration = 0;
+}
+
+void updateHealth(Player *p, environment * env) {
+    if (turns < NUM_MOVES) {  
+    if (moves[turns] == WAIT) {
+        
+    } else {
+        p -> health -= 0.3; 
+    }
+    }
 }
 
 static void updateVelocity(Player * p){
-   
-   }
+    // if the current move is set than continue executing that move
+    if (p -> m.set) {
+        // duration is less or equal than 0 than move is over
+        // does the movement
+        
+        if (moves[turns] == JUMP) {
+            if (p -> velocity.y >= GRAVITY) {
+                p -> m.set = false;
+            }
+        } else {
+            if (moves[turns] == RIGHT) {
+                p -> velocity.x += 2;
+            } else if (moves[turns] == LEFT) {
+                p -> velocity.x -= 2;
+            } 
 
-static void randomise() {
-    // if (turns < 10 && true ) {
-    //     if (moves[turns] == 'R') {
-
-    //     } else {
-
-    //     }
-
-    // }
-    
+            if (p -> m.duration <= 0) {
+                p -> m.set = false;
+            } else {
+                p->m.duration -= 0.5;      
+            }          
+        }
+    } else if (turns < NUM_MOVES) {
+        // set the new move if there are still left
+        if (moves[turns] == RIGHT) {
+            p -> m.duration = 30 + (rand() % DURATION);
+        } else if (moves[turns] == LEFT) {
+            p -> m.duration = 30 + (rand() % DURATION);
+        } else if (moves[turns] == JUMP) {
+            p -> velocity.y = - GRAVITY;
+        } else if (moves[turns] == WAIT) {
+            p -> m.duration = 30 + (rand() % DURATION);
+        }
+        p -> m.set = true;
+        turns++;
+    } else {
+        // if all moves in the queue were executed 
+        // regenerate the queue
+        for (char i = 0; i < NUM_MOVES; i++) {
+            int temp = rand() % 4;
+            switch (temp) {
+                case 0:
+                    moves[i] = RIGHT;
+                break;
+                case 1:
+                    moves[i] = LEFT;
+                break;
+                case 2:
+                    moves[i] = JUMP;
+                break;
+                default: 
+                    moves[i] = WAIT;
+                break;
+            }
+        }
+        turns = 0;
+    }
 }
 
 void updatePosition(Player* p) {
+    // updates velocity accordingly
     updateVelocity(p);
+
     p -> position.x  += p -> velocity.x;
     p -> position.y  += p -> velocity.y;
     if (p->position.x > BOUNDS_X - p->size.x) {
@@ -56,6 +114,12 @@ void updatePosition(Player* p) {
     }
     
     p -> velocity.x = 0;
-    p -> velocity.y = 0;
+    if (p -> velocity.y < GRAVITY) {
+        
+        p -> velocity.y += 1;
+
+    } else {
+        p -> velocity.y = GRAVITY;
+    }
 }
     

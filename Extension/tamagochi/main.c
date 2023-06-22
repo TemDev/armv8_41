@@ -5,11 +5,6 @@
 #define COLOUR_STEPS 150
 
 
-typedef struct{
-    data data;
-    int count;
-    int actual_colour[4];
-} environment;
 
 
 
@@ -48,18 +43,7 @@ void DrawEverything(Player* p, environment *env) {
 }
 
 void updateKeys(Player* p, bool* moved){
-    if (IsKeyDown(KEY_RIGHT)) {
-            p -> velocity.x = 3.0f;
-        } else if (IsKeyDown(KEY_LEFT)) {
-            p -> velocity.x = -3.0f;
-        } else if (IsKeyDown(KEY_UP)) {
-            p -> velocity.y = -3.0f;
-        } else if (IsKeyDown(KEY_DOWN)) {
-            p -> velocity.y = 3.0f;
-        }
-        else {
-            *moved = false;
-        }
+    
 }
 
 void updateEnvironment(Player* p, environment* env) {
@@ -85,13 +69,13 @@ void updateEnvironment(Player* p, environment* env) {
 
 void updateEverything(Player* p, environment * env) {
     bool moved = true;
-    updateEnvironment(p, env);
+    updateEnvironment(p, env); 
+    updateHealth(p, env);
     updateKeys(p, &moved);    
     updatePosition(p);
-    p -> health -= -0.5f;
 }    
-int main(void)
-{
+
+int main(void) {
     
     
 
