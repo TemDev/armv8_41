@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "main.h"
 #include "player.h"
 
 #define NUM_MOVES 10
