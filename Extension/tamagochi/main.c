@@ -4,9 +4,11 @@
 #include "sensorsData.h"
 #include "main.h"
 #define COLOUR_STEPS 300
+#define COLOUR_STEPS2 90
 #define FPS 60
 #define SCALING_FACTOR 4
 #define GRASS_SCALING_FACTOR 13.5
+#define ARRAY_FINISH -1
 
 
 
@@ -32,7 +34,7 @@ void DrawAttributes(Player* p) {
 void DrawBackGround(Player* p, int *actual_colour) {
     ClearBackground((Color) {actual_colour[0], actual_colour[1], actual_colour[2], actual_colour[3]});
     
-    DrawText("move the ball with arrow keys", 10, 10, 20, DARKGRAY);
+    DrawText("DigiPet", 10, 10, 20, DARKGRAY);
 
 }
 
@@ -56,7 +58,7 @@ void updateEnvironment(Player* p, environment* env) {
     FILE *sensorFile = fopen("sensorReadings.txt", "r");
     fetchData(&(env -> data), sensorFile);
     fclose(sensorFile);
-    env->data.lightOff = true;
+    //env->data.lightOff = true;
     //environment light off
     if (env -> data.lightOff && (env -> count < COLOUR_STEPS) ){
         env -> count++;
@@ -89,10 +91,24 @@ int main(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Digital Pet");
     SetTargetFPS(FPS); 
 
-
-
     Player character;
     environment env;
+    // Snow
+    Image snowImage = LoadImage("images/snow.png");
+    ImageResizeNN(&snowImage, snowImage.width * SCALING_FACTOR, snowImage.height * SCALING_FACTOR);
+    Texture2D snow = LoadTextureFromImage(snowImage);
+    // Snow Cloud
+    Image snowCloudImage = LoadImage("images/snow_clouds.png");
+    ImageResizeNN(&snowCloudImage, snowCloudImage.width * SCALING_FACTOR, snowCloudImage.height * SCALING_FACTOR);
+    Texture2D snowCloud = LoadTextureFromImage(snowCloudImage);
+    // Rain
+    Image rainImage = LoadImage("images/rain.png");
+    ImageResizeNN(&rainImage, rainImage.width * SCALING_FACTOR, rainImage.height * SCALING_FACTOR);
+    Texture2D rain = LoadTextureFromImage(rainImage);
+    // Rain Cloud
+    Image rainCloudImage = LoadImage("images/rain_clouds.png");
+    ImageResizeNN(&rainCloudImage, rainCloudImage.width * SCALING_FACTOR, rainCloudImage.height * SCALING_FACTOR);
+    Texture2D rainCloud = LoadTextureFromImage(rainCloudImage);
     // Raspberry
     Image raspberryImage = LoadImage("image/Raspberry.png");
     Texture2D raspberry = LoadTextureFromImage(raspberryImage);
@@ -102,15 +118,15 @@ int main(void) {
     // Pear
     Image pearImage = LoadImage("images/Pear.png");
     Texture2D pear = LoadTextureFromImage(pearImage);
-    // Moon state
+    // Moon
     Image moonImage = LoadImage("images/Moon.png");
     ImageResizeNN(&moonImage, moonImage.width * SCALING_FACTOR, moonImage.height * SCALING_FACTOR);
     Texture2D moon = LoadTextureFromImage(moonImage);
-    // Flaing Hell Anger  state
+    // Sun
     Image sunImage = LoadImage("images/Sun.png");
     ImageResizeNN(&sunImage, sunImage.width * SCALING_FACTOR, sunImage.height * SCALING_FACTOR);
     Texture2D sun = LoadTextureFromImage(sunImage);
-    // Flaing Hell Anger  state
+    // Flaming Hell Anger  state
     Image flamingAngerImage = LoadImage("images/flamingHellAnger.png");
     ImageResizeNN(&flamingAngerImage, flamingAngerImage.width * SCALING_FACTOR, flamingAngerImage.height * SCALING_FACTOR);
     Texture2D flamingAnger = LoadTextureFromImage(flamingAngerImage);
@@ -144,23 +160,74 @@ int main(void) {
     makePlayer(&character, 500, 100, 100, normal);
     env.count = 0;
     int happyHeyCount = 0;
-
+    int cloudProgress = 0;
+    int rainingP = 0;
+    int rainingP2 = COLOUR_STEPS2 / 2;
+    Texture2D rainOrSnowCloud;
+    Texture2D rainOrSnow;
+    float final_x_offset[] = {((float)SCREEN_WIDTH / 2 + 100.), ((float)SCREEN_WIDTH / 2 + 120.), ((float)SCREEN_WIDTH / 2), ((float)SCREEN_WIDTH / 2 - 100.),  ((float)SCREEN_WIDTH / 2 - 150.), ((float)SCREEN_WIDTH / 2 - 200.), ((float)SCREEN_WIDTH / 2 - 300.), ((float)SCREEN_WIDTH / 2 + 200.), ((float)SCREEN_WIDTH / 2 + 250.), ((float)SCREEN_WIDTH / 2 + 320.), ((float)SCREEN_WIDTH / 2 + 380.), ARRAY_FINISH};
+    int x_offset = 100;
+    int y_offset[] = {0, 25, 30, 40, 30, 20, 10, 35, 0 ,20, 40, ARRAY_FINISH};
+    float raining_Ps[] = {0, COLOUR_STEPS2 / 5, COLOUR_STEPS2 / 5 * 2, COLOUR_STEPS2 / 5 * 3, COLOUR_STEPS2 / 5 * 4, ARRAY_FINISH};
+    
     while (!WindowShouldClose()) {
+        // env.data.tempC = 35;
         if (happyHeyCount < FPS * 2) {
 	  character.texture = happyHey;
 	  happyHeyCount++;
-        }else if (character.health > 250) {
+        } else if (character.health > 250) {
 	  character.texture = normal;
-	}else {
+	} else {
 	  character.texture = anxious;
 	}
-	
+	if (env.data.tempC <= 5) {
+	  character.texture = frozen;
+	} else if (env.data.tempC >= 30) {
+	  character.texture = flamingAnger;
+	}
+	  
 
-        DrawTexture(grass, 0, BOUNDS_Y, WHITE);
-	    DrawTexture(grass, 400, BOUNDS_Y, WHITE);
         updateEverything(&character, &env);
         DrawTexture(sun, env.sun_x, env.sun_y, WHITE);
-	    DrawTexture(moon, env.moon_x, env.moon_y, WHITE);
+	DrawTexture(moon, env.moon_x, env.moon_y, WHITE);
+
+	// env.data.waterLevel = 5;
+	// env.data.tempC = 4;
+	if ((env.data.waterLevel > 1) && (env.data.tempC > 5)) {
+	  if (cloudProgress < COLOUR_STEPS) {
+	    cloudProgress++;
+	  }
+	  rainOrSnowCloud = rainCloud;
+	  rainOrSnow = rain;
+	} else if ((env.data.waterLevel > 1) && (env.data.tempC <= 5)) {
+	  if (cloudProgress < COLOUR_STEPS) {
+	    cloudProgress++;
+	  }
+	  rainOrSnowCloud = snowCloud;
+	  rainOrSnow = snow;
+	} else if ((env.data.waterLevel < 1) && (cloudProgress > 0)) {
+	  cloudProgress--;
+	}
+	for (int i = 0; raining_Ps[i] != ARRAY_FINISH; i++) {
+	  if (raining_Ps[i] == COLOUR_STEPS2) {
+	    raining_Ps[i] = 0;
+	  } else {
+	    raining_Ps[i]++;
+	  }
+	}
+	
+	for (int i = 0; raining_Ps[i] != ARRAY_FINISH; i++) {
+	  for (int j = 0; final_x_offset[j] != ARRAY_FINISH; j++) {
+	    DrawTexture(rainOrSnow, -x_offset + final_x_offset[j] * ((float)cloudProgress / (float)COLOUR_STEPS), y_offset[j] + rainImage.height / 3 + SCREEN_HEIGHT * (raining_Ps[i] / (float)COLOUR_STEPS2), WHITE);
+	  }
+	}
+	
+	for (int i = 0; final_x_offset[i] != ARRAY_FINISH; i++) {
+	  DrawTexture(rainOrSnowCloud, -x_offset + final_x_offset[i] * ((float)cloudProgress / (float)COLOUR_STEPS), y_offset[i], WHITE);
+	}
+	
+        DrawTexture(grass, 0, BOUNDS_Y, WHITE);
+	DrawTexture(grass, 400, BOUNDS_Y, WHITE);
         
         BeginDrawing();
         
