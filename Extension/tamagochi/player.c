@@ -14,10 +14,11 @@ static Texture2D walkingLeft [6];
 static Texture2D walkingRight [6];
 
 Texture2D getWalkingTexture(int index, bool mirror) {
-    char path [34];
-    sprintf(path, "images/maincharacter/walking%d.png", index);
+    char path [42];
+    sprintf(path, "images/maincharacter/walking/walking%d.png", index);
 
     Image temp = LoadImage(path);
+    ImageResizeNN(&temp, temp.width * 4, temp.height * 4);
     if (mirror) {
         ImageFlipHorizontal(&temp);
     }
@@ -80,16 +81,19 @@ static void updateVelocity(Player * p){
         } else {
             if (moves[turns] == RIGHT) {
                 p -> velocity.x += 1;
-                p -> texture = walkingRight[(int) (p -> m.duration) % 6];
+                int val = (p -> m.duration);
+                p -> texture = walkingRight[val % 6];
             } else if (moves[turns] == LEFT) {
                 p -> velocity.x -= 1;
-                p -> texture = walkingLeft[(int) (p -> m.duration) % 6];
+                int val = (p -> m.duration);
+                p -> texture = walkingLeft[val % 6];
             } 
 
             if (p -> m.duration <= 0) {
                 p -> m.set = false;
                 p -> texture = regular;
             } else {
+                p -> m.duration -=0.3;
                 
 
             }          
@@ -137,11 +141,15 @@ void updatePosition(Player* p) {
 
     p -> position.x  += p -> velocity.x;
     p -> position.y  += p -> velocity.y;
+
     if (p->position.x > BOUNDS_X - p->size.x) {
         p -> position.x = BOUNDS_X - p->size.x;
+        p -> m.duration = 0;
     }
+
     if (p->position.x < 0) {
         p -> position.x = 0;
+        p -> m.duration = 0;
     }
     if (p->position.y > BOUNDS_Y - p -> size.y) {
         p -> position.y = BOUNDS_Y - p -> size.y;
@@ -153,7 +161,7 @@ void updatePosition(Player* p) {
     p -> velocity.x = 0;
     if (p -> velocity.y < GRAVITY) {
         
-        p -> velocity.y += 1;
+        p -> velocity.y += 0.5;
 
     } else {
         p -> velocity.y = GRAVITY;
