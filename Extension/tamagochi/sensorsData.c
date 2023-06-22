@@ -23,8 +23,8 @@ void fetchData(data* dataSensors, FILE * sensorFile) {
   fgets(buffer, BUFFER_SIZE, sensorFile);
   dataSensors->lightOff = (!strncmp(buffer, "1", 1)) ? true : false;
 
-  printf("sensorsData.c\n");
-  printf("%f\n%d\n%i", dataSensors->tempC, dataSensors->waterLevel, dataSensors->lightOff);
+  //printf("sensorsData.c\n");
+  //printf("%f\n%d\n%i", dataSensors->tempC, dataSensors->waterLevel, dataSensors->lightOff);
   free(buffer);
 }
 
