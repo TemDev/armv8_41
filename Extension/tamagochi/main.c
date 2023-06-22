@@ -90,13 +90,18 @@ int main(void) {
     Player character;
     environment env;
     Texture2D texture = getTexture("images/maincharacter/smile.png");
+    Image grassImage = LoadImage("images/output-onlinepngtools.png");
+    ImageResizeNN(&grassImage, 400, 133);
+    Texture2D grass = LoadTextureFromImage(grassImage);
+    
     makePlayer(&character, 500, 100, 100, texture);
     env.count = 0;
 
     while (!WindowShouldClose()) {
 
 
-
+        DrawTexture(grass, 0, BOUNDS_Y, WHITE);
+	DrawTexture(grass, 400, BOUNDS_Y, WHITE);
         updateEverything(&character, &env);
         
         

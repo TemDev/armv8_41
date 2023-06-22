@@ -7,7 +7,7 @@
 
 
 #define BOUNDS_X 800
-#define BOUNDS_Y 400
+#define BOUNDS_Y 330
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 450
 #define RADIUS 50
