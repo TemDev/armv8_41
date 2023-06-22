@@ -9,7 +9,23 @@
 
 static move_type moves[10];
 static int turns = 10;
+static Texture2D regular;
+static Texture2D walkingLeft [6];
+static Texture2D walkingRight [6];
 
+Texture2D getWalkingTexture(int index, bool mirror) {
+    char path [34];
+    sprintf(path, "images/maincharacter/walking%d.png", index);
+
+    Image temp = LoadImage(path);
+    if (mirror) {
+        ImageFlipHorizontal(&temp);
+    }
+    Texture2D texture = LoadTextureFromImage(temp);
+    return texture;
+
+
+}
 
 
 void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
@@ -25,9 +41,22 @@ void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
     p -> texture = tex;
     p -> m.set = false;
     p -> m.duration = 0;
+    walkingRight[0] = getWalkingTexture(1, true);
+    walkingRight[1] =getWalkingTexture(2, true);
+    walkingRight[2] =getWalkingTexture(3, true);
+    walkingRight[3] =getWalkingTexture(4, true);
+    walkingRight[4] =getWalkingTexture(5, true);
+    walkingRight[5] = getWalkingTexture(6, true);
+    walkingLeft[0] = getWalkingTexture(1, false);
+    walkingLeft[1] =  getWalkingTexture(2, false);
+    walkingLeft[2] =  getWalkingTexture(3, false);
+    walkingLeft[3] = getWalkingTexture(4, false);
+    walkingLeft[4] = getWalkingTexture(5, false);
+    walkingLeft[5] = getWalkingTexture(6, false);
+    regular = tex;
 }
 
-void updateHealth(Player *p, environment * env) {
+void updateHealth(Player *p, environment *env) {
     // change this later
     if (turns < NUM_MOVES) {  
     if (moves[turns] == WAIT) {
@@ -43,22 +72,26 @@ static void updateVelocity(Player * p){
     if (p -> m.set) {
         // duration is less or equal than 0 than move is over
         // does the movement
-        
+        //printf("current move :%d", moves[turns]);
         if (moves[turns] == JUMP) {
             if (p -> velocity.y >= GRAVITY) {
                 p -> m.set = false;
             }
         } else {
             if (moves[turns] == RIGHT) {
-                p -> velocity.x += 2;
+                p -> velocity.x += 1;
+                p -> texture = walkingRight[(int) (p -> m.duration) % 6];
             } else if (moves[turns] == LEFT) {
-                p -> velocity.x -= 2;
+                p -> velocity.x -= 1;
+                p -> texture = walkingLeft[(int) (p -> m.duration) % 6];
             } 
 
             if (p -> m.duration <= 0) {
                 p -> m.set = false;
+                p -> texture = regular;
             } else {
-                p->m.duration -= 0.5;      
+                
+
             }          
         }
     } else if (turns < NUM_MOVES) {
