@@ -27,31 +27,6 @@ void DrawAttributes(Player* p) {
     int hbar_width = (p -> health > 0)? p -> health: 0;
     Color color = (hbar_width < 350)? YELLOW: GREEN;
     DrawRectangle(0,0, p -> health, 10, color);
-    Texture2D button1 = LoadTexture("Strawberry.png"); // Load button texture
-    Texture2D button2 = LoadTexture("Apple.png"); // Load button textures
-    Texture2D button3 = LoadTexture("Pear.png"); // Load button texture
-
-    // Define frame rectangle for drawing
-    // float frameHeight1 = (float)button1.height/NUM_FRAMES;
-    // Rectangle sourceRec1 = { 0, 0, (float)button1.width, frameHeight1 };
-
-    // // Define button bounds on screen
-    // Rectangle btnBounds1 = { screenWidth/4.0f - button1.width/4.0f, 
-    // screenHeight/4.0f - button1.height/NUM_FRAMES/4.0f, (float)button1.width, frameHeight1 };
-
-    // float frameHeight2 = (float)button2.height/NUM_FRAMES;
-    // Rectangle sourceRec2 = { 2, 2, (float)button2.width, frameHeight2 };
-
-    // // Define button bounds on screen
-    // Rectangle btnBounds2 = { screenWidth/2.0f - button2.width/2.0f, 
-    // screenHeight/2.0f - button2.height/NUM_FRAMES/2.0f, (float)button2.width, frameHeight2 };
-
-    // float frameHeight3 = (float)button3.height/NUM_FRAMES;
-    // Rectangle sourceRec3 = { 6, 6, (float)button3.width, frameHeight3 };
-
-    // // Define button bounds on screen
-    // Rectangle btnBounds3 = { screenWidth/6.0f - button3.width/6.0f,
-    //  screenHeight/6.0f - button3.height/NUM_FRAMES/6.0f, (float)button3.width, frameHeight3 };
 }
 
 void DrawBackGround(Player* p, int *actual_colour) {
@@ -83,7 +58,7 @@ void updateEnvironment(Player* p, environment* env) {
     fclose(sensorFile);
     env->data.lightOff = true;
     //environment light off
-    if (env ->data.lightOff && (env -> count < COLOUR_STEPS) ){
+    if (env -> data.lightOff && (env -> count < COLOUR_STEPS) ){
         env -> count++;
     } else if (!env->data.lightOff && env -> count > 0) {
 	    env -> count--;
@@ -118,6 +93,15 @@ int main(void) {
 
     Player character;
     environment env;
+    // Raspberry
+    Image raspberryImage = LoadImage("image/Raspberry.png");
+    Texture2D raspberry = LoadTextureFromImage(raspberryImage);
+    // Apple
+    Image appleImage = LoadImage("images/Apple.png");
+    Texture2D apple = LoadTextureFromImage(appleImage);
+    // Pear
+    Image pearImage = LoadImage("images/Pear.png");
+    Texture2D pear = LoadTextureFromImage(pearImage);
     // Moon state
     Image moonImage = LoadImage("images/Moon.png");
     ImageResizeNN(&moonImage, moonImage.width * SCALING_FACTOR, moonImage.height * SCALING_FACTOR);
@@ -173,10 +157,10 @@ int main(void) {
 	
 
         DrawTexture(grass, 0, BOUNDS_Y, WHITE);
-	DrawTexture(grass, 400, BOUNDS_Y, WHITE);
+	    DrawTexture(grass, 400, BOUNDS_Y, WHITE);
         updateEverything(&character, &env);
         DrawTexture(sun, env.sun_x, env.sun_y, WHITE);
-	DrawTexture(moon, env.moon_x, env.moon_y, WHITE);
+	    DrawTexture(moon, env.moon_x, env.moon_y, WHITE);
         
         BeginDrawing();
         
