@@ -1,10 +1,10 @@
 #include <raylib.h>
 #include "player.h"
 #include "sensorsData.h"
-
 #define COLOUR_STEPS 150
-
-
+#define FPS 60
+#define SCALING_FACTOR 4
+#define GRASS_SCALING_FACTOR 13.5
 
 
 
@@ -84,22 +84,57 @@ int main(void) {
     
    
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib [core] example - keyboard input");
-    SetTargetFPS(60); 
+    SetTargetFPS(FPS); 
 
 
 
     Player character;
     environment env;
-    Texture2D texture = getTexture("images/maincharacter/smile.png");
+    // Flaing Hell Anger  state
+    Image flamingAngerImage = LoadImage("images/flamingHellAnger.png");
+    ImageResizeNN(&flamingAngerImage, flamingAngerImage.width * SCALING_FACTOR, flamingAngerImage.height * SCALING_FACTOR);
+    Texture2D flamingAnger = LoadTextureFromImage(flamingAngerImage);
+    // Frozen state
+    Image frozenImage = LoadImage("images/frozen.png");
+    ImageResizeNN(&frozenImage, frozenImage.width * SCALING_FACTOR, frozenImage.height * SCALING_FACTOR);
+    Texture2D frozen = LoadTextureFromImage(frozenImage);
+    // Angry state
+    Image angryImage = LoadImage("images/angry.png");
+    ImageResizeNN(&angryImage, angryImage.width * SCALING_FACTOR, angryImage.height * SCALING_FACTOR);
+    Texture2D angry = LoadTextureFromImage(angryImage);
+    // HappyHey state
+    Image happyHeyImage = LoadImage("images/happyHey.png");
+    ImageResizeNN(&happyHeyImage, happyHeyImage.width * SCALING_FACTOR, happyHeyImage.height * SCALING_FACTOR);
+    Texture2D happyHey = LoadTextureFromImage(happyHeyImage);
+    // Anxious state
+    Image anxiousImage = LoadImage("images/anxious.png");
+    ImageResizeNN(&anxiousImage, anxiousImage.width * SCALING_FACTOR, anxiousImage.height * SCALING_FACTOR);
+    Texture2D anxious = LoadTextureFromImage(anxiousImage);
+    // Normal state
+    Image normalImage = LoadImage("images/normal.png");
+    ImageResizeNN(&normalImage, normalImage.width * SCALING_FACTOR, normalImage.height * SCALING_FACTOR);
+    Texture2D normal = LoadTextureFromImage(normalImage);
+    // Grass image handling
     Image grassImage = LoadImage("images/output-onlinepngtools.png");
-    ImageResizeNN(&grassImage, 400, 133);
+    ImageResizeNN(&grassImage, grassImage.width * GRASS_SCALING_FACTOR, grassImage.height * GRASS_SCALING_FACTOR);
     Texture2D grass = LoadTextureFromImage(grassImage);
+    //
+    //Texture2D texture = getTexture("images/maincharacter/smile.png");
     
-    makePlayer(&character, 500, 100, 100, texture);
+    makePlayer(&character, 500, 100, 100, normal);
     env.count = 0;
+    int happyHeyCount = 0;
 
     while (!WindowShouldClose()) {
-
+        if (happyHeyCount < FPS * 2) {
+	  character.texture = happyHey;
+	  happyHeyCount++;
+        }else if (character.health > 250) {
+	  character.texture = normal;
+	}else {
+	  character.texture = anxious;
+	}
+	
 
         DrawTexture(grass, 0, BOUNDS_Y, WHITE);
 	DrawTexture(grass, 400, BOUNDS_Y, WHITE);
@@ -108,7 +143,7 @@ int main(void) {
         
         BeginDrawing();
         
-	    DrawEverything(&character, &env);
+        DrawEverything(&character, &env);
 
             
         EndDrawing();
