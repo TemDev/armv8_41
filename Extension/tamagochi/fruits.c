@@ -1,6 +1,8 @@
-#include "raylib.h"
+#include <stdlib.h>
+#include <raylib.h>
+#include "fruits.h"
 static Texture2D rastex;
-initFruits(fruit* fs) {
+void initFruits(fruit* fs) {
     rastex = LoadTexture("images/Raspberry.png");
     for (int i = 0; i < NUMFRUITS; i++) {
         fs[i].position.x = (rand() % SCREEN_WIDTH - 50) + 10; // decrease the value by 50 to make sure the image does not go out of bounds
@@ -9,14 +11,14 @@ initFruits(fruit* fs) {
         fs[i].growTime = rand() % SPAWNFRUITS + SPAWNFRUITS;
     }
 }
-initFruit(fruit* fs) {
+void initFruit(fruit* fs) {
         fs -> position.x = (rand() % SCREEN_WIDTH - 50) + 10; // decrease the value by 50 to make sure the image does not go out of bounds
         fs->position.y = 0;
         fs->isVisible = false;
         fs->growTime = rand() % SPAWNFRUITS + SPAWNFRUITS;
 }
 
-updateFruits(fruit* fs) {
+void updateFruits(fruit* fs) {
     for (int i = 0; i < NUMFRUITS; i++) {
         if (fs[i].isVisible) {
             if (fs[i].position.y < BOUNDS_Y - SIZEFRUIT) {

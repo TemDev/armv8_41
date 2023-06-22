@@ -1,4 +1,4 @@
 #include <stdio.h>
-#include "defs.h"
+#include "player.h"
 
 void fetchData(data *,FILE *);

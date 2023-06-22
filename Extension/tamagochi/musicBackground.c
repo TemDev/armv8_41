@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sndfile.h>
 #include <math.h>
-#include "defs.h"
+#include "player.h"
 #include "musicBackground.h"
 
 

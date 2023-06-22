@@ -1,12 +1,11 @@
 #include <raylib.h>
 #include <math.h>
-#include "player.h"
 #include "sensorsData.h"
 #include "main.h"
 #define COLOUR_STEPS 300
 #define COLOUR_STEPS2 90
 #include "musicBackground.h"
-#include "fruits.c"
+#include "fruits.h"
 #define FPS 60
 #define SCALING_FACTOR 4
 #define GRASS_SCALING_FACTOR 13.5
@@ -64,7 +63,8 @@ void DrawBackGround(Player* p, int *actual_colour, float * buffer, float time, e
     Color c = (Color) {actual_colour[0], actual_colour[1], actual_colour[2], actual_colour[3]};
     ClearBackground(c);
     // This is for audio
-    //DrawTexture(getMusicBackground(env -> background, time, buffer, c) ,0, 0, WHITE);
+    
+    DrawTexture(getMusicBackground(env -> background, time, buffer, c) ,0, 0, WHITE);
     DrawFruits(&(env ->fs));
     DrawText("Don't let it die", 10, 10, 20, DARKGRAY);
 
@@ -193,7 +193,7 @@ int main(void) {
     float *buffer;
     buffer  = readData(music);
     // starts the music
-
+    InitAudioDevice(); 
     Music song = LoadMusicStream(music);
 
     //Texture2D texture = getTexture("images/maincharacter/smile.png");
@@ -213,9 +213,6 @@ int main(void) {
     int y_offset[] = {0, 25, 30, 40, 30, 20, 10, 35, 0 ,20, 40, ARRAY_FINISH};
     float raining_Ps[] = {0, COLOUR_STEPS2 / 5, COLOUR_STEPS2 / 5 * 2, COLOUR_STEPS2 / 5 * 3, COLOUR_STEPS2 / 5 * 4, ARRAY_FINISH};
     
-    while (!WindowShouldClose()) {
-        // env.data.tempC = 35;
-        if (happyHeyCount < FPS * 2) {
 
     PlayMusicStream(song);
 
@@ -225,7 +222,7 @@ int main(void) {
 
     while (!WindowShouldClose()) {
 
-
+        UpdateMusicStream(song);
         frameTime += GetFrameTime();  // raylib function
         // if (frameTime > 10) {
         //     if (data->tempC > 26) {
@@ -299,8 +296,8 @@ int main(void) {
 	DrawTexture(grass, 400, BOUNDS_Y, WHITE);
         
         BeginDrawing();
-        float time = 0;//(GetMusicTimePlayed(song) > 0)? GetMusicTimePlayed(song) : 0;
-        DrawEverything(&character, &env, buffer,time);// change to the time of the actual song
+        float time = (GetMusicTimePlayed(song) > 0)? GetMusicTimePlayed(song) : 0;
+        DrawEverything(&character, &env, buffer, time);// change to the time of the actual song
         DrawTexture(grass, 0, BOUNDS_Y, WHITE);
 	    DrawTexture(grass, 400, BOUNDS_Y, WHITE);
             

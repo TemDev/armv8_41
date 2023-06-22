@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sndfile.h>
 #include <math.h>
-#include "defs.h"
+#include <raylib.h>
 
 #define NUM_WAVES 40
 

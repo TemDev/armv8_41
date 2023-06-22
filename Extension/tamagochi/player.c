@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "defs.h"
 #include "player.h"
+#include "fruits.h"
 
 #define NUM_MOVES 10
 
