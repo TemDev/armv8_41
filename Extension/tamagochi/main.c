@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include "player.h"
 #include "sensorsData.h"
+#include "musicBackground.h"
 #define COLOUR_STEPS 150
 #define FPS 60
 #define SCALING_FACTOR 4
@@ -22,12 +23,13 @@ Texture2D getTexture(char *path) {
 }
 
 void DrawAttributes(Player* p) {
+    // draws a health bar
     int hbar_width = (p -> health > 0)? p -> health: 0;
     Color color = (hbar_width < 350)? YELLOW: GREEN;
     DrawRectangle(0,0, p -> health, 10, color);
-    Texture2D button1 = LoadTexture("Strawberry.png"); // Load button texture
-    Texture2D button2 = LoadTexture("Apple.png"); // Load button textures
-    Texture2D button3 = LoadTexture("Pear.png"); // Load button texture
+    // Texture2D button1 = LoadTexture("Strawberry.png"); // Load button texture
+    // Texture2D button2 = LoadTexture("Apple.png"); // Load button textures
+    // Texture2D button3 = LoadTexture("Pear.png"); // Load button texture
 
     // Define frame rectangle for drawing
     // float frameHeight1 = (float)button1.height/NUM_FRAMES;
@@ -52,10 +54,13 @@ void DrawAttributes(Player* p) {
     //  screenHeight/6.0f - button3.height/NUM_FRAMES/6.0f, (float)button3.width, frameHeight3 };
 }
 
-void DrawBackGround(Player* p, int *actual_colour) {
-    ClearBackground((Color) {actual_colour[0], actual_colour[1], actual_colour[2], actual_colour[3]});
+void DrawBackGround(Player* p, int *actual_colour, float * buffer, float time, environment* env) {
+    Color c = (Color) {actual_colour[0], actual_colour[1], actual_colour[2], actual_colour[3]};
+    ClearBackground(c);
+    // This is for audio
+    //DrawTexture(getMusicBackground(env -> background, time, buffer, c) ,0, 0, WHITE);
     
-    DrawText("move the ball with arrow keys", 10, 10, 20, DARKGRAY);
+    DrawText("Don't let it die", 10, 10, 20, DARKGRAY);
 
 }
 
@@ -63,8 +68,8 @@ void DrawPlayer(Player* p){
     DrawTexture(p -> texture, p ->position.x, p -> position.y, WHITE);
 }
 
-void DrawEverything(Player* p, environment *env) {
-    DrawBackGround(p, env -> actual_colour);
+void DrawEverything(Player* p, environment *env, float *buffer, float time) {
+    DrawBackGround(p, env -> actual_colour, buffer, time,env);
     DrawAttributes(p);
     DrawPlayer(p);
 }
@@ -145,15 +150,47 @@ int main(void) {
     Image grassImage = LoadImage("images/output-onlinepngtools.png");
     ImageResizeNN(&grassImage, grassImage.width * GRASS_SCALING_FACTOR, grassImage.height * GRASS_SCALING_FACTOR);
     Texture2D grass = LoadTextureFromImage(grassImage);
-    //
+    
+    // processes the music 
+    char music [] = "music/songx.wav";
+    float *buffer;
+    buffer  = readData(music);
+    // starts the music
+
+    Music song = LoadMusicStream(music);
+
     //Texture2D texture = getTexture("images/maincharacter/smile.png");
     
     makePlayer(&character, 500, 100, 100, normal);
     env.count = 0;
+    env.background = malloc(sizeof(Texture2D));
     int happyHeyCount = 0;
 
+    PlayMusicStream(song);
+
+
+    
+    float frameTime = 0;
+
     while (!WindowShouldClose()) {
-        if (happyHeyCount < FPS * 2) {
+
+
+        frameTime += GetFrameTime();  // raylib function
+        // if (frameTime > 10) {
+        //     if (data->tempC > 26) {
+        //         tooHot = true;
+        //     } else if (data->tempC < 0) {
+        //         tooCold = true;
+        //     }
+        //     if (data->waterlevel > 1) {
+        //         precipitation = true;
+        //     } else if (data->waterlevel > 3) {
+        //         heavyPrecipitation = true;
+        //     }
+        //     frameTime = 0;
+        // }
+
+        if (frameTime < 2) {
 	  character.texture = happyHey;
 	  happyHeyCount++;
         }else if (character.health > 250) {
@@ -163,18 +200,23 @@ int main(void) {
 	}
 	
 
-        DrawTexture(grass, 0, BOUNDS_Y, WHITE);
-	DrawTexture(grass, 400, BOUNDS_Y, WHITE);
+        
         updateEverything(&character, &env);
         
         
         BeginDrawing();
-        
-        DrawEverything(&character, &env);
-
+        float time = 0;//(GetMusicTimePlayed(song) > 0)? GetMusicTimePlayed(song) : 0;
+        DrawEverything(&character, &env, buffer,time);// change to the time of the actual song
+        DrawTexture(grass, 0, BOUNDS_Y, WHITE);
+	    DrawTexture(grass, 400, BOUNDS_Y, WHITE);
             
         EndDrawing();
     }
+    free(buffer);
+    free(env.background);
+    UnloadMusicStream(song);   // Unload music stream buffers from RAM
+
+    CloseAudioDevice();
 
   
     CloseWindow();

@@ -24,8 +24,6 @@ Texture2D getWalkingTexture(int index, bool mirror) {
     }
     Texture2D texture = LoadTextureFromImage(temp);
     return texture;
-
-
 }
 
 

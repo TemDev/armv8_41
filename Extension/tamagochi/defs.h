@@ -31,6 +31,7 @@ typedef struct{
     data data;
     int count;
     int actual_colour[4];
+    Texture2D* background;
 } environment;
 
 
