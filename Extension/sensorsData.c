@@ -22,7 +22,7 @@ data *fetchData(void) {
   Py_Finalize();
   
   char buffer[BUFFER_SIZE];
-  data *dataSensors =(data *) malloc(sizeof(data));
+  data *dataSensors =
   FILE *sensorFile = fopen("sensorReadings.txt", "r");
   
   fgets(buffer, BUFFER_SIZE, sensorFile);
@@ -43,5 +43,7 @@ data *fetchData(void) {
 
 
 int main(void) {
-  data* newData = fetchData();
+  while (true) {
+  fetchData();
+  }
 }

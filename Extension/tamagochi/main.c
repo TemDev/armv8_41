@@ -1,36 +1,23 @@
-/*******************************************************************************************
-*
-*   raylib [core] example - Keyboard input
-*
-*   Example originally created with raylib 1.0, last time updated with raylib 1.0
-*
-*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
-*   BSD-like license that allows static linking with closed source software
-*
-*   Copyright (c) 2014-2023 Ramon Santamaria (@raysan5)
-*
-********************************************************************************************/
-
 #include <raylib.h>
 #include "player.h"
 #include "sensorsData.h"
+
 #define COLOUR_STEPS 150
 
-/*#if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            120 // Change this back to 330 if compiling for a platform that supports GLSL3.3
-#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
-#endif*/
+
+typedef struct{
+    data data;
+    int count;
+    int actual_colour[4];
+} environment;
 
 
-/*bool inBounds(Vector2 object){
-    return object.x < BOUNDS_X && object.x > -BOUNDS_X
-     && object.y < BOUNDS_Y && object.y > -BOUNDS_Y;
-    
-}*/
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
+
+int colour1[] = {102, 191, 255, 255};
+int colour2[] = {80, 80, 80, 255};
+
+
+
 Texture2D getTexture(char *path) {
     // path is for the image
     Image temp = LoadImage(path);
@@ -52,11 +39,10 @@ void DrawBackGround(Player* p, int *actual_colour) {
 
 void DrawPlayer(Player* p){
     DrawTexture(p -> texture, p ->position.x, p -> position.y, WHITE);
-
 }
 
-void DrawEverything(Player* p, int *actual_colour) {
-    DrawBackGround(p, actual_colour);
+void DrawEverything(Player* p, environment *env) {
+    DrawBackGround(p, env -> actual_colour);
     DrawAttributes(p);
     DrawPlayer(p);
 }
@@ -76,100 +62,69 @@ void updateKeys(Player* p, bool* moved){
         }
 }
 
-void updateEnvironment(Player* p) {
+void updateEnvironment(Player* p, environment* env) {
+    // updates the data
+    FILE *sensorFile = fopen("sensorReadings.txt", "r");
+    fetchData(&(env -> data), sensorFile);
+    fclose(sensorFile);
 
+
+    if (env ->data.lightOff && (env -> count < COLOUR_STEPS) ){
+        env -> count++;
+    } else if (env -> count > 0) {
+	    env -> count--;
+    }
+
+    env -> actual_colour[0] =  colour1[0] + (colour2[0] - colour1[0]) * (env -> count)/ COLOUR_STEPS;
+	env -> actual_colour[1] =  colour1[1] + (colour2[1] - colour1[1]) * (env -> count)/ COLOUR_STEPS;
+	env -> actual_colour[2] =  colour1[2] + (colour2[2] - colour1[2]) *( env -> count) / COLOUR_STEPS;
+	env -> actual_colour[3] =  colour1[3] + (colour2[3] - colour1[3]) * (env -> count )/ COLOUR_STEPS;
+	
+    
 }
 
-void updateConditions(Player* p,bool *moved) {
-    updateEnvironment(p);
-    updateKeys(p, moved);
-    p -> health -= -0.05f;
+void updateEverything(Player* p, environment * env) {
+    bool moved = true;
+    updateEnvironment(p, env);
+    updateKeys(p, &moved);    
+    updatePosition(p);
+    p -> health -= -0.5f;
 }    
 int main(void)
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    const int screenWidth = SCREEN_WIDTH;
-    const int screenHeight = SCREEN_HEIGHT;
-    int colour1[] = {102, 191, 255, 255};
-    int colour2[] = {80, 80, 80, 255};
-    int actual_colour[] = {102, 191, 255, 255};
-    bool light_off = true;
-    int count = 0;
-    data *dataSensors;
+    
+    
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - keyboard input");
-    Player character;
+    
+    
    
-
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib [core] example - keyboard input");
     SetTargetFPS(60); 
-    
-                  // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
 
-   // Load image in CPU memory (RAM)
 
-    // Draw one image over the other with a scaling of 1.5f
-    //ImageCrop(&character, (Rectangle){ 0, 0, 100, 100}); // Crop resulting image
-    
 
-    // Draw on the image with a few image draw methods
-    // ImageDrawPixel(&character, 10, 10, RAYWHITE);
-    // ImageDrawCircleLines(&character, 10, 10, 5, RAYWHITE);
-    // ImageDrawRectangle(&character, 5, 20, 10, 10, RAYWHITE);
-    Texture2D texture = getTexture("images/maincharacter/smile.png");//LoadTextureFromImage(character);//getTexture("images/maincharacter/smile.png");
-    
+    Player character;
+    environment env;
+    Texture2D texture = getTexture("images/maincharacter/smile.png");
     makePlayer(&character, 500, 100, 100, texture);
-    //UnloadImage(character); 
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        // Receive new information from sensors
-        dataSensors = fetchData();
-        light_off = dataSensors->lightOff;
-        // Background Colour updates
-        if (light_off && (count < COLOUR_STEPS)) {
-	    count++;
-        } else if (count > 0) {
-	    count--;
-        }
-        actual_colour[0] =  colour1[0] + (colour2[0] - colour1[0]) * count / COLOUR_STEPS;
-	actual_colour[1] =  colour1[1] + (colour2[1] - colour1[1]) * count / COLOUR_STEPS;
-	actual_colour[2] =  colour1[2] + (colour2[2] - colour1[2]) * count / COLOUR_STEPS;
-	actual_colour[3] =  colour1[3] + (colour2[3] - colour1[3]) * count / COLOUR_STEPS;
-	// 
-        bool moved = true;
-        updateConditions(&character, &moved);
-        
-        if (moved) {
-            character.health -= 0.1;
-        }
-        
-        updatePosition(&character);
-        // if (moved) {
-        //     printf("X:%.4f Y:%.4f \n", ballPosition.x, ballPosition.y);
-        
-        //----------------------------------------------------------------------------------
+    env.count = 0;
 
-        // Draw
-        //----------------------------------------------------------------------------------
+    while (!WindowShouldClose()) {
+
+
+
+        updateEverything(&character, &env);
+        
+        
         BeginDrawing();
         
-	DrawEverything(&character, &actual_colour[0]);
+	    DrawEverything(&character, &env);
 
-            
-            //DrawCircleV(character.position, RADIUS, MAROON);
             
         EndDrawing();
-        //----------------------------------------------------------------------------------
     }
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
-
+  
+    CloseWindow();
     return 0;
 }

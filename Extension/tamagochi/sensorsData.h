@@ -1,7 +1,9 @@
+
+#include <Python.h>
 typedef struct {
   float tempC;
   int waterLevel;
   bool lightOff;
 } data;
 
-data *fetchData(void);
+void fetchData(data *,FILE *);

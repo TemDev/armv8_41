@@ -97,10 +97,17 @@ def light_reading():
     init_light()
     return GPIO.input(PIN_NUMBER)
 
-adcout = main_readadc()
-temp_c, temp_f = read_temp()
-light_off = light_reading()
-f = open("sensorReadings.txt", "w")
-f.write(str(temp_c) +  "\n" + str(adcout) + "\n" + str(light_off) + "\n")
-f.close()
+
+
+while True :
+        adcout = main_readadc()
+        temp_c, temp_f = read_temp()
+        light_off = light_reading()
+
+        f = open("sensorReadings.txt", "w")
+        f.write(str(temp_c) +  "\n" + str(adcout) + "\n" + str(light_off) + "\n")
+        f.close()
+        print(str(temp_c) +  "\n" + str(adcout) + "\n" + str(light_off) + "\n")
+        time.sleep(1)
+
 GPIO.cleanup()

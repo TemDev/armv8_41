@@ -1,6 +1,14 @@
 
 #include "player.h"
 
+typedef struct {
+    bool set;
+
+};
+
+// static char moves[11];
+// static int turns = 0;
+
 void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
     p -> health = health;
     p -> velocity.x = 0;
@@ -17,6 +25,18 @@ void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
 static void updateVelocity(Player * p){
    
    }
+
+static void randomise() {
+    // if (turns < 10 && true ) {
+    //     if (moves[turns] == 'R') {
+
+    //     } else {
+
+    //     }
+
+    // }
+    
+}
 
 void updatePosition(Player* p) {
     updateVelocity(p);
