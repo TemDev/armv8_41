@@ -3,6 +3,8 @@
 #include "player.h"
 #include "sensorsData.h"
 #include "musicBackground.h"
+
+#include "fruits.c"
 #define COLOUR_STEPS 150
 #define FPS 60
 #define SCALING_FACTOR 4
@@ -60,7 +62,7 @@ void DrawBackGround(Player* p, int *actual_colour, float * buffer, float time, e
     ClearBackground(c);
     // This is for audio
     //DrawTexture(getMusicBackground(env -> background, time, buffer, c) ,0, 0, WHITE);
-    
+    DrawFruits(&(env ->fs));
     DrawText("Don't let it die", 10, 10, 20, DARKGRAY);
 
 }
@@ -106,10 +108,11 @@ void updateEnvironment(Player* p, environment* env) {
 
 void updateEverything(Player* p, environment * env) {
     bool moved = true;
-    updateEnvironment(p, env); 
-    updateHealth(p, env);
-    updateKeys(p, &moved);    
+    updateEnvironment(p, env);
+    updateKeys(p, &moved);  
+    updateFruits(&(env ->fs));
     updatePosition(p);
+    updateHealth(p, env);
 }    
 
 int main(void) {
@@ -178,9 +181,10 @@ int main(void) {
 
     //Texture2D texture = getTexture("images/maincharacter/smile.png");
     
-    makePlayer(&character, 500, 100, 100, normal);
+    makePlayer(&character, 500, PLAYER_HEIGHT,PLAYER_WIDTH, normal);
     env.count = 0;
     env.background = malloc(sizeof(Texture2D));
+    initFruits(&env.fs);
     int happyHeyCount = 0;
 
     PlayMusicStream(song);
@@ -233,6 +237,7 @@ int main(void) {
     }
     free(buffer);
     free(env.background);
+    free(env.fs);
     UnloadMusicStream(song);   // Unload music stream buffers from RAM
 
     CloseAudioDevice();

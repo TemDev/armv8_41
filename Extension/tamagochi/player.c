@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "main.h"
+#include "defs.h"
 #include "player.h"
 
 #define NUM_MOVES 10
@@ -55,9 +55,38 @@ void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
     walkingLeft[5] = getWalkingTexture(6, false);
     regular = tex;
 }
-
+static int max(int x, int y){
+    if(x > y){
+        return x;
+    }else{
+        return y;
+    }
+}
+static int min(int x, int y){
+    if(x < y){
+        return x;
+    }else{
+        return y;
+    }
+}
 void updateHealth(Player *p, environment *env) {
+    int px = p -> position.x;
+    int py = p -> position.y;
     // change this later
+    for (int i = 0; i < NUMFRUITS; i++) { 
+        if (env -> fs[i].isVisible) {
+            int fx = env -> fs[i].position.x;
+            int fy = env -> fs[i].position.y;
+            int intx = min(px + p ->size.x, fx + SIZEFRUIT) - max(fx,px);
+            int inty = min(py + p ->size.y, fy + SIZEFRUIT) - max(fy,py);
+            
+            if (intx > 0 && inty > 0 ) {
+                p -> health += HPFRUIT;
+                initFruit(&(env -> fs[i]));
+                break;
+            }
+        }
+    }
     if (turns < NUM_MOVES) {  
     if (moves[turns] == WAIT) {
         
@@ -100,13 +129,13 @@ static void updateVelocity(Player * p){
     } else if (turns < NUM_MOVES) {
         // set the new move if there are still left
         if (moves[turns] == RIGHT) {
-            p -> m.duration = 30 + (rand() % DURATION);
+            p -> m.duration = DURATION + (rand() % DURATION);
         } else if (moves[turns] == LEFT) {
-            p -> m.duration = 30 + (rand() % DURATION);
+            p -> m.duration = DURATION + (rand() % DURATION);
         } else if (moves[turns] == JUMP) {
             p -> velocity.y = - GRAVITY;
         } else if (moves[turns] == WAIT) {
-            p -> m.duration = 30 + (rand() % DURATION);
+            p -> m.duration =DURATION+ (rand() % DURATION);
         }
         p -> m.set = true;
         turns++;
@@ -141,19 +170,16 @@ void updatePosition(Player* p) {
     p -> position.x  += p -> velocity.x;
     p -> position.y  += p -> velocity.y;
 
-    if (p->position.x > BOUNDS_X - p->size.x) {
-        p -> position.x = BOUNDS_X - p->size.x;
+    if (p->position.x > BOUNDS_X - p -> size.x) {
+        p -> position.x = BOUNDS_X - p -> size.x;
         p -> m.duration = 0;
-    }
-
-    if (p->position.x < 0) {
+    } else if (p->position.x < 0) {
         p -> position.x = 0;
         p -> m.duration = 0;
     }
-    if (p->position.y > BOUNDS_Y - p -> size.y) {
+    if (p -> position.y > BOUNDS_Y - p -> size.y) {
         p -> position.y = BOUNDS_Y - p -> size.y;
-    }
-    if (p->position.y < 0) {
+    } else if (p->position.y < 0) {
         p -> position.y = 0;
     }
     
