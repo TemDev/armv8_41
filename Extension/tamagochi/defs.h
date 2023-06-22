@@ -5,6 +5,7 @@
 #include <raylib.h>
 #include <assert.h>
 
+// constants and data types used throughout the project
 
 #define BOUNDS_X 800
 #define BOUNDS_Y 330

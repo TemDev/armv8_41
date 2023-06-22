@@ -3,7 +3,7 @@
 
 #include "defs.h"
 
-
+// makes player
 void makePlayer(Player*, int, int, int, Texture2D);
 
 void updatePosition(Player*);

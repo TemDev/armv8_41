@@ -43,16 +43,17 @@ void DrawEverything(Player* p, environment *env) {
 }
 
 void updateKeys(Player* p, bool* moved){
-    
+    //currently unimplemented
+
 }
 
 void updateEnvironment(Player* p, environment* env) {
-    // updates the data
+    // updates the data from sensors
     FILE *sensorFile = fopen("sensorReadings.txt", "r");
     fetchData(&(env -> data), sensorFile);
     fclose(sensorFile);
 
-
+    //environment light off
     if (env ->data.lightOff && (env -> count < COLOUR_STEPS) ){
         env -> count++;
     } else if (env -> count > 0) {

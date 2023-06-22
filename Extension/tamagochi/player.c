@@ -10,7 +10,10 @@
 static move_type moves[10];
 static int turns = 10;
 
+
+
 void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
+    // initialises the player with the correct versions
     p -> health = health;
     p -> velocity.x = 0;
     p -> velocity.y = 0;
@@ -25,6 +28,7 @@ void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
 }
 
 void updateHealth(Player *p, environment * env) {
+    // change this later
     if (turns < NUM_MOVES) {  
     if (moves[turns] == WAIT) {
         
