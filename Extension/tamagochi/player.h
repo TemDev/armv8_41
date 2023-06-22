@@ -7,4 +7,6 @@
 void makePlayer(Player*, int, int, int, Texture2D);
 
 void updatePosition(Player*);
+
+void updateHealth(Player *, environment *);
 #endif
