@@ -50,6 +50,7 @@ typedef struct{
     int sun_y;
     int moon_x;
     int moon_y;
+    bool musicOn;
 } environment;
 
 typedef struct __player{

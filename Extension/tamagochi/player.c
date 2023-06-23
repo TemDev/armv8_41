@@ -6,17 +6,19 @@
 
 #define DURATION 20
 
-#define COOLDOWNRAIN 20
-#define COOLDOWNSNOW 0
-#define COOLDOWNHOT 30
-#define COOLDOWNCOLD 10
+#define COOLDOWNRAIN 90
+#define COOLDOWNSNOW 20
+#define COOLDOWNHOT 120
+#define COOLDOWNCOLD 50
 
 #define DAMAGERAIN 0.4
 #define DAMAGESNOW 1
 #define DAMAGEHOT 0.3
 #define DAMAGECOLD 0.5
 
-typdef enum{COLD, HOT, RAIN, SNOW} whet;
+#define HALF_LIFE 350
+#define SCALING_FACTOR 4
+typedef enum{COLD, HOT, RAIN, SNOW} whet;
 
 
 static move_type moves[10];
@@ -45,7 +47,7 @@ Texture2D getWalkingTexture(int index, bool mirror) {
     return texture;
 }
 
-static whet setWhet(environment* env) {
+static whet getWhet(environment* env) {
     if (isHot(env)) {
         if (isRain(env)){
             return RAIN;
@@ -141,7 +143,7 @@ void updateHealth(Player *p, environment *env) {
 
     // checks which cooldown applies now
     
-    cooldown--;
+    
     bool rain = isHot(env);
     bool hot = isHot(env);
     if (cooldown < 0) {
@@ -154,6 +156,8 @@ void updateHealth(Player *p, environment *env) {
         } else {
             p ->health -= DAMAGECOLD;
         }
+    } else {
+    	cooldown--;
     }
 
     if (turns < NUM_MOVES) {  
@@ -186,11 +190,8 @@ static void updateVelocity(Player * p, environment* env){
                 p -> velocity.x -= mov;
                 int val = (p -> m.duration);
                 p -> texture = walkingLeft[val % 6];
-            } 
-
-            if (p -> m.duration <= 0) {
-                p -> m.set = false;
-                if (cooldown < 0) {
+            } else {// this is when pet is standing
+	         if (cooldown < 0) {
                     switch (getWhet(env)) {
                     case HOT:
                         p -> texture = angryFlaming;
@@ -205,7 +206,7 @@ static void updateVelocity(Player * p, environment* env){
                         p -> texture = anxious;
                         break;
                     default:
-                        p -> texture = angry
+                        p -> texture = angry;
                         break;
                     }
                 } else if (p -> health < HALF_LIFE){
@@ -216,7 +217,11 @@ static void updateVelocity(Player * p, environment* env){
                     p -> texture = regular;
                 }
 
-            } else {
+}
+
+            if (p -> m.duration <= 0) {
+                p -> m.set = false;
+                       } else {
                 p -> m.duration -=0.3;
                 
 
@@ -295,12 +300,12 @@ void updatePosition(Player* p, environment* env) {
                 
                 cooldown = COOLDOWNRAIN;
 
-            } else [
+            } else {
                 
                 cooldown = COOLDOWNHOT;
-            ]
+	    }
 
-        } elif (isRain(env)) {
+        } else if (isRain(env)) {
             cooldown = COOLDOWNSNOW;
         } else {
             cooldown = COOLDOWNCOLD;

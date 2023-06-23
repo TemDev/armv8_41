@@ -13,6 +13,7 @@
 #define SCALING_FACTOR 4
 #define GRASS_SCALING_FACTOR 13.5
 #define ARRAY_FINISH -1
+#define PLAYER_HEALTH 1000
 
 
 
@@ -31,9 +32,9 @@ Texture2D getTexture(char *path) {
 
 void DrawAttributes(Player* p) {
     // draws a health bar
-    int hbar_width = (p -> health > 0)? p -> health: 0;
+    int hbar_width = (p -> health > 0)? (p -> health / (1.0 * PLAYER_HEALTH) * SCREEN_WIDTH / 2): 0;
     Color color = (hbar_width < 350)? YELLOW: GREEN;
-    DrawRectangle(0,0, p -> health, 10, color);
+    DrawRectangle(0,0, hbar_width, 10, color);
 
 }
 
@@ -42,7 +43,7 @@ void DrawBackGround(Player* p, int *actual_colour, float * buffer, float time, e
     Color c = (Color) {actual_colour[0], actual_colour[1], actual_colour[2], actual_colour[3]};
     ClearBackground(c);
     // This is for audio
-    //getMusicBackground(time, buffer, c);
+    getMusicBackground(time, buffer, c);
     
     DrawFruits(&(env ->fs));
     //DrawText("e", 10, 10, 20, DARKGRAY);
@@ -61,7 +62,7 @@ void DrawEverything(Player* p, environment *env, float *buffer, float time) {
 
 void updateKeys(Player* p, bool* moved){
     //currently unimplemented
-
+	
 }
 
 void updateEnvironment(Player* p, environment* env) {
@@ -96,6 +97,17 @@ void updateEverything(Player* p, environment * env) {
     updatePosition(p, env);
     updateHealth(p, env);
 }    
+
+void endingDraw(void) {
+	float time = 0;
+	while (time < 4) {
+		time += GetFrameTime();
+		BeginDrawing();
+		ClearBackground(BLUE);
+		DrawText("GAME OVER", 100, SCREEN_HEIGHT /2, 30, GRAY);
+		EndDrawing();
+	}
+}
 
 int main(void) {
     
@@ -170,7 +182,7 @@ int main(void) {
     Music song = LoadMusicStream(music);
 
     
-    makePlayer(&character, 500, PLAYER_HEIGHT,PLAYER_WIDTH, normal);
+    makePlayer(&character,PLAYER_HEALTH , PLAYER_HEIGHT,PLAYER_WIDTH, normal);
     env.count = 0;
     initFruits(&env.fs);
     int happyHeyCount = 0;
@@ -190,28 +202,18 @@ int main(void) {
 
     
     float frameTime = 0;
-
-    while (!WindowShouldClose()) {
+	bool alive = false;
+    while (!WindowShouldClose() || alive) {
         updateEverything(&character, &env);
       	UpdateMusicStream(song);
+	alive = character.health > 0;
+	if (!alive) {
+		break;
+	}
 	BeginDrawing();
+
 	//gets the timeframe
         frameTime += GetFrameTime();  // raylib function
-
-  //       if (frameTime < 2) {
-	//   character.texture = happyHey;
-	//   happyHeyCount++;
-  //       } else if (character.health > 250) {
-	//   character.texture = normal;
-	// } else {
-	//   character.texture = anxious;
-	// }
-	// if (isHot(&env)) {
-	//   character.texture = flamingAnger;
-	// } else{
-	//   character.texture = frozen;
-	//}
-	  
 
         
 	
@@ -264,6 +266,10 @@ int main(void) {
 	    DrawTexture(grass, 400, BOUNDS_Y, WHITE);
             
       EndDrawing();
+    }
+
+    if (!alive){
+    	endingDraw();
     }
     free(buffer);
     free(env.fs);

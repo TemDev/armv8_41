@@ -8,6 +8,7 @@
 
 static float waves[NUM_WAVES];
 static sampleRate;
+static numChannels;
 static Image img;
 
 float* readData(char * path) {
@@ -19,7 +20,7 @@ float* readData(char * path) {
         return 1;
     }
     sampleRate = sfInfo.samplerate;
-    int numChannels = sfInfo.channels;
+    numChannels = sfInfo.channels;
     float *buffer  = malloc(sizeof(float) * numChannels * sampleRate);
 
     int seconds = sfInfo.frames / sampleRate;
@@ -57,18 +58,23 @@ void getMusicBackground(float time, float* buffer, Color background) {
 
     float average = 0;
     int start = (time * sampleRate);
-
-    for (int i = (time * sampleRate); i < (time  + (float)(1.0 / NUM_WAVES)) * sampleRate; i ++){
-        average += buffer[i];
+    float step = sampleRate / (NUM_WAVES * NUM_WAVES);
+    
+    for(int j = 0; j < NUM_WAVES;j++ ){
+	average = 0;
+	for(int i = start + step * j; i < sampleRate * numChannels || i < start + step * (j + 1); i++){
+		average += buffer[i];
+	}
+	waves[j] = average / step;
     }
 
-    average = (average * NUM_WAVES) / sampleRate;
-    addNew(average);
+   // average = (average * NUM_WAVES) / sampleRate;
+   // addNew(average);
         
     
     float width = SCREEN_WIDTH / NUM_WAVES;
     for (int i = 0; i < NUM_WAVES; i++) {
-        DrawRectangle(i * width, SCREEN_HEIGHT/2, width,waves[i] * 400, RED);
+        DrawRectangle(i * width, SCREEN_HEIGHT/2 - (waves[i] * 4), width,waves[i] * 400, RED);
     }
 
 }
