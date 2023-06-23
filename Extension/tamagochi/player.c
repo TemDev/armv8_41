@@ -26,6 +26,7 @@ static int turns = 10;
 static float cooldown = 10;
 static whet prev = HOT;
 static bool setcooldown = false;
+static int musicBonus = 100; 
 static Texture2D angry;
 static Texture2D angryFlaming;
 static Texture2D frozen;
@@ -143,7 +144,10 @@ void updateHealth(Player *p, environment *env) {
 
     // checks which cooldown applies now
     
-    
+    if (env -> musicOn && musicBonus > 0) {
+        musicBonus--;
+        p -> health +=0.5;
+    } else {
     bool rain = isHot(env);
     bool hot = isHot(env);
     if (cooldown < 0) {
@@ -165,6 +169,7 @@ void updateHealth(Player *p, environment *env) {
         
     } else {
         p -> health -= ((env -> data.lightOff)? 0.15: 0.3);
+    }
     }
     }
 }

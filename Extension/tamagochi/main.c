@@ -61,7 +61,7 @@ void DrawEverything(Player* p, environment *env, float *buffer, float time) {
 }
 
 void updateKeys(Player* p, bool* moved){
-    //currently unimplemented
+     
 	
 }
 
@@ -210,6 +210,12 @@ int main(void) {
 	if (!alive) {
 		break;
 	}
+  if (IsKeyPressed(KEY_P)) {
+      env.musicOn = !env.musicOn;
+
+      if (!env.musicOn) PauseMusicStream(song);
+      else ResumeMusicStream(song);
+  }
 	BeginDrawing();
 
 	//gets the timeframe
