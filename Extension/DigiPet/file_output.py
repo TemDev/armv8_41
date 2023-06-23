@@ -1,3 +1,7 @@
+# Code that gets data from sensors
+# Code inspired from online methods of getting data from sensors
+# https://kookye.com/2016/08/01/smart-home-sensor-kit-for-arduinoraspberry-pi/
+
 import RPi.GPIO as GPIO
 import time
 import os
@@ -20,12 +24,14 @@ base_dir = '/sys/bus/w1/devices/'
 device_folder = glob.glob(base_dir + '28*')[0]
 device_file = device_folder + '/w1_slave'
 
+# Reads the lines from the file
 def read_temp_raw():
     f = open(device_file, 'r')
     lines = f.readlines()
     f.close()
     return lines
 
+# Reads the temperature from the file
 def read_temp():
     lines = read_temp_raw()
     while lines[0].strip()[-3:] != 'YES':
@@ -85,20 +91,23 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
         return adcout
 
 
+# Reads in the digital data of the waterlevel
 def main_readadc():
-         init()
-         return readadc(photo_ch, SPICLK, SPIMOSI, SPIMISO, SPICS)
+    init()
+    return readadc(photo_ch, SPICLK, SPIMOSI, SPIMISO, SPICS)
 
+# Initialises GPIO pins used in reading light
 def init_light():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(PIN_NUMBER, GPIO.IN)
 
+# Produces a light reading
 def light_reading():
     init_light()
     return GPIO.input(PIN_NUMBER)
 
 
-
+# Uses all the functions to write in data into a file
 while True :
         adcout = main_readadc()
         temp_c, temp_f = read_temp()
@@ -110,4 +119,5 @@ while True :
         print(str(temp_c) +  "\n" + str(adcout) + "\n" + str(light_off) + "\n")
         time.sleep(1)
 
+# Cleans all the GPIO pins
 GPIO.cleanup()
