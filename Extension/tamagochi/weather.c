@@ -1,3 +1,6 @@
+#include <raylib.h>
+#include <math.h>
+#include "main.h"
 #include "weather.h"
 static Texture2D snow;
 static Texture2D snowCloud;

@@ -1,7 +1,4 @@
-#include <raylib.h>
-#include <math.h>
 //#include "sensorsData.h"
-#include "main.h"
 #include "player.h"
 #define COLOUR_STEPS 300
 #define COLOUR_STEPS2 90
