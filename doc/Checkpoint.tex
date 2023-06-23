@@ -1,30 +1,87 @@
-\documentclass[11pt]{article}
+\documentclass[11pt, oneside, USenglish]{article} 
+\usepackage[utf8]{inputenc}
+\usepackage{babel}
+\usepackage{geometry}   
+\geometry{margin = 0.75 in}    
+\geometry{a4paper}   
+\usepackage{graphicx}
+\usepackage{ragged2e}
+\graphicspath{ {./} }
 
-\usepackage{fullpage}
-
+\title{\vspace{-2cm}ARMv8 Progress Report}
+\author{Group 41: Ivan Artiukhov, Temirlan Sergazin, Dionisii Nuzhnyi, Lorenzo Evans}
+\date{}
 \begin{document}
-
-\title{ARM Checkpoint... }
-\author{TODO}
 
 \maketitle
 
-\section{Group Organisation}
+This report outlines the development process of our group in creating an emulator for the ARMv8 AArch64 architecture.
+The report describes how we divided the workload, the effectiveness of our teamwork, the structure of the emulator, the potential code reuse for the assembler and the challenges we anticipate implementing it.
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\section{Emulator Structure}
+The design of the emulator involves 3 main components.
+The first component reads binary input, populates the memory, and manages the data which represents the current state of the emulated processor - this is located in the \verb|emulate.c| file. 
+After the input is read, an array of \verb|char| type is populated, which represents the byte-addressable memory of the emulated processor - this means the index of each array element is its own memory location.
+The structure which stores the processor state is then initialized - it contains an array of 31 general purpose registers, the required special purpose registers (as defined by the ISA) and condition flags (stored as \verb|bool| type variables).
+The file also contains a function for reading and writing to memory, where the size of the data is specified.
 
-\section{Implementation Strategies}
+The second component of the emulator processes the instructions, changes the state of the processor accordingly, and performs the necessary memory operations, logic and arithmetic to emulate the correct behaviour of a real AArch64 processor.
+Firstly, after the type of instruction is determined by the decoder in component 1 (by inspecting certain bits of the opcode), a call is made to a procedure in another file. 
+Each instruction type has its own dedicated file containing the functions required to process that instruction type and alter the state of the processor accordingly. These further decode the instruction to select the correct function. Below we discuss the handling of various instruction types.
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+Immediate and Register instruction processing is done in \verb|immediateInstructionProcessing.c| and \verb|RegisterInstructionProcessing.c|, and is very similar in nature.
+When an instruction is supplied, the \verb|determineType| function determines what type of operation needs to be performed.
+The usage of bit masks is essential when decoding the binary and calling the correct functions.
+The supplied instruction could be either 32 or 64-bits long, so all functions must account for this.
+As there are a significant number of functions, the use of function pointers proved to be an effective technique for avoiding code repetition, while also improving readability.
+Additionally, it was noticed that most functions had an almost identical version of it, with one operand negated - 
+we were able to change the code in such a way that the same function could be used to perform both, with a negated operand passed in the required cases.
+A simple example of this is the \verb|add| instruction being used when performing a subtraction by simply negating the value of the second operand.
+\newline \emph{The file structure we have used is displayed as a dependency tree below:}
+\break
+
+\includegraphics[scale=0.37]{graph1.png}
+
+The bitwise operations were stored separately in \verb|bitwise.c|, and then called from the previous two instruction processor files. They also took advantage of masking, especially as separate functions were required for 64-bit and 32-bit operands. In some cases, where no sign extension is required, the 32-bit version could make a call to the 64-bit version, and mask the result to a 32-bit integer afterwards, but some 32-bit functions required their own bespoke implementations.
+
+The \verb|branch| function in \verb|branchInstrustions.c| determines which of the 3 branches are performed.
+Unconditional branching with a register offset is relatively simple and dealt with in a single line.
+Conditional branches on the other hand will only occur if a specific flag configuration is satisfied - each of these configurations is dealt with inside a case-switch statement. If satisfied, the program counter is increased by the provided offset, jumping to the new instruction.
+The signed offset is extended to a signed 32-bit integer so that the address is calculated correctly.
+
+The third component outputs the state of the processor, writing the value of the registers, flags and non-zero memory locations to a file.
+This component is also implemented in \verb|emulate.c|.
+
+Much of the logic in the emulator has a counterpart in the assembler. For example, the emulator has a decoder which inspects the binary opcode and calls a specific function - in the assembler something similar is done: the assembly is inspected and depending on the instruction, a different binary opcode is generated. The logical flow which maps instructions to binary is effectively reversed for each part, and so when we implemented the assembler we were effectively able to reuse much of the logic from the emulator code to write a similarly structured program.
+
+\section{Working as a Team}
+Work coordination included the use of pair programming techniques to collaborate on and peer review each person's code. 
+Dionisii and Lorenzo worked on the input and output components, as well as the processing of single data transfer instructions. 
+Ivan and Temirlan worked on the processing of immediate, register and branch instructions.
+Version control was managed using \verb|git| - we started by all using the master branch but quickly realised we would have to create separate branches to avoid annoying conflicts, which were tedious to deal with.
+After all the C files were linked together, it was tested and debugged, on a per component basis to ensure all tests passed.
+This was the most time consuming part of the project. As part of the testing process, we wrote out own test functions, and also made use of the practical debugger, \verb|gdb|.
+
+A problem we initially had to deal with was miscommunication when working remotely - after we started working together in person we saw a massive productivity boost, especially when debugging.
+
+Our group is now working well together and our efficiency and cohesion as a team has grown significantly since the start of the project. Thoughtful distribution of tasks was a key and challenging part aspect of the project. We believe that tasks were divided in a fair manner which resulted in an equal distribution of work. 
+We have been succesful in effectively dividing the workload and ensuring timely progress.
+However as we move on to the later tasks, we will need to adapt our coordination strategy.
+
+
+\section{Potential Challenges for the Next Section}
+As of the time of writing, we have done most of the assembler implementation, and some of its components have proven to be challenging. For instance, multiple data structures are required to represent the different types of assembly code - managing these effectively may be difficult, especially concerning memory allocation and the prevention of memory leaks.
+In addition, the interdependency between the different parts of the assembler is much more complex than in the emulator.
+With good team coordination and a strict use of conventions in our code, we will be able to work on this part effectively.
+
+Another challenge concerns the Raspberry Pi, which is effectively a black box.
+We expect that learning and developing useful debugging methods and tools (as \verb|gdb| cannot be used in a typical manner) will be necessary to complete the project.
+
+Additionally, an extension for our project needs to be considered - it will be a challenge in itself to come up with a sufficiently interesting and complex idea that can be completed in a reasonable amount of time. We already came up with an interesting idea that we will try to implement soon.
+
+To address these challenges, the strengths and preferences of each team member will be considered to allocate tasks accordingly, ensuring a balance between familiarity and learning opportunities.
+By incorporating the techniques of unit testing, test-driven development, and decomposition, the program can be split into more manageable sub-programs which can be easily tested and worked on individually.
+
+In conclusion, despite the many challenges ahead, we will try to finish all the parts of the project to the highest standard and come up with a unique extension idea which will give a personal element to our project.
 
 \end{document}
