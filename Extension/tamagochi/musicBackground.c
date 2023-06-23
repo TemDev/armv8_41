@@ -41,7 +41,6 @@ static init(void) {
      for (int i = 0; i < NUM_WAVES; i++) {
         waves[i] =  0;
      }
-  //   img = GenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
 }
 
 
@@ -62,8 +61,6 @@ void getMusicBackground(float time, float* buffer, Color background) {
 	waves[j] =  average * 20 / step;
     }
 
-   // average = (average * NUM_WAVES) / sampleRate;
-   // addNew(average);
         
     
     float width = SCREEN_WIDTH / NUM_WAVES;
