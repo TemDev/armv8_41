@@ -13,7 +13,7 @@
 #define SCALING_FACTOR 4
 #define GRASS_SCALING_FACTOR 13.5
 #define ARRAY_FINISH -1
-#define PLAYER_HEALTH 1000
+#define PLAYER_HEALTH 3000
 
 
 
@@ -174,7 +174,7 @@ int main(void) {
     Texture2D grass = LoadTextureFromImage(grassImage);
     
     // processes the music 
-    char music [] = "music/songx.wav";
+    char music [] = "music/DENYA.wav";
     float *buffer;
     buffer  = readData(music);
     // starts the music

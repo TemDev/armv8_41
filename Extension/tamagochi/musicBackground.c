@@ -43,13 +43,6 @@ static init(void) {
   //   img = GenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
 }
 
-static addNew(float value) {
-     for (int i = NUM_WAVES - 1; i > 0; i--) {
-        waves[i] =  waves[i - 1];
-     }
-     printf("new float value%f", value);
-     waves[0] = value;
-}
 
 
 void getMusicBackground(float time, float* buffer, Color background) {
@@ -62,10 +55,10 @@ void getMusicBackground(float time, float* buffer, Color background) {
     
     for(int j = 0; j < NUM_WAVES;j++ ){
 	average = 0;
-	for(int i = start + step * j; i < sampleRate * numChannels || i < start + step * (j + 1); i++){
-		average += buffer[i];
+	for(int i = start + step * j; i < sampleRate * numChannels || i < start + step * (j + 1); i+=20){
+		average += buffer[i/10];
 	}
-	waves[j] = average / step;
+	waves[j] =  average * 20 / step;
     }
 
    // average = (average * NUM_WAVES) / sampleRate;
@@ -74,8 +67,10 @@ void getMusicBackground(float time, float* buffer, Color background) {
     
     float width = SCREEN_WIDTH / NUM_WAVES;
     for (int i = 0; i < NUM_WAVES; i++) {
-        Color c = Color {rand()%256, rand()%256, rand()%256, rand()%256}
-        DrawRectangle(i * width, SCREEN_HEIGHT/2 - (waves[i] * 4), width,waves[i] * 400, c);
+        Color c = (Color) {rand() % 256, rand()% 256, rand() % 256, rand()%256};
+        int height = waves[i] * 300;
+	height = (height > 300)? 300:height;
+	DrawRectangle(i * width, SCREEN_HEIGHT/2 - height, width ,2*height, c);
     }
 
 }

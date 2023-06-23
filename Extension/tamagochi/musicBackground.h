@@ -4,9 +4,7 @@
 #include <math.h>
 #include <raylib.h>
 
-#define NUM_WAVES 40
-
-
+#define NUM_WAVES 80
 float* readData(char * path);
 
 
