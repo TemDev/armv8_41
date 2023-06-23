@@ -198,19 +198,19 @@ int main(void) {
 	//gets the timeframe
         frameTime += GetFrameTime();  // raylib function
 
-        if (frameTime < 2) {
-	  character.texture = happyHey;
-	  happyHeyCount++;
-        } else if (character.health > 250) {
-	  character.texture = normal;
-	} else {
-	  character.texture = anxious;
-	}
-	if (isHot(&env)) {
-	  character.texture = flamingAnger;
-	} else{
-	  character.texture = frozen;
-	}
+  //       if (frameTime < 2) {
+	//   character.texture = happyHey;
+	//   happyHeyCount++;
+  //       } else if (character.health > 250) {
+	//   character.texture = normal;
+	// } else {
+	//   character.texture = anxious;
+	// }
+	// if (isHot(&env)) {
+	//   character.texture = flamingAnger;
+	// } else{
+	//   character.texture = frozen;
+	//}
 	  
 
         
@@ -260,10 +260,10 @@ int main(void) {
         
         
       
-            DrawTexture(grass, 0, BOUNDS_Y, WHITE);
+      DrawTexture(grass, 0, BOUNDS_Y, WHITE);
 	    DrawTexture(grass, 400, BOUNDS_Y, WHITE);
             
-        EndDrawing();
+      EndDrawing();
     }
     free(buffer);
     free(env.fs);

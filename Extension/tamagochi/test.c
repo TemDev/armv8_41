@@ -35,7 +35,7 @@ Texture2D getTexture(char *path) {
     // path is for the image
     Image temp = LoadImage(path);
     Texture2D texture = LoadTextureFromImage(temp);
-    UnloadImage(temp);
+    //UnloadImage(temp);
     return ;
 }
 int main(void)

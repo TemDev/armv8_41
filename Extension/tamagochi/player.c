@@ -6,11 +6,28 @@
 
 #define DURATION 20
 
+#define COOLDOWNRAIN 20
+#define COOLDOWNSNOW 0
+#define COOLDOWNHOT 30
+#define COOLDOWNCOLD 10
+
+#define DAMAGERAIN 0.4
+#define DAMAGESNOW 1
+#define DAMAGEHOT 0.3
+#define DAMAGECOLD 0.5
+
+typdef enum{COLD, HOT, RAIN, SNOW} whet;
 
 
 static move_type moves[10];
 static int turns = 10;
-static float cooldown;
+static float cooldown = 10;
+static whet prev = HOT;
+static bool setcooldown = false;
+static Texture2D angry;
+static Texture2D angryFlaming;
+static Texture2D frozen;
+static Texture2D anxious;
 static Texture2D regular;
 static Texture2D walkingLeft [6];
 static Texture2D walkingRight [6];
@@ -28,6 +45,21 @@ Texture2D getWalkingTexture(int index, bool mirror) {
     return texture;
 }
 
+static whet setWhet(environment* env) {
+    if (isHot(env)) {
+        if (isRain(env)){
+            return RAIN;
+        } else {
+            return HOT;
+        }
+    } else {
+        if (isRain(env)){
+            return SNOW;
+        } else {
+            return COLD;
+        }
+    }
+}
 
 void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
     // initialises the player with the correct versions
@@ -55,6 +87,22 @@ void makePlayer(Player* p, int health, int sizex, int sizey, Texture2D tex) {
     walkingLeft[4] = getWalkingTexture(5, false);
     walkingLeft[5] = getWalkingTexture(6, false);
     regular = tex;
+
+    Image flamingAngerImage = LoadImage("images/flamingHellAnger.png");
+    ImageResizeNN(&flamingAngerImage, flamingAngerImage.width * SCALING_FACTOR, flamingAngerImage.height * SCALING_FACTOR);
+    angryFlaming = LoadTextureFromImage(flamingAngerImage);
+    // Frozen state
+    Image frozenImage = LoadImage("images/frozen.png");
+    ImageResizeNN(&frozenImage, frozenImage.width * SCALING_FACTOR, frozenImage.height * SCALING_FACTOR);
+    frozen = LoadTextureFromImage(frozenImage);
+    // Angry state
+    Image angryImage = LoadImage("images/angry.png");
+    ImageResizeNN(&angryImage, angryImage.width * SCALING_FACTOR, angryImage.height * SCALING_FACTOR);
+    angry = LoadTextureFromImage(angryImage);
+    // Anxious state
+    Image anxiousImage = LoadImage("images/anxious.png");
+    ImageResizeNN(&anxiousImage, anxiousImage.width * SCALING_FACTOR, anxiousImage.height * SCALING_FACTOR);
+    anxious = LoadTextureFromImage(anxiousImage);
 }
 static int max(int x, int y){
     if(x > y){
@@ -75,6 +123,7 @@ void updateHealth(Player *p, environment *env) {
     int py = p -> position.y;
     // updates the thing based on the environment
     for (int i = 0; i < NUMFRUITS; i++) { 
+        // detects a collision
         if (env -> fs[i].isVisible) {
             int fx = env -> fs[i].position.x;
             int fy = env -> fs[i].position.y;
@@ -89,6 +138,23 @@ void updateHealth(Player *p, environment *env) {
         }
     }
 
+
+    // checks which cooldown applies now
+    
+    cooldown--;
+    bool rain = isHot(env);
+    bool hot = isHot(env);
+    if (cooldown < 0) {
+        if (hot && !rain) {
+            p ->health -= DAMAGEHOT;
+        } else if (hot && rain) {
+            p ->health -= DAMAGERAIN;
+        } else if (rain) {
+            p ->health -= DAMAGESNOW;
+        } else {
+            p ->health -= DAMAGECOLD;
+        }
+    }
 
     if (turns < NUM_MOVES) {  
     if (moves[turns] == WAIT) {
@@ -110,7 +176,7 @@ static void updateVelocity(Player * p, environment* env){
                 p -> m.set = false;
             }
         } else {
-		// movement at night the pet is maller
+		// movement at night the pet is slower
 		int mov = (env -> data.lightOff)? 1: 2;
             if (moves[turns] == RIGHT) {
                 p -> velocity.x += mov;
@@ -124,7 +190,32 @@ static void updateVelocity(Player * p, environment* env){
 
             if (p -> m.duration <= 0) {
                 p -> m.set = false;
-                p -> texture = regular;
+                if (cooldown < 0) {
+                    switch (getWhet(env)) {
+                    case HOT:
+                        p -> texture = angryFlaming;
+                        break;
+                    case RAIN:
+                        p -> texture = angry;
+                        break;
+                    case SNOW:
+                        p -> texture = frozen;
+                        break;
+                    case COLD:
+                        p -> texture = anxious;
+                        break;
+                    default:
+                        p -> texture = angry
+                        break;
+                    }
+                } else if (p -> health < HALF_LIFE){
+                    p -> texture = anxious;
+
+                } else {
+
+                    p -> texture = regular;
+                }
+
             } else {
                 p -> m.duration -=0.3;
                 
@@ -196,5 +287,29 @@ void updatePosition(Player* p, environment* env) {
     } else {
         p -> velocity.y = GRAVITY;
     }
+
+    // updates the cooldown and sets a new one
+    if (!setcooldown || prev != getWhet(env)) {
+        if (isHot(env)) {
+            if (isRain(env)){
+                
+                cooldown = COOLDOWNRAIN;
+
+            } else [
+                
+                cooldown = COOLDOWNHOT;
+            ]
+
+        } elif (isRain(env)) {
+            cooldown = COOLDOWNSNOW;
+        } else {
+            cooldown = COOLDOWNCOLD;
+        }
+
+        setcooldown = true;
+
+    }
+
+    prev = getWhet(env);
 }
     
