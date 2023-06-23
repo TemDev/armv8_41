@@ -45,7 +45,7 @@ typedef struct{
     int count;
     int actual_colour[4];
     fruit fs[NUMFRUITS];
-    Texture2D* background;
+    Texture2D background;
     int sun_x;
     int sun_y;
     int moon_x;
@@ -67,7 +67,7 @@ typedef struct __player{
 // makes player
 void makePlayer(Player*, int, int, int, Texture2D);
 
-void updatePosition(Player*);
+void updatePosition(Player*, environment*);
 
 void updateHealth(Player *, environment *);
 #endif

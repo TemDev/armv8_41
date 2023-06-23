@@ -2,23 +2,39 @@
 #include <raylib.h>
 #include "fruits.h"
 static Texture2D rastex;
+static delay  = SPAWNFRUITS;
 void initFruits(fruit* fs) {
     rastex = LoadTexture("images/Raspberry.png");
+    delay = SPAWNFRUITS;
     for (int i = 0; i < NUMFRUITS; i++) {
         fs[i].position.x = (rand() % SCREEN_WIDTH - 50) + 10; // decrease the value by 50 to make sure the image does not go out of bounds
         fs[i].position.y = 0;
         fs[i].isVisible = false;
-        fs[i].growTime = rand() % SPAWNFRUITS + SPAWNFRUITS;
+        fs[i].growTime = rand() % delay + delay;
     }
 }
-void initFruit(fruit* fs) {
+void initFruit(fruit* fs, environment* env) {
         fs -> position.x = (rand() % SCREEN_WIDTH - 50) + 10; // decrease the value by 50 to make sure the image does not go out of bounds
         fs->position.y = 0;
         fs->isVisible = false;
-        fs->growTime = rand() % SPAWNFRUITS + SPAWNFRUITS;
+	if (env -> data.lightOff){
+		delay = 2 * SPAWNFRUITS;
+	} else {
+		delay = SPAWNFRUITS;
+	}
+	if (isRain(env)) { 
+		if (isHot(env)){ 
+			// it is rain, so it helps
+			delay = delay / 2;
+		} else {
+			// it is snow, so it is long
+			delay = delay * 8;
+		}
+	}
+        fs->growTime = rand() % delay + delay;
 }
 
-void updateFruits(fruit* fs) {
+void updateFruits(fruit* fs, environment* env) {
     for (int i = 0; i < NUMFRUITS; i++) {
         if (fs[i].isVisible) {
             if (fs[i].position.y < BOUNDS_Y - SIZEFRUIT) {

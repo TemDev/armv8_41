@@ -10,6 +10,7 @@
 
 static move_type moves[10];
 static int turns = 10;
+static float cooldown;
 static Texture2D regular;
 static Texture2D walkingLeft [6];
 static Texture2D walkingRight [6];
@@ -72,7 +73,7 @@ static int min(int x, int y){
 void updateHealth(Player *p, environment *env) {
     int px = p -> position.x;
     int py = p -> position.y;
-    // change this later
+    // updates the thing based on the environment
     for (int i = 0; i < NUMFRUITS; i++) { 
         if (env -> fs[i].isVisible) {
             int fx = env -> fs[i].position.x;
@@ -82,21 +83,23 @@ void updateHealth(Player *p, environment *env) {
             
             if (intx > 0 && inty > 0 ) {
                 p -> health += HPFRUIT;
-                initFruit(&(env -> fs[i]));
+                initFruit(&(env -> fs[i]), env);
                 break;
             }
         }
     }
+
+
     if (turns < NUM_MOVES) {  
     if (moves[turns] == WAIT) {
         
     } else {
-        p -> health -= 0.3; 
+        p -> health -= ((env -> data.lightOff)? 0.15: 0.3);
     }
     }
 }
 
-static void updateVelocity(Player * p){
+static void updateVelocity(Player * p, environment* env){
     // if the current move is set than continue executing that move
     if (p -> m.set) {
         // duration is less or equal than 0 than move is over
@@ -107,12 +110,14 @@ static void updateVelocity(Player * p){
                 p -> m.set = false;
             }
         } else {
+		// movement at night the pet is maller
+		int mov = (env -> data.lightOff)? 1: 2;
             if (moves[turns] == RIGHT) {
-                p -> velocity.x += 1;
+                p -> velocity.x += mov;
                 int val = (p -> m.duration);
                 p -> texture = walkingRight[val % 6];
             } else if (moves[turns] == LEFT) {
-                p -> velocity.x -= 1;
+                p -> velocity.x -= mov;
                 int val = (p -> m.duration);
                 p -> texture = walkingLeft[val % 6];
             } 
@@ -163,9 +168,9 @@ static void updateVelocity(Player * p){
     }
 }
 
-void updatePosition(Player* p) {
+void updatePosition(Player* p, environment* env) {
     // updates velocity accordingly
-    updateVelocity(p);
+    updateVelocity(p,env);
 
     p -> position.x  += p -> velocity.x;
     p -> position.y  += p -> velocity.y;

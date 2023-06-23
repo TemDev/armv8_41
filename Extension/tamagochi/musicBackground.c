@@ -37,9 +37,9 @@ float* readData(char * path) {
 
 static init(void) {
      for (int i = 0; i < NUM_WAVES; i++) {
-        waves[i] =  -0.5;
+        waves[i] =  0;
      }
-     img = GenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+  //   img = GenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
 }
 
 static addNew(float value) {
@@ -51,13 +51,14 @@ static addNew(float value) {
 }
 
 
-Texture2D getMusicBackground(Texture2D* t, float time, float* buffer, Color background) {
-    ImageDrawRectangle(&img,0,0,SCREEN_WIDTH, SCREEN_HEIGHT, background);
+void getMusicBackground(float time, float* buffer, Color background) {
+    
+
 
     float average = 0;
     int start = (time * sampleRate);
 
-    for (int i = (time * sampleRate); i < (time  + 1 / NUM_WAVES) * sampleRate; i ++){
+    for (int i = (time * sampleRate); i < (time  + (float)(1.0 / NUM_WAVES)) * sampleRate; i ++){
         average += buffer[i];
     }
 
@@ -67,9 +68,7 @@ Texture2D getMusicBackground(Texture2D* t, float time, float* buffer, Color back
     
     float width = SCREEN_WIDTH / NUM_WAVES;
     for (int i = 0; i < NUM_WAVES; i++) {
-        ImageDrawRectangle(&img, i * width, SCREEN_HEIGHT/2, width,waves[i] * 40, RED);
+        DrawRectangle(i * width, SCREEN_HEIGHT/2, width,waves[i] * 400, RED);
     }
-
-    *t = LoadTextureFromImage(img);
 
 }

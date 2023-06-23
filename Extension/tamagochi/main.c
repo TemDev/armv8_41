@@ -6,6 +6,9 @@
 #define COLOUR_STEPS2 90
 #include "musicBackground.h"
 #include "fruits.h"
+
+#include "weather.h"
+
 #define FPS 60
 #define SCALING_FACTOR 4
 #define GRASS_SCALING_FACTOR 13.5
@@ -31,31 +34,7 @@ void DrawAttributes(Player* p) {
     int hbar_width = (p -> health > 0)? p -> health: 0;
     Color color = (hbar_width < 350)? YELLOW: GREEN;
     DrawRectangle(0,0, p -> health, 10, color);
-    // Texture2D button1 = LoadTexture("Strawberry.png"); // Load button texture
-    // Texture2D button2 = LoadTexture("Apple.png"); // Load button textures
-    // Texture2D button3 = LoadTexture("Pear.png"); // Load button texture
 
-    // Define frame rectangle for drawing
-    // float frameHeight1 = (float)button1.height/NUM_FRAMES;
-    // Rectangle sourceRec1 = { 0, 0, (float)button1.width, frameHeight1 };
-
-    // // Define button bounds on screen
-    // Rectangle btnBounds1 = { screenWidth/4.0f - button1.width/4.0f, 
-    // screenHeight/4.0f - button1.height/NUM_FRAMES/4.0f, (float)button1.width, frameHeight1 };
-
-    // float frameHeight2 = (float)button2.height/NUM_FRAMES;
-    // Rectangle sourceRec2 = { 2, 2, (float)button2.width, frameHeight2 };
-
-    // // Define button bounds on screen
-    // Rectangle btnBounds2 = { screenWidth/2.0f - button2.width/2.0f, 
-    // screenHeight/2.0f - button2.height/NUM_FRAMES/2.0f, (float)button2.width, frameHeight2 };
-
-    // float frameHeight3 = (float)button3.height/NUM_FRAMES;
-    // Rectangle sourceRec3 = { 6, 6, (float)button3.width, frameHeight3 };
-
-    // // Define button bounds on screen
-    // Rectangle btnBounds3 = { screenWidth/6.0f - button3.width/6.0f,
-    //  screenHeight/6.0f - button3.height/NUM_FRAMES/6.0f, (float)button3.width, frameHeight3 };
 }
 
 
@@ -63,10 +42,10 @@ void DrawBackGround(Player* p, int *actual_colour, float * buffer, float time, e
     Color c = (Color) {actual_colour[0], actual_colour[1], actual_colour[2], actual_colour[3]};
     ClearBackground(c);
     // This is for audio
+    //getMusicBackground(time, buffer, c);
     
-    DrawTexture(getMusicBackground(env -> background, time, buffer, c) ,0, 0, WHITE);
     DrawFruits(&(env ->fs));
-    DrawText("Don't let it die", 10, 10, 20, DARKGRAY);
+    //DrawText("e", 10, 10, 20, DARKGRAY);
 
 }
 
@@ -113,8 +92,8 @@ void updateEverything(Player* p, environment * env) {
     bool moved = true;
     updateEnvironment(p, env);
     updateKeys(p, &moved);  
-    updateFruits(&(env ->fs));
-    updatePosition(p);
+    updateFruits(&(env ->fs),env);
+    updatePosition(p, env);
     updateHealth(p, env);
 }    
 
@@ -122,7 +101,7 @@ int main(void) {
     
    
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Digital Pet");
-    SetTargetFPS(FPS); 
+    SetTargetFPS(60); 
 
     Player character;
     environment env;
@@ -145,12 +124,6 @@ int main(void) {
     // Raspberry
     Image raspberryImage = LoadImage("image/Raspberry.png");
     Texture2D raspberry = LoadTextureFromImage(raspberryImage);
-    // Apple
-    Image appleImage = LoadImage("images/Apple.png");
-    Texture2D apple = LoadTextureFromImage(appleImage);
-    // Pear
-    Image pearImage = LoadImage("images/Pear.png");
-    Texture2D pear = LoadTextureFromImage(pearImage);
     // Moon
     Image moonImage = LoadImage("images/Moon.png");
     ImageResizeNN(&moonImage, moonImage.width * SCALING_FACTOR, moonImage.height * SCALING_FACTOR);
@@ -196,11 +169,9 @@ int main(void) {
     InitAudioDevice(); 
     Music song = LoadMusicStream(music);
 
-    //Texture2D texture = getTexture("images/maincharacter/smile.png");
     
     makePlayer(&character, 500, PLAYER_HEIGHT,PLAYER_WIDTH, normal);
     env.count = 0;
-    env.background = malloc(sizeof(Texture2D));
     initFruits(&env.fs);
     int happyHeyCount = 0;
     int cloudProgress = 0;
@@ -221,22 +192,11 @@ int main(void) {
     float frameTime = 0;
 
     while (!WindowShouldClose()) {
-
-        UpdateMusicStream(song);
+        updateEverything(&character, &env);
+      	UpdateMusicStream(song);
+	BeginDrawing();
+	//gets the timeframe
         frameTime += GetFrameTime();  // raylib function
-        // if (frameTime > 10) {
-        //     if (data->tempC > 26) {
-        //         tooHot = true;
-        //     } else if (data->tempC < 0) {
-        //         tooCold = true;
-        //     }
-        //     if (data->waterlevel > 1) {
-        //         precipitation = true;
-        //     } else if (data->waterlevel > 3) {
-        //         heavyPrecipitation = true;
-        //     }
-        //     frameTime = 0;
-        // }
 
         if (frameTime < 2) {
 	  character.texture = happyHey;
@@ -246,26 +206,29 @@ int main(void) {
 	} else {
 	  character.texture = anxious;
 	}
-	if (env.data.tempC <= 5) {
-	  character.texture = frozen;
-	} else if (env.data.tempC >= 30) {
+	if (isHot(&env)) {
 	  character.texture = flamingAnger;
+	} else{
+	  character.texture = frozen;
 	}
 	  
 
-        updateEverything(&character, &env);
-        DrawTexture(sun, env.sun_x, env.sun_y, WHITE);
-	DrawTexture(moon, env.moon_x, env.moon_y, WHITE);
+        
+	
 
-	// env.data.waterLevel = 5;
-	// env.data.tempC = 4;
-	if ((env.data.waterLevel > 1) && (env.data.tempC > 5)) {
+	float time =(GetMusicTimePlayed(song) > 0)? GetMusicTimePlayed(song) : 0;
+        DrawEverything(&character, &env, buffer, time);// change to the time of the actual song
+       
+	DrawTexture(sun, env.sun_x, env.sun_y, WHITE);
+	DrawTexture(moon, env.moon_x, env.moon_y, WHITE);
+ 
+	if ((env.data.waterLevel > 1) && (env.data.tempC > 25)) {
 	  if (cloudProgress < COLOUR_STEPS) {
 	    cloudProgress++;
 	  }
 	  rainOrSnowCloud = rainCloud;
 	  rainOrSnow = rain;
-	} else if ((env.data.waterLevel > 1) && (env.data.tempC <= 5)) {
+	} else if ((env.data.waterLevel > 1) && (env.data.tempC <= 25)) {
 	  if (cloudProgress < COLOUR_STEPS) {
 	    cloudProgress++;
 	  }
@@ -292,19 +255,17 @@ int main(void) {
 	  DrawTexture(rainOrSnowCloud, -x_offset + final_x_offset[i] * ((float)cloudProgress / (float)COLOUR_STEPS), y_offset[i], WHITE);
 	}
 	
-        DrawTexture(grass, 0, BOUNDS_Y, WHITE);
-	DrawTexture(grass, 400, BOUNDS_Y, WHITE);
+      //  DrawTexture(grass, 0, BOUNDS_Y, WHITE);
+	//DrawTexture(grass, 400, BOUNDS_Y, WHITE);
         
-        BeginDrawing();
-        float time = (GetMusicTimePlayed(song) > 0)? GetMusicTimePlayed(song) : 0;
-        DrawEverything(&character, &env, buffer, time);// change to the time of the actual song
-        DrawTexture(grass, 0, BOUNDS_Y, WHITE);
+        
+      
+            DrawTexture(grass, 0, BOUNDS_Y, WHITE);
 	    DrawTexture(grass, 400, BOUNDS_Y, WHITE);
             
         EndDrawing();
     }
     free(buffer);
-    free(env.background);
     free(env.fs);
     UnloadMusicStream(song);   // Unload music stream buffers from RAM
 
