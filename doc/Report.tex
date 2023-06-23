@@ -1,21 +1,252 @@
-\documentclass[11pt]{article}
+\documentclass[11pt, oneside, UKenglish]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{babel}
+\usepackage{geometry}   
+\geometry{margin = 0.75 in}       
+\geometry{a4paper}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{ragged2e}
+\usepackage{xurl}
+\usepackage{csquotes}
 
-\usepackage{fullpage}
+\usepackage{graphicx}
 
 \begin{document}
 
-\title{Our Extension...}
-\author{TODO}
+\title{\vspace{-2cm}Our Extension \enquote{DigiPet}}
+\author{Group 41: Ivan Artiukhov, Temirlan Sergazin, Dionisii Nuzhnyi, Lorenzo Evans}
+\date{}
 
 \maketitle
 
 \section{Introduction}
+This report outlines the development process our group used to create an assembler for the ARMv8 AArch64 architecture, the assembly code to make the LED on the Raspberry Pi flash, and the extension to the project that we came up with. 
+The report also describes how we divided the workload, the effectiveness of our teamwork, how we structured each part of the project, and how we came up with our extension \enquote{DigiPet}.
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+\section{The Assembler}
+Our assembler has the following main components:
+\newline • A parser which reads the \verb|.s| assembly file and converts string instructions into a custom datatypes, 
+\newline • A decoder which turns the labeled datatypes into binary instructions 
+\newline • A program which writes the output binary to a file.
+\par The input/parser section dealt with reading lines from the assembly files and tokenising the contents.
+First, the input file is opened, and on each iteration of a loop, a string is saved with the contents of each line.
+Each string is passed one at a time to a function which determines whether the line contains an instruction, label or directive---an instance of a custom C structure called \verb|line_data| is created, and the \verb|line_type| tag is assigned based on the result of this function.
+Now that the line type is known, the entire line can be parsed and important information can be stored within the fields of \verb|line_data|.
+If the line contains an instruction, it is broken down into the opcode and operands.
+Additional functions are used to check the types of the operands (general/special purpose registers, labels, immediate values or shift values). Another structure is used to represent these operands, with tags being applied similar to the line contents so that the decoder knows how to get the actual value of the operand.
+A basal pointer to an array of these operands is held in the \verb|line_data| structure if it also has the instruction tag - this is done by using different structures for different line types, and a union which selects one of these to populate \verb|line_data|'s \verb|line_contents| field according to the assigned tag. Similarly, if the line contains a directive, the name of the directive and the 32-bit integer argument are stored in \verb|line_contents|.
+If the line contains a label, only its name is stored. Once the line is fully tokenised, the original string can be discarded as all data has been extracted and can be assembled fully with this information alone.
+This code resides within the \verb|AssemblerInput.c| file, with the data-type-esque structures defined in Assemble.h as the types are used throughout the assembler.
+After data is processed, a pass is made which looks for labels---it notes the name of the label and the line number it corresponds to in the code.
+A second pass is then made, during which label operands of instructions are changed into numeric values---these are offsets from the current instruction which point to the line of the label.Decoding takes place next, and is done by taking the instruction\_data datatype and processing its contents.
+Firstly it checks whether it is an alias to regular instructions and then re-formats it appropriately. 
+
+There are 3 main types of instructions branching, data processing and memory transfer.
+All of these have a separate function to process them.
+All instruction names are mapped to the function which processed them and also there is a specific value that determines details of how the instruction is composed.
+Branching instructions have their encoding as the special value, \verb|ldr| and \verb|str| just have 1 and 0.
+The special value in data processing instructions holds all possible types of instructions it can be.
+Finally, the output section copies the integer array into a file specified in the arguments. 
+\begin{figure}[H] %fix
+    \centering
+    \includegraphics[scale=0.3]{graph1 (1) (1).png}
+    \caption{Dependency graph of the assembler source code}
+    \label{fig:dependency-graph}
+\end{figure}
+
+\section{Part III. Raspberry Pi}
+In our report for the first interim checkpoint, we wrote how we suspected this part would be challenging due to the difficulties in testing it.
+This is because with no commercial OS loaded onto the Raspberry Pi, no error is produced when we do not achieve the desired outcome (the LED flashing).
+We actively used QEMU to emulate the code we wrote and see where the errors could be.
+After writing the code in assembly language, we used our assembler to run it. We ended up using GDB frequently when a segfault occurred, as it is useful for checking where exactly in the code the program breaks.
+We also decided that changing the emulator slightly would be very helpful for debugging the code in this part.
+The changes allowed us to use the console to debug and see exactly what happens when the code executes. The folder \enquote{Raspberry Pi} was added to the \verb|src| folder in our GitLab project containing the changes made to the emulator and the final code for \enquote{Part III} that succeeds in makes out LED flash.
+
+We spent quite some time reading and understanding about how the mailbox system we were meant to implement actually works.
+The key to implementing this part for us was to structure our assembly code into labels effectively.
+After a label was created for all the main sections of the code which did important things, (turning the light on and off when processing the mailbox data, creating a delay, and changing flags) it allowed us to better structure the code made finding the mistakes we made in the code much faster.
+Initially our LED blinked only 5 times, but after fixing the bugs with processing and freeing up the queue, we managed to fix the mailbox and flash for a seemingly infinite period of time.
+Generally, this part of the project was challenging for us due to it's rather abstract nature, however after spending time discussing it as a team and breaking the workload into distinct pieces, we managed to reach the desired outcome.
+
+\section{Extension Overview}
+We decided early on that we wanted to use the Raspberry Pi provided for part III in our extension.
+The group also liked the idea of using external sensors to make use of the Pi's most versatile feature: its GPIO pins---which allow for the use of a plethora of simple to advanced electronics in any program executing on its processor.
+
+We decided on creating a virtual pet simulator-game inspired by retro Tamagotchi devices.
+Our idea was to improve upon the genre by augmenting our game with sensors, which take environmental data from the real world and simulate these conditions inside the game.
+The virtual pet would be displayed in its \enquote{world} on a screen connected to the Pi, and UI elements such as the pet's life points (which go up or down depending on how well you take care of it or what the weather is like) are overlayed on top.
+We wanted our project to allow people to enjoy interacting with the pet, and if the sensors were placed outside, give them an idea of any rough weather conditions outside.
+This makes our project entertaining and potentially useful at the same time. 
+The idea we had involving the external electronics was to use a temperature sensor (connected via jumper cables to a breadboard and the Pi's GPIO pins) which would change the weather in the game---for example if it got too cold, then snow would start falling from the top of the screen, making the pet uncomfortable and causing it to lose life points.
+We decided to also use humidity and water level sensors, which would influence the weather in our game.
+Apart from sensors, we have ways to interact with our pet by feeding it. 
+This is done using the fruits which appear in the screen from time to time. 
+When the pet is fed, this increases it's health points. 
+
+\section{Designing the Extension}
+We began by researching graphics libraries in C which would allow us to render our game to the screen.
+The first challenge of our mini-project was finding a suitable library in C, as the majority of graphics packages were designed to be used with C++, and although the language was created as an add-on to C, we thought it was different enough that we should avoid using it to conform to the spec's request to use \enquote{C as your main programming language}.
+We eventually decided on raylib, which by default is supported by both C and C++.
+Spending time to research the functionality of this programming library was essential[2]---once we understood it we started writing small scripts to create individual UI elements that we would use in the final UI.
+The images and animations we use in our game were developed in the app Aseprite---a popular tool for making pixelart style animations.
+When our pet makes certain movements, an animation plays by cycling through images in a specific folder of sprites one by one, displaying them on the screen making our pet seem more realistic and \enquote{alive}. 
+
+The second important step was to understand how to read the data from the sensors and pass this data to the main program.
+We purchased the temperature, water-level and light sensors that we used, and tried to test them with the sample C code provided - however it did not work. 
+We then tried to write our own code in C: this was very time consuming and our code became more and more complex.
+Unfortunately, this code either read the data incorrectly, or did not read it at all.
+We went back to the sensor manufacturer's website to look at the sample code again, and noticed that they recommended using Python for any functions that read data.
+The reason for this is the many Python libraries which could be used to read data---one of these is RPi.GPIO, which is very useful for getting data from electronics wired to the Pi's GPIO pins.
+We then made the decision to write these functions in Python to avoid further headache, allowing us to spend more time on the remainder of the project. We took ideas from the following website[1] which helped us when writing the Python code for the water level and temperature sensors, because they turned out to be rather complex and required an advanced knowledge about a certain few Python libraries. 
+Once our reading functions finally worked, we added more Python code to write the data into a file.
+T0his allows the data to be transferred from the Python script to the C program, as the data is then read from the file and stored in a C struct, from which it can be accessed whenever we need it. 
+
+Apart from that sensor controls, we have another feature involving a  file reader, that opens \verb|.wav| music files and plays it.
+Before playing the song it is copying its contents into a buffer of floats. When music is playing there is a script that puts a waveform of the current music timestamp being played.
+Each value in that buffer represents an offset from an equilibrium.
+Therefore, by skipping, some of them, to make the computations easier and multiplying the value by certain constants, the rectangles are drawn on the screen where each one is tiny part of a wave with a different distance from the equilibrium, hence different height.
+This effect produces a correct wave when applied for every frame in the recording.
+This feature makes our game more interesting for a user, because they can enjoy the music as well as see the waveform representing it on the screen.
+
+
+\subsection{Testing extension code}
+Testing each bit of code separately was essential to make sure that when putting everything together, it all worked smoothly.
+As we split the tasks between us, each function was tested separately after completing it.
+For example, when writing and reading data from the file, we tested the output we get for different sets of data read by the sensors. We created some additional non-software related tests, which included testing in dark conditions, testing with the sensor in water, and heating/cooling the temperature sensor.
+We tested to make sure the data written into files was accurate and in the correct format, and tested that it was read correctly and stored in the C structure.
+Testing of the output worked in a similar manner. We ran raylib separately on our personal machines and tested to make sure each component of the UI worked before putting it all together. 
+As a result, the testing we have carried out before combining everything together turned out to be extremely effective.
+
+\subsection{Running the code on Raspberry Pi}
+As the digital pet program is meant to run on the Raspberry Pi, we had to find a way to transfer and run all of our code on it.
+Initially we started by installing a 32-bit OS on our Pi so we could work with a GUI, with the aim of using the Secure Shell protocol to interface with the Pi, to avoid having to plug in a myriad of peripherals every time we want to test something.
+Complimenting this was VNC connect, which came in very useful for testing the UI and graphics related components of the extension, as it allows you to use your laptop as a pseudo-monitor, allowing for access to the Pi's OS desktop and window applications.
+This was very important for configuring settings such as the Ethernet connection, or Bluetooth accessories.
+We also configured Git so that we could pull and push code to the Pi which allowed us to all work on code stored in our GitLab repository.
+This helped a lot in dividing tasks so we could work on them in pairs by utilising separate branches which we could eventually merge back into master.  
+
+\section{Programming in a group}
+The results of the first peer assessment showed that generally the way we divided the workload between the members of the team was very efficient.
+We continued using the same technique as that mentioned in the first interim report---we came to an agreement that working in groups of 2 was very effective in our team. We structured the groups such that each person in a pair was doing a different but similar task to the other pair member.
+This allowed them to help each other in the case someone got stuck, as both people would be familiar with the same libraries and logic.
+For example, during the extension, Den and Lorenzo focused on the UI creation and image processing in with raylib, whereas Ivan and Tem collaborated by working with sensors, the data read from them and the processing of this data (determining how it would affect the simulation).
+
+Working in separate branches was something mentioned in the first report as something to improve on.
+From the start of Part II, we created separate branches and worked on them independently or in pairs.
+This decreased the frequency of issues with Git as we did not push code that conflicted with someone else's.
+Generally, all group members found it much easier to work in a group at this stage compared to the beginning of the project. The main reasons for this were: 
+\newline • Being more comfortable and confident working with Git (knowing the useful commands, using branches, knowing exactly how to deal with problems that occur).
+\newline • Knowing the strengths and weaknesses of each other - this helped to divide the tasks even more efficiently than before.
+\newline • Writing comments for all the functions we created - this allows for any person to look at and understand code (even if they didn't write it) allowing them to help debug and fix errors.
+\newline • Learning to be calm when the code does not work and working efficiently to implement the next steps in order to fix the problem.
+
+In general, the coordination between the group members has definitely improved from the first checkpoint.
+We conducted regular meeting where we met all together and worked on the code which helped our teamwork significantly. 
+
+
+\section{Individual reflections}
+All group members did not describe their contributions to the emulator part, because this was already done in our first checkpoint report.
+
+\subsection{Ivan Artiukhov}
+During this project I felt myself as a valued team member.
+As well as being able to apply the knowledge I have, I also learnt a lot.
+After reviewing the Peer Assessment feedback I received, I am pleased with how my teammates rated my team work and contribution.
+They pointed out that my serenity, even when things didn't go according to plan, was helpful for the team.
+I remained calm and focused on finding solutions to the problems we faced, which helped us progress more efficiently.
+
+In the second part, I was writing the code for processing the aliases and, having experience form the first part, debugged the code which was much went much more efficiently in this case.
+When working with the Raspberry Pi, I contributed a lot to the creation of the final working code.
+My idea of dividing the code in labels was something that helped us to succeed in this part.
+During the extension I have done a lot of work to make the sensors operate correctly and also implemented some functionality for the UI for our project. 
+While working in a team, I identified the areas I feel more or less comfortable at.
+My strengths include remaining calm and composed when faced with challenges, diligently working to resolve issues, organizing regular team meetings and calls, and effectively debugging the code.
+The teamwork activities and competitions I participated in the past greatly contributed to my confidence within the team. 
+
+In the beginning, I struggled with a lack of experience working with Git, GDB and efficient usage of the terminal.
+However, through the project, I made significant improvements in this area and now feel much more confident.
+Another area where I faced difficulties was utilizing memory in C for different data structures since I hadn't previously worked with C.
+However, as I progressed through Parts I and II of the project, my understanding and management of memory improved as I gained more experience coding in C.
+
+One important lesson I learned from this project is the value of conducting thorough initial research.
+Being well-prepared and equipped with knowledge from the beginning allows for a smoother start and minimizes time spent struggling to understand the project specifications.
+In this particular project, I didn't allocate enough time to initial research, and as a result, I faced some challenges before gaining a clear understanding of the requirements.
+Overall, I really enjoyed working in my group. I appreciate the feedback and have identified areas of improvement.
+Moving forward, I will continue to build on my strengths and actively address any weaknesses to enhance my skills and performance in future team projects.
+
+
+\subsection{Temirlan Sergazin}
+One of my strongest qualities is my diligence.
+Despite encountering numerous issues while working on our group project, I persevered and effectively handled the challenges that arose during testing and program compilation.
+I relied on my intuition and problem-solving skills to overcome these obstacles.
+I am delighted to note that my group members recognized and appreciated my efforts, as evident from the excellent rating I received in the Peer Assessments.
+Their constructive comments echoed a similar sentiment.
+
+Throughout the project, I actively contributed to each part.
+In Part 2 of the project, I continued my high level of involvement by working on the 
+\verb|assemble.c| file.
+I created a robust foundation for the two-pass assembler.
+Furthermore, I successfully devised a mechanism to convert labels into their respective memory addresses, streamlining the assembly process.
+In Part 3, I drafted the first version of the assembly code. Although it was not fully functional, I believe it served as a pivotal starting point for our team.
+In the extension part, I tackled the challenging task of processing intricate images created by one of our group members.
+Although this aspect may have been relatively minor in scope, I also took on the responsibility of developing code to receive data from sensors, collaborating closely with one of my group members. I dedicated myself to crafting captivating animations for various sensor responses, such as simulating rain when the water level was high and dynamically transitioning between day and night based on the ambient light detected by the photosensitive sensor. By actively contributing to multiple aspects of the project, I demonstrated my versatility and attention to detail.
+
+This group project also revealed areas where I need to further develop my technical and soft skills.
+My previous experience with GDB was limited to the bomb-defusing architecture coursework, which resulted in insufficient knowledge to apply it effectively, especially while debugging Part 2 Assembler.
+Additionally, I occasionally struggled to collaborate with my peers when we had differing ideas on implementation.
+Nonetheless, one of my key abilities is transforming weaknesses into strengths. Despite initially lacking proficiency in debugging the Assembler, I quickly observed and learned from my group members, harnessing the skill of using GDB to contribute to the successful completion of Part 2. 
+
+Overall, I thoroughly enjoyed the experience of working in a group.
+I have become more receptive to diverse perspectives, and I recognize the value of learning from my peers.
+Moving forward, I will actively seek opportunities to enhance my technical skills and further improve my communication and collaboration abilities.
+
+\subsection{Dionisii Nuzhnyi}
+
+In this group I felt myself in the right place. I was valued and respected by all team members.
+In return, throughout my time in group 41, at any time, I was respectful and supportive to others.
+From my perspective, my teammates were working hard to finish their parts and did a decent job of helping each other throughout. 
+
+In the assembler part of the project I was in charge of doing the decoder for the instructions.
+This was a challenging tasks, especially when I had to deal with memory. After completing the code, I was taking an active part when debugging it and fixing the errors to make the program successfully pass all the tests.
+After that I actively contributed to writing the assembly code for the \enquote{mailbox} that we had to implement and adopting it to make the LED be controlled correctly.
+When the group started working on the extension part, I was the one making the initial set up for the Raspberry Pi (downloading OS, required software).
+Then I was in charge of working with some of the UI, designed and coded the music file processing feature and fixing the features that did not work as we supposed.
+
+One of my strong sides that I noticed was attention to detail, through debugging tools, peer-reviewing the code and solving problems.
+Anyone alone could not go through the issues as quickly as we did collectively. This crucial thing helped me to contribute to this project well.
+However, towards the end, I took a bit more workload than I could finish properly.
+Later it caused some problems for me, and then affected the team slightly. Nevertheless, we managed to change the distribution of tasks to reach the desired goal on time.
+
+This project showed me that self-management and peer support are crucial in any team project.
+Team members can boost each other's productivity, but when they are not well organised it can result in redundant work.
+From my observation, we had some efficient days and some when the miscommunication slowed us down.
+However working all together allowed us to make relevant changes at the right time and get all the parts of the project working on time.
+
+\subsection{Lorenzo Evans}
+Throughout the duration of the project I have learnt a lot about my strengths and weaknesses when it comes to working in a team.
+The start of the project was challenging for everyone, but we were able to quickly move on and start making progress.
+We shifted from collaborating mostly online to mostly in person, which despite not being my preference did help boost our productivity.
+Sometimes I felt I was able to get more done by staying at home and working independently while avoiding distractions, but I tried my best to engage in person as much as possible in order to support my teammates.
+Counter-intuitively, I think this method of working by myself at times was actually one of my strengths when it came to working as a team---I think I was able to communicate clearly at an in person meeting what I wanted to work on and discuss it with the group, go off and complete the task, and then explain how I was able to solve the problem and what I learnt from it at the next meeting.
+
+I moved on to start part II earlier than others in order to set a foundation we would all be able to build from for the assembler.
+I did this by designing and creating many C structures, to represent contents of each line of assembly.
+I then worked on functions to read lines from the assembly files, determine the contents of the line, and then fully parse the string, returning a tokenised representation of the line data to the decoder which would select the relevant functions to execute.
+This ended up being an instrumental part of the assembler design, and once I was able to explain and justify my decisions to the group, my teammates were able to quickly implement the rest of the assembler in parallel to my input-parsing development.
+This was the section I felt most proud of, as I was effectively able to recall and use knowledge I learnt throughout the year to assist me in my programming.
+
+I helped with the initial brainstorming and designing of the assembly code in part III, but moved on quickly to the extension where I came up with the first iteration of the final idea, and found some sensors at home we could use in the project.
+I worked on the art and animations for our pet simulator, and wrote sections of code around updating the environment based on the sensor data.
+I also helped to shoot and script our video presentation, and then edited it to combine it with our slides and test videos.
+I think the project has been a great success, and I thoroughly enjoyed working with my group.
+
+\begin{thebibliography}{2}
+\bibitem{sensors}
+Inspiration for reading data from sensors. Available from: \url{https://kookye.com/2016/08/01/smart-home-sensor-kit-for-arduinoraspberry-pi/} [Accessed on: 23 Jun 2023]
+
+\bibitem{raylib}
+Tutorials about using Raylib library. Available from: \url{https://www.raylib.com/} [Accessed on: 23 Jun 2023]
+\end{thebibliography}
+
 
 \end{document}
