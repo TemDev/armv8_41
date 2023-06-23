@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "player.h"
 #include "fruits.h"
+#include "weather.h"
 
 #define NUM_MOVES 10
 

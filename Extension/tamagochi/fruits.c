@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <raylib.h>
 #include "fruits.h"
+#include "weather.h"
 static Texture2D rastex;
 static delay  = SPAWNFRUITS;
 void initFruits(fruit* fs) {

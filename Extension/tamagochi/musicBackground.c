@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sndfile.h>
 #include <math.h>
+#include <raylib.h>
 #include "player.h"
 #include "musicBackground.h"
 
@@ -67,10 +68,12 @@ void getMusicBackground(float time, float* buffer, Color background) {
     
     float width = SCREEN_WIDTH / NUM_WAVES;
     for (int i = 0; i < NUM_WAVES; i++) {
+
         Color c = (Color) {rand() % 256, rand()% 256, rand() % 256, rand()%256};
         int height = waves[i] * 300;
 	height = (height > 300)? 300:height;
 	DrawRectangle(i * width, SCREEN_HEIGHT/2 - height, width ,2*height, c);
+
     }
 
 }
